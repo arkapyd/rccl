@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Name Pending — 2v2 League</title>
+<title>Real Cricket Champions' League</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -44,14 +44,16 @@ body{
 }
 h1{
   font-variation-settings:"wdth" 125;font-weight:800;
-  font-size:clamp(34px,6.4vw,64px);line-height:.92;letter-spacing:-.01em;
-  text-transform:uppercase;flex:1 1 320px;
+  font-size:clamp(30px,5.4vw,56px);line-height:.94;letter-spacing:-.012em;
+  text-transform:uppercase;flex:1 1 340px;
 }
-h1 .pending{display:block;font-size:.34em;font-weight:500;font-variation-settings:"wdth" 100;
-  letter-spacing:.14em;color:var(--dim);margin-top:8px}
-.tally{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--dim);text-align:right;
-  letter-spacing:.04em;padding-bottom:6px}
-.tally b{display:block;font-size:30px;color:var(--ink);font-weight:600;line-height:1.1}
+h1 .season{display:block;font-size:.28em;font-weight:500;font-variation-settings:"wdth" 100;
+  letter-spacing:.16em;color:var(--dim);margin-top:9px}
+.tally{display:flex;gap:26px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--dim);
+  letter-spacing:.06em;padding-bottom:6px;text-transform:uppercase}
+.tally b{display:block;font-size:27px;color:var(--ink);font-weight:600;line-height:1.15;
+  letter-spacing:0;text-transform:none}
+.tally .mv b{font-size:18px;padding-top:7px}
 
 /* ---------- panels ---------- */
 .cols{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px;align-items:start}
@@ -76,12 +78,15 @@ tbody tr.on td{border-top-color:var(--live)}
 tr.on .who{color:var(--live)}
 td.n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-weight:500}
 .pts{font-weight:600;font-size:15px}
+.mvpn.lead{color:var(--live);font-weight:600}
 .tiemark{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--live);
   border:1px solid var(--live);padding:1px 4px;margin-left:6px;letter-spacing:.08em;vertical-align:1px}
 .form{display:flex;gap:3px}
-.pip{width:11px;height:11px;border:1.4px solid var(--ink);flex:none}
+.pip{width:11px;height:11px;border:1.4px solid var(--ink);flex:none;position:relative}
 .pip.w{background:var(--ink)}
 .pip.p{border-color:var(--rule);background:repeating-linear-gradient(45deg,transparent,transparent 3px,var(--rule) 3px,var(--rule) 4px)}
+.pip.m::after{content:"";position:absolute;left:50%;top:-4px;width:3px;height:3px;
+  margin-left:-1.5px;background:var(--live)}
 
 /* ---------- the draw (signature) ---------- */
 #draw{width:100%;height:auto;display:block}
@@ -103,7 +108,7 @@ td.n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;fon
 .legend i.d{border-top:1px dashed var(--ink);opacity:.6}
 
 /* ---------- fixtures ---------- */
-.fixtures{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:12px}
+.fixtures{display:grid;grid-template-columns:repeat(auto-fill,minmax(302px,1fr));gap:12px}
 .fix{border:1px solid var(--rule);background:var(--sheet);padding:9px 10px 10px}
 .fix.done{border-color:var(--ink)}
 .fix.dec{border-left:3px solid var(--live)}
@@ -126,6 +131,17 @@ td.n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;fon
 .vs{align-self:center;font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--dim);flex:none}
 .side:focus-visible,.clr:focus-visible,button:focus-visible,tr:focus-visible{outline:2px solid var(--live);outline-offset:2px}
 
+/* ---------- mvp picker ---------- */
+.mvp{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:8px;
+  padding-top:8px;border-top:1px solid rgba(147,166,180,.5)}
+.mvplab{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--dim);margin-right:3px}
+.cap{font:inherit;font-size:11.5px;cursor:pointer;padding:2px 7px;
+  border:1px solid var(--rule);background:transparent;color:var(--dim);
+  transition:border-color .12s,color .12s,background .12s}
+.cap:hover{border-color:var(--live);color:var(--live)}
+.cap.on{background:var(--live);border-color:var(--live);color:var(--sheet);font-weight:600}
+
 /* ---------- deciders ---------- */
 .round{margin-bottom:20px}
 .round:last-child{margin-bottom:0}
@@ -144,14 +160,13 @@ td.n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;fon
 .btn:hover{background:var(--live);border-color:var(--live)}
 .btn.ghost{background:transparent;color:var(--ink)}
 .btn.ghost:hover{background:rgba(27,79,216,.1);color:var(--ink)}
-textarea{width:100%;height:130px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+textarea{width:100%;height:150px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;
   line-height:1.6;padding:11px;border:1px solid var(--rule);background:#fff;color:var(--ink);resize:vertical}
 .stack{margin-top:22px}
 
 @media (max-width:880px){
   .cols{grid-template-columns:1fr}
   body{padding:20px 14px 60px}
-  .tally{text-align:left}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -159,10 +174,13 @@ textarea{width:100%;height:130px;font-family:"IBM Plex Mono",monospace;font-size
 <body>
 <div class="wrap">
 
-  <div class="eyebrow">2v2 · 10 players · 15 games · six each · partners drawn, never repeated</div>
+  <div class="eyebrow">RCCL · 2v2 · 10 players · 15 games · six each · partners drawn, never repeated</div>
   <div class="masthead">
-    <h1 id="title">Name Pending<span class="pending">Season One</span></h1>
-    <div class="tally"><b id="tallyNum">0/15</b>games recorded</div>
+    <h1 id="title">Real Cricket Champions' League<span class="season">Season One</span></h1>
+    <div class="tally">
+      <div><b id="tallyNum">0/15</b>games recorded</div>
+      <div class="mv"><b id="tallyMvp">—</b>leading mvp</div>
+    </div>
   </div>
 
   <div class="cols">
@@ -171,12 +189,12 @@ textarea{width:100%;height:130px;font-family:"IBM Plex Mono",monospace;font-size
       <table>
         <thead><tr>
           <th class="pos"></th><th>Player</th>
-          <th class="n">P</th><th class="n">W</th><th class="n">L</th>
+          <th class="n">W</th><th class="n">L</th><th class="n">MVP</th>
           <th>Form</th>
         </tr></thead>
         <tbody id="tbody"></tbody>
       </table>
-      <p class="note" style="margin-top:14px">Filled square is a win, hollow is a loss, hatched is unplayed. Ranking is wins only; level players go to a decider.</p>
+      <p class="note" style="margin-top:14px">Filled square is a win, hollow a loss, hatched unplayed. A blue tick above a square marks the game that player took MVP. Order is wins, then MVP awards, then a decider.</p>
     </section>
 
     <section class="panel">
@@ -191,7 +209,7 @@ textarea{width:100%;height:130px;font-family:"IBM Plex Mono",monospace;font-size
   </div>
 
   <section class="panel stack">
-    <h2>Fixtures <span>click the winning side</span></h2>
+    <h2>Fixtures <span>click the winning side, then the MVP</span></h2>
     <div class="fixtures" id="fixtures"></div>
   </section>
 
@@ -214,11 +232,11 @@ textarea{width:100%;height:130px;font-family:"IBM Plex Mono",monospace;font-size
 
 <script>
 /* ==========================================================================
-   NAME PENDING — 2v2 LEAGUE
+   REAL CRICKET CHAMPIONS' LEAGUE
    Everything you ever need to hand-edit lives in this block.
    ========================================================================== */
 
-const LEAGUE = "Name Pending";
+const LEAGUE = "Real Cricket Champions' League";
 const SEASON = "Season One";
 
 /* --- The draw. 15 games, each player in exactly 6, no repeated partnership. --- */
@@ -245,6 +263,10 @@ const SCHEDULE = [
 const RESULTS = {
 };
 
+/* Game number : the player the four of them voted MVP. */
+const MVPS = {
+};
+
 /* Decider results. Keys are generated by the page — use the copy button. */
 const DECIDERS = {
 };
@@ -258,11 +280,18 @@ const MAX_ROUNDS = 6;
 
 const results  = Object.assign({}, RESULTS);
 const deciders = Object.assign({}, DECIDERS);
+const mvps     = {};
+/* keep only MVP votes that name someone who actually played that game */
+Object.keys(MVPS).forEach(k => {
+  const g = SCHEDULE[+k - 1];
+  if (g && g.a.concat(g.b).includes(MVPS[k])) mvps[+k] = MVPS[k];
+});
+
 let focus = null;
 
 document.getElementById("title").innerHTML =
-  esc(LEAGUE) + '<span class="pending">' + esc(SEASON) + "</span>";
-document.title = LEAGUE + " — 2v2 League";
+  esc(LEAGUE) + '<span class="season">' + esc(SEASON) + "</span>";
+document.title = LEAGUE;
 
 function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
@@ -290,11 +319,15 @@ function pick(pool, n, rand){
 /* ---------------------------------------------------------------- standings */
 function baseRecord(){
   const rec = {};
-  PLAYERS.forEach(p => rec[p] = { p:0, w:0, l:0, form:[] });
+  PLAYERS.forEach(p => rec[p] = { p:0, w:0, l:0, mvp:0, form:[] });
   SCHEDULE.forEach((g, i) => {
     const r = results[i+1];
-    const all = g.a.concat(g.b);
-    all.forEach(p => { if (rec[p]) rec[p].form.push(r ? (g[r.toLowerCase()].includes(p) ? "w" : "l") : "p"); });
+    g.a.concat(g.b).forEach(p => {
+      if (!rec[p]) return;
+      rec[p].form.push({ r: r ? (g[r.toLowerCase()].includes(p) ? "w" : "l") : "p",
+                         m: mvps[i+1] === p });
+    });
+    if (mvps[i+1] && rec[mvps[i+1]]) rec[mvps[i+1]].mvp++;
     if (!r) return;
     const won = r === "A" ? g.a : g.b, lost = r === "A" ? g.b : g.a;
     won.forEach(p  => { if (rec[p]) { rec[p].p++; rec[p].w++; } });
@@ -303,18 +336,20 @@ function baseRecord(){
   return rec;
 }
 
-/* Everyone on the same win total forms a level group. */
-function levelGroups(rec){
-  const by = {};
-  PLAYERS.forEach(p => { (by[rec[p].w] = by[rec[p].w] || []).push(p); });
-  return Object.keys(by).map(Number).sort((x,y)=>y-x).map(w => ({ wins:w, members:by[w] }));
+/* Wins first, then MVP awards. Whoever is still level goes to a decider. */
+function buckets(rec){
+  const key = p => rec[p].w + ":" + rec[p].mvp;
+  const map = {};
+  PLAYERS.forEach(p => { (map[key(p)] = map[key(p)] || []).push(p); });
+  return Object.keys(map)
+    .map(k => ({ wins:+k.split(":")[0], mvp:+k.split(":")[1], members:map[k] }))
+    .sort((x,y) => y.wins - x.wins || y.mvp - x.mvp);
 }
 
 /* Every pair in a level group meets once, 2v2, with two fillers drawn to fill
    the teams out. Only the two level players' result counts. */
 function fixturesFor(members, round){
   const key = members.slice().sort().join("|") + "#r" + round;
-  const rand = rng(hash(key));
   const out = [];
   const sorted = members.slice().sort();
   for (let i=0;i<sorted.length;i++){
@@ -340,12 +375,12 @@ function resolveGroup(members, round, rounds){
   members.forEach(m => wins[m] = 0);
   fx.forEach(f => { wins[deciders[f.id]]++; });
 
-  const buckets = {};
-  members.forEach(m => { (buckets[wins[m]] = buckets[wins[m]] || []).push(m); });
+  const grouped = {};
+  members.forEach(m => { (grouped[wins[m]] = grouped[wins[m]] || []).push(m); });
 
   let order = [], pending = false;
-  Object.keys(buckets).map(Number).sort((x,y)=>y-x).forEach(w => {
-    const grp = buckets[w];
+  Object.keys(grouped).map(Number).sort((x,y)=>y-x).forEach(w => {
+    const grp = grouped[w];
     if (grp.length === 1) { order.push(grp[0]); return; }
     const sub = resolveGroup(grp, round+1, rounds);
     if (sub) order = order.concat(sub); else { order = order.concat(grp); pending = true; }
@@ -356,33 +391,38 @@ function resolveGroup(members, round, rounds){
 /* -------------------------------------------------------------------- table */
 function renderTable(){
   const rec = baseRecord();
-  const groups = levelGroups(rec);
+  const topMvp = Math.max(...PLAYERS.map(p => rec[p].mvp));
   const rows = [];
   let pos = 1;
 
-  groups.forEach(g => {
+  buckets(rec).forEach(g => {
     let order = g.members.slice().sort(), unresolved = g.members.length > 1;
     if (g.members.length > 1){
       const settled = resolveGroup(g.members, 1, []);
       if (settled) { order = settled; unresolved = false; }
     }
-    order.forEach(p => rows.push({ name:p, rec:rec[p], pos:pos++, level:unresolved && g.members.length > 1 }));
+    order.forEach(p => rows.push({ name:p, rec:rec[p], pos:pos++, level:unresolved }));
   });
 
   document.getElementById("tbody").innerHTML = rows.map(r => `
     <tr data-p="${esc(r.name)}" tabindex="0" class="${focus === r.name ? "on" : ""}">
       <td class="pos">${r.pos}</td>
       <td class="who">${esc(r.name)}${r.level ? '<span class="tiemark">level</span>' : ""}</td>
-      <td class="n">${r.rec.p}</td>
       <td class="n pts">${r.rec.w}</td>
       <td class="n">${r.rec.l}</td>
-      <td><div class="form">${r.rec.form.map(f => `<span class="pip ${f}"></span>`).join("")}</div></td>
+      <td class="n mvpn ${r.rec.mvp === topMvp && topMvp > 0 ? "lead" : ""}">${r.rec.mvp}</td>
+      <td><div class="form">${r.rec.form.map(f =>
+        `<span class="pip ${f.r}${f.m ? " m" : ""}"></span>`).join("")}</div></td>
     </tr>`).join("");
 
   const played = Object.keys(results).length;
   document.getElementById("tallyNum").textContent = played + "/15";
+  const leaders = PLAYERS.filter(p => rec[p].mvp === topMvp && topMvp > 0);
+  document.getElementById("tallyMvp").textContent =
+    !leaders.length ? "—" : leaders.length > 2 ? leaders.length + " level on " + topMvp
+    : leaders.join(" & ") + " (" + topMvp + ")";
   document.getElementById("tableNote").textContent =
-    played < 15 ? "provisional" : "final round complete";
+    played < 15 ? "provisional" : "all games played";
 }
 
 /* --------------------------------------------------------------- the draw */
@@ -439,35 +479,40 @@ function renderDraw(){
 }
 
 /* ----------------------------------------------------------------- fixtures */
-function sideHTML(side, names, decider){
+function sideHTML(names, decider){
   const lead = decider ? names[0] : names.join(" + ");
   const fill = decider ? " + " + names[1] : "";
   return `<b>${esc(lead)}${fill ? `<span class="fill">${esc(fill)}</span>` : ""}</b>`;
 }
 function fixtureCard(o){
   const done = !!o.won;
+  const mvpRow = o.mvpOf ? `<div class="mvp"><span class="mvplab">MVP</span>${
+    o.a.concat(o.b).map(p =>
+      `<button class="cap ${o.mvp === p ? "on" : ""}" data-mvp="${o.mvpOf}" data-p="${esc(p)}">${esc(p)}</button>`
+    ).join("")}</div>` : "";
   return `<div class="fix ${done ? "done" : ""} ${o.decider ? "dec" : ""}">
     <div class="fixhead"><span>${esc(o.label)}</span>${
-      done ? `<button class="clr" data-clear="${esc(o.key)}">clear</button>` : "<span></span>"}</div>
+      done || o.mvp ? `<button class="clr" data-clear="${esc(o.key)}">clear</button>` : "<span></span>"}</div>
     <div class="sides">
       <button class="side ${o.won === "A" ? "win" : done ? "lose" : ""}" data-set="${esc(o.key)}" data-v="A">
-        ${sideHTML("A", o.a, o.decider)}</button>
+        ${sideHTML(o.a, o.decider)}</button>
       <span class="vs">v</span>
       <button class="side ${o.won === "B" ? "win" : done ? "lose" : ""}" data-set="${esc(o.key)}" data-v="B">
-        ${sideHTML("B", o.b, o.decider)}</button>
-    </div>
+        ${sideHTML(o.b, o.decider)}</button>
+    </div>${mvpRow}
   </div>`;
 }
 function renderFixtures(){
   document.getElementById("fixtures").innerHTML = SCHEDULE.map((g, i) => fixtureCard({
-    key: "g" + (i+1), label: "Game " + (i+1), a: g.a, b: g.b, won: results[i+1] || null, decider:false
+    key: "g" + (i+1), label: "Game " + (i+1), a: g.a, b: g.b,
+    won: results[i+1] || null, decider:false, mvpOf: i+1, mvp: mvps[i+1] || null
   })).join("");
 }
 
 /* ----------------------------------------------------------------- deciders */
 function renderDeciders(){
   const rec = baseRecord();
-  const groups = levelGroups(rec).filter(g => g.members.length > 1);
+  const groups = buckets(rec).filter(g => g.members.length > 1);
   const host = document.getElementById("deciders");
   const note = document.getElementById("decNote");
 
@@ -478,7 +523,7 @@ function renderDeciders(){
   }
   if (!groups.length){
     note.textContent = "none needed";
-    host.innerHTML = `<p class="empty">No two players are level. The table stands as it is.</p>`;
+    host.innerHTML = `<p class="empty">Wins and MVP awards separate everyone. No deciders required.</p>`;
     return;
   }
 
@@ -494,6 +539,7 @@ function renderDeciders(){
       pending += r.fixtures.filter(f => !deciders[f.id]).length;
       html += `<div class="round">
         <div class="rlabel">${r.members.length} level on ${g.wins} ${g.wins === 1 ? "win" : "wins"}
+          and ${g.mvp} MVP${g.mvp === 1 ? "" : "s"}
           <em>· round ${r.round} · ${r.fixtures.length} ${r.fixtures.length === 1 ? "game" : "games"}</em></div>
         <div class="fixtures">${fx}</div>
       </div>`;
@@ -502,17 +548,19 @@ function renderDeciders(){
   });
 
   note.textContent = pending ? pending + " to play" : "all settled";
-  host.innerHTML = html + `<p class="note" style="margin-top:16px">Every pair of level players meets once. The two greyed names are fillers drawn from the rest of the pool to keep the game 2v2 — their result does not touch their own record. If a decider round ends level again, a fresh round is drawn.</p>`;
+  host.innerHTML = html + `<p class="note" style="margin-top:16px">Only players level on both wins and MVP awards come here. Every such pair meets once; the two greyed names are fillers drawn from the rest of the pool to keep the game 2v2, and their result does not touch their own record. Deciders carry no MVP vote. If a round ends level again, a fresh round is drawn.</p>`;
 }
 
 /* --------------------------------------------------------------------- save */
 function renderSave(){
-  const gl = Object.keys(results).map(Number).sort((a,b)=>a-b)
-    .map(k => `  ${k}: "${results[k]}"`).join(",\n");
+  const nums = o => Object.keys(o).map(Number).sort((a,b)=>a-b);
+  const gl = nums(results).map(k => `  ${k}: "${results[k]}"`).join(",\n");
+  const ml = nums(mvps).map(k => `  ${k}: ${JSON.stringify(mvps[k])}`).join(",\n");
   const dl = Object.keys(deciders).sort()
     .map(k => `  ${JSON.stringify(k)}: ${JSON.stringify(deciders[k])}`).join(",\n");
   document.getElementById("out").value =
-    "const RESULTS = {\n" + gl + (gl ? "\n" : "") + "};\n\n" +
+    "const RESULTS = {\n"  + gl + (gl ? "\n" : "") + "};\n\n" +
+    "const MVPS = {\n"     + ml + (ml ? "\n" : "") + "};\n\n" +
     "const DECIDERS = {\n" + dl + (dl ? "\n" : "") + "};";
 }
 
@@ -520,6 +568,12 @@ function render(){ renderTable(); renderDraw(); renderFixtures(); renderDeciders
 
 /* ------------------------------------------------------------------- events */
 document.addEventListener("click", e => {
+  const cap = e.target.closest("[data-mvp]");
+  if (cap){
+    const n = +cap.dataset.mvp, p = cap.dataset.p;
+    if (mvps[n] === p) delete mvps[n]; else mvps[n] = p;
+    return render();
+  }
   const set = e.target.closest("[data-set]");
   if (set){
     const key = set.dataset.set, v = set.dataset.v;
@@ -530,7 +584,8 @@ document.addEventListener("click", e => {
   const clr = e.target.closest("[data-clear]");
   if (clr){
     const key = clr.dataset.clear;
-    if (key.startsWith("g")) delete results[+key.slice(1)]; else delete deciders[key];
+    if (key.startsWith("g")) { delete results[+key.slice(1)]; delete mvps[+key.slice(1)]; }
+    else delete deciders[key];
     return render();
   }
   const row = e.target.closest("tr[data-p]");
@@ -560,8 +615,7 @@ document.getElementById("copyBtn").addEventListener("click", async e => {
   setTimeout(() => e.target.textContent = "Copy results block", 1600);
 });
 document.getElementById("resetBtn").addEventListener("click", () => {
-  Object.keys(results).forEach(k => delete results[k]);
-  Object.keys(deciders).forEach(k => delete deciders[k]);
+  [results, deciders, mvps].forEach(o => Object.keys(o).forEach(k => delete o[k]));
   focus = null; render();
 });
 
