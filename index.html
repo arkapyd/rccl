@@ -64,6 +64,8 @@ body{margin:0;background:repeating-linear-gradient(180deg,rgba(255,255,255,.035)
 .verdict.crowned::before{opacity:.14}
 .v-kicker{position:relative;font-size:10.5px;font-weight:800;letter-spacing:.28em;text-transform:uppercase;color:var(--bronze-lit)}
 .v-name{position:relative;font-family:'Teko',sans-serif;font-weight:700;font-size:clamp(40px,9vw,84px);line-height:.94;margin:8px 0 12px;letter-spacing:.005em;text-transform:uppercase;}
+.v-name.chase{font-size:clamp(26px,5vw,48px)}
+.v-name .chaser{color:var(--gold)}
 .verdict.crowned .v-name{color:var(--gold)}
 .v-note{position:relative;font-size:15px;color:var(--lilac);max-width:54ch}
 .v-note b{color:var(--white);font-weight:700}
@@ -80,7 +82,8 @@ tbody tr{border-top:1px solid var(--hair-soft)}
 tbody td{padding:14px 0;text-align:right;vertical-align:middle}
 tbody td.tl{text-align:left}
 .pos{width:30px;padding-right:14px!important;font-family:'Teko',sans-serif;font-weight:600;font-size:19px;color:var(--lilac-dim)}
-.who{font-weight:700;font-size:16px;white-space:nowrap}
+.who{font-weight:700;font-size:16px;white-space:nowrap;transition:color .15s ease,text-shadow .15s ease}
+tr:hover .who{color:var(--gold);text-shadow:0 0 10px rgba(255,228,99,.55)}
 .who .stray{display:block;font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#FF9DA6;margin-top:2px}
 .num{width:46px;color:var(--lilac);font-weight:500}
 .pcw{width:88px;font-family:'Teko',sans-serif;font-size:clamp(22px,3.2vw,28px);font-weight:700}
@@ -338,6 +341,11 @@ const ALIASES = {
 // Shown only while the database is unconfigured or unreachable.
 const SEED = [];
 
+// Reverse of ALIASES — used only in the Results log, which shows real
+// names instead of handles. The table and everything else keeps handles.
+const REAL_NAMES = {};
+Object.keys(ALIASES).forEach(function(real){ REAL_NAMES[ALIASES[real]] = real; });
+
 /* ═════════════════════ end of editable block ══════════════════ */
 
 var $ = function(id){ return document.getElementById(id); };
@@ -356,6 +364,7 @@ $("logo").onerror = function(){ var p = this.closest(".plate"); if(p) p.remove()
 
 /* ───────── helpers ───────── */
 function canon(n){ return ALIASES[n] || n; }
+function realName(n){ return REAL_NAMES[n] || n; }
 function inWindow(m){ return m.d ? (m.d >= CYCLE.start && m.d <= CYCLE.end) : true; }
 function num(v){ if(v === "" || v === null || v === undefined) return null; var n = Number(v); return isNaN(n) ? null : n; }
 function findMatch(id){
@@ -450,6 +459,7 @@ function renderVerdict(rows){
   var box = $("verdict"), closed = daysLeft() < 0;
   var through = rows.filter(function(r){ return r.w >= CYCLE.minWins; });
   box.classList.remove("crowned");
+  $("vName").classList.remove("chase");
 
   if(!through.length){
     var chase = rows.slice().sort(function(a,b){ return b.w - a.w || b.pcw - a.pcw; })[0];
@@ -462,7 +472,8 @@ function renderVerdict(rows){
       $("vName").textContent = "Nothing on the board";
       $("vNote").innerHTML = "The first result gets the cycle moving. <b>" + CYCLE.minWins + " wins</b> opens the gate.";
     } else {
-      $("vName").textContent = chase.name + " leads the chase";
+      $("vName").classList.add("chase");
+      $("vName").innerHTML = '<span class="chaser">' + esc(chase.name) + '</span> leads the chase';
       $("vNote").innerHTML = "On <b>" + chase.w + " wins</b> at <b>" + chase.pcw.toFixed(2) +
         " PCW</b>, with <b>" + (CYCLE.minWins - chase.w) +
         " more</b> to reach the gate. Nobody is in contention until someone does.";
@@ -522,9 +533,9 @@ function renderLog(){
     return '<li class="' + (inWindow(m) ? "" : "void") + '">' +
       '<div class="line">' +
         '<span class="day">' + (fmt(m.d) || "—") + '</span>' +
-        '<span class="won">' + esc((m.w || []).join(" & ")) + '</span>' +
+        '<span class="won">' + esc((m.w || []).map(realName).join(" & ")) + '</span>' +
         '<span class="verb">beat</span>' +
-        '<span class="lost">' + esc((m.l || []).join(" & ")) + '</span>' +
+        '<span class="lost">' + esc((m.l || []).map(realName).join(" & ")) + '</span>' +
         (inWindow(m) ? "" : '<span class="tag">Outside window</span>') +
         (S.unlocked
           ? '<span class="tools">' +
