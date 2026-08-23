@@ -5,22 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RCCL — Real Cricket Champions' League</title>
 <link rel="icon" href="RCCL.png">
-<meta name="theme-color" content="#440353">
+<meta name="theme-color" content="#7000E0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,700;1,6..96,400;1,6..96,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
 :root{
-  --royal:#440353;
-  --royal-deep:#2B0136;
-  --royal-panel:#3A0347;
+  --royal:#7000E0;
+  --royal-deep:#2C0060;
+  --royal-panel:#54009E;
   --bronze:#AA6B25;
-  --bronze-lit:#C98833;
+  --bronze-lit:#F0C878;
   --gold:#FFE463;
   --white:#FFFFFF;
-  --lilac:#BFA3CB;
-  --lilac-dim:#8A6A99;
+  --lilac:#E4D2F0;
+  --lilac-dim:#E0CCF0;
   --hair:rgba(255,228,99,.16);
   --hair-soft:rgba(255,228,99,.08);
   --gutter:clamp(18px,4.5vw,56px);
@@ -28,7 +28,7 @@
 }
 *,*::before,*::after{box-sizing:border-box}
 html{background:var(--royal);scrollbar-width:thin;scrollbar-color:var(--bronze) var(--royal-deep);}
-body{margin:0;background:repeating-linear-gradient(180deg,rgba(255,255,255,.028) 0 1px,transparent 1px 5px),radial-gradient(120% 70% at 50% -10%,#560A6A 0%,var(--royal) 46%,var(--royal-deep) 100%);background-attachment:fixed;color:var(--white);font-family:'Manrope',system-ui,sans-serif;font-size:15.5px;line-height:1.5;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;padding-bottom:clamp(50px,9vw,96px);}
+body{margin:0;background:repeating-linear-gradient(180deg,rgba(255,255,255,.035) 0 1px,transparent 1px 5px),radial-gradient(120% 70% at 50% -10%,#8A1AF0 0%,var(--royal) 46%,var(--royal-deep) 100%);background-attachment:fixed;color:var(--white);font-family:'Manrope',system-ui,sans-serif;font-size:15.5px;line-height:1.5;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;padding-bottom:clamp(50px,9vw,96px);}
 ::-webkit-scrollbar{width:13px;height:13px}
 ::-webkit-scrollbar-track{background:var(--royal-deep);border-left:1px solid var(--hair-soft)}
 ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--bronze-lit),var(--bronze) 55%,#8A5518);border:3px solid var(--royal-deep);border-radius:99px;}
@@ -46,12 +46,12 @@ body{margin:0;background:repeating-linear-gradient(180deg,rgba(255,255,255,.028)
 .plate::after{content:"";position:absolute;inset:-4%;pointer-events:none;background:radial-gradient(60% 40% at 50% 42%,rgba(255,228,99,.15),transparent 70%);}
 .season{font-size:11px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:var(--bronze-lit);display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;}
 .season .dot{width:4px;height:4px;background:var(--bronze);border-radius:50%;display:inline-block}
-.lede{font-family:'Bodoni Moda',Georgia,serif;font-weight:400;font-style:italic;font-size:clamp(21px,3.4vw,34px);line-height:1.24;margin:16px 0 22px;}
-.lede em{font-style:normal;color:var(--gold)}
+.lede{font-family:'Teko',sans-serif;font-weight:500;font-size:clamp(24px,4vw,38px);line-height:1.2;letter-spacing:.01em;margin:14px 0 20px;color:var(--lilac);}
+.lede em{font-style:normal;font-weight:700;color:var(--gold)}
 .tally{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}
 .tally div{padding:14px 12px 14px 0}
 .tally div+div{border-left:1px solid var(--hair-soft);padding-left:14px}
-.tally b{display:block;font-family:'Bodoni Moda',serif;font-size:clamp(24px,4vw,34px);line-height:1;color:var(--gold)}
+.tally b{display:block;font-family:'Teko',sans-serif;font-weight:700;font-size:clamp(28px,4.6vw,40px);line-height:1;color:var(--gold)}
 .tally span{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--lilac-dim);font-weight:700}
 .wire{margin-top:18px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-dim);display:flex;align-items:center;gap:8px;font-weight:600;}
 .pip{width:7px;height:7px;border-radius:50%;background:var(--lilac-dim);flex:0 0 auto}
@@ -63,14 +63,14 @@ body{margin:0;background:repeating-linear-gradient(180deg,rgba(255,255,255,.028)
 .verdict.crowned{border-color:var(--bronze);background:linear-gradient(112deg,rgba(255,228,99,.13),transparent 58%),var(--royal-panel);}
 .verdict.crowned::before{opacity:.14}
 .v-kicker{position:relative;font-size:10.5px;font-weight:800;letter-spacing:.28em;text-transform:uppercase;color:var(--bronze-lit)}
-.v-name{position:relative;font-family:'Bodoni Moda',serif;font-weight:700;font-size:clamp(32px,7.4vw,68px);line-height:1.02;margin:12px 0;letter-spacing:-.01em;}
+.v-name{position:relative;font-family:'Teko',sans-serif;font-weight:700;font-size:clamp(40px,9vw,84px);line-height:.94;margin:8px 0 12px;letter-spacing:.005em;text-transform:uppercase;}
 .verdict.crowned .v-name{color:var(--gold)}
 .v-note{position:relative;font-size:15px;color:var(--lilac);max-width:54ch}
 .v-note b{color:var(--white);font-weight:700}
 .verdict.crowned .v-note b{color:var(--gold)}
 section{margin-top:var(--stack)}
 .head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:8px}
-.head h2{margin:0;font-family:'Bodoni Moda',serif;font-weight:500;font-size:clamp(20px,3vw,27px)}
+.head h2{margin:0;font-family:'Teko',sans-serif;font-weight:600;font-size:clamp(24px,3.6vw,32px);letter-spacing:.01em;text-transform:uppercase;}
 .head .aside{font-size:10.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--lilac-dim);text-align:right}
 .hairline{height:1px;background:linear-gradient(90deg,var(--bronze),var(--hair) 42%,transparent);margin-bottom:6px}
 table{width:100%;border-collapse:collapse}
@@ -79,10 +79,10 @@ thead th.tl{text-align:left}
 tbody tr{border-top:1px solid var(--hair-soft)}
 tbody td{padding:14px 0;text-align:right;vertical-align:middle}
 tbody td.tl{text-align:left}
-.pos{width:30px;padding-right:14px!important;font-family:'Bodoni Moda',serif;font-size:16px;color:var(--lilac-dim)}
+.pos{width:30px;padding-right:14px!important;font-family:'Teko',sans-serif;font-weight:600;font-size:19px;color:var(--lilac-dim)}
 .who{font-weight:700;font-size:16px;white-space:nowrap}
 .num{width:46px;color:var(--lilac);font-weight:500}
-.pcw{width:88px;font-family:'Bodoni Moda',serif;font-size:clamp(18px,2.6vw,23px);font-weight:500}
+.pcw{width:88px;font-family:'Teko',sans-serif;font-size:clamp(22px,3.2vw,28px);font-weight:700}
 tr.through{background:linear-gradient(90deg,rgba(255,228,99,.11),transparent 62%)}
 tr.through .who,tr.through .pcw{color:var(--gold)}
 tr.through .pos{color:var(--bronze-lit)}
@@ -108,7 +108,7 @@ input::placeholder{color:var(--lilac-dim)}
 .teams{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:14px}
 .pair{display:flex;gap:8px;flex:1 1 250px;min-width:0}
 .pair select{flex:1 1 0}
-.versus{font-family:'Bodoni Moda',serif;font-style:italic;font-size:19px;color:var(--bronze-lit)}
+.versus{font-family:'Teko',sans-serif;font-weight:700;font-size:18px;letter-spacing:.06em;text-transform:uppercase;color:var(--bronze-lit)}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .btn{font-family:'Manrope',sans-serif;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:12px 20px;border-radius:2px;cursor:pointer;border:1px solid var(--hair);background:transparent;color:var(--white);transition:.16s ease;}
 .btn:hover{border-color:var(--gold);color:var(--gold)}
@@ -122,7 +122,7 @@ input::placeholder{color:var(--lilac-dim)}
 .log li{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 12px;padding:13px 0;border-top:1px solid var(--hair-soft)}
 .log .day{flex:0 0 66px;font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--lilac-dim)}
 .log .won{font-weight:700;color:var(--gold)}
-.log .verb{font-family:'Bodoni Moda',serif;font-style:italic;font-size:14px;color:var(--lilac-dim)}
+.log .verb{font-family:'Teko',sans-serif;font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--lilac-dim)}
 .log .lost{color:var(--lilac)}
 .log .kill{margin-left:auto;background:none;border:0;color:var(--lilac-dim);font-size:17px;line-height:1;padding:2px 7px;cursor:pointer}
 .log .kill:hover{color:var(--gold)}
@@ -132,7 +132,7 @@ input::placeholder{color:var(--lilac-dim)}
 .blank{padding:20px 0;border-top:1px solid var(--hair-soft);color:var(--lilac-dim);font-size:14.5px}
 .laws{list-style:none;margin:0;padding:0;counter-reset:law;columns:2;column-gap:clamp(24px,4vw,52px)}
 .laws li{break-inside:avoid;padding:14px 0;border-top:1px solid var(--hair-soft);font-size:14px;color:var(--lilac)}
-.laws li::before{counter-increment:law;content:counter(law,upper-roman);display:block;font-family:'Bodoni Moda',serif;font-size:13px;color:var(--bronze-lit);margin-bottom:5px;letter-spacing:.1em;}
+.laws li::before{counter-increment:law;content:counter(law,upper-roman);display:block;font-family:'Teko',sans-serif;font-weight:700;font-size:16px;color:var(--bronze-lit);margin-bottom:4px;letter-spacing:.14em;}
 .laws b{color:var(--white);font-weight:700}
 @media (max-width:700px){.laws{columns:1}}
 footer{margin-top:var(--stack);padding-top:18px;border-top:1px solid var(--hair);display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-dim);font-weight:600;}
@@ -485,7 +485,7 @@ function renderEntry(){
     '<div class="teams">' +
       '<div class="pair"><select id="a1" aria-label="First player, left pair">' + opts + '</select>' +
       '<select id="a2" aria-label="Second player, left pair">' + opts + '</select></div>' +
-      '<span class="versus">v</span>' +
+      '<span class="versus">vs</span>' +
       '<div class="pair"><select id="b1" aria-label="First player, right pair">' + opts + '</select>' +
       '<select id="b2" aria-label="Second player, right pair">' + opts + '</select></div>' +
     '</div>' +
