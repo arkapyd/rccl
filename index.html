@@ -81,6 +81,7 @@ tbody td{padding:14px 0;text-align:right;vertical-align:middle}
 tbody td.tl{text-align:left}
 .pos{width:30px;padding-right:14px!important;font-family:'Teko',sans-serif;font-weight:600;font-size:19px;color:var(--lilac-dim)}
 .who{font-weight:700;font-size:16px;white-space:nowrap}
+.who .stray{display:block;font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#FF9DA6;margin-top:2px}
 .num{width:46px;color:var(--lilac);font-weight:500}
 .pcw{width:88px;font-family:'Teko',sans-serif;font-size:clamp(22px,3.2vw,28px);font-weight:700}
 tr.through{background:linear-gradient(90deg,rgba(255,228,99,.11),transparent 62%)}
@@ -100,32 +101,62 @@ tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
 .tail.over{color:var(--gold)}
 @media (max-width:620px){.plinth{height:24px}.step{width:6px}.step:nth-child(7){width:8px}.tail{display:none}}
 @media (max-width:470px){.plinth-cell{display:none}}
+
+/* ---------------- entry ---------------- */
 .panel{border:1px solid var(--hair);background:var(--royal-panel);padding:clamp(18px,3.6vw,28px)}
+.panel.editing{border-color:var(--gold);box-shadow:inset 0 0 0 1px rgba(255,228,99,.2)}
 .lock{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
 .lock p{margin:0;flex:1 1 240px;font-size:14px;color:var(--lilac)}
 input,select{font-family:inherit;font-size:14.5px;color:var(--white);background:var(--royal-deep);border:1px solid var(--hair);padding:11px 12px;border-radius:2px;min-width:0;}
 input::placeholder{color:var(--lilac-dim)}
-.teams{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:14px}
+.n::-webkit-outer-spin-button,.n::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.n{-moz-appearance:textfield;text-align:center;font-family:'Teko',sans-serif;font-size:20px;font-weight:600;padding:6px 8px}
+.editbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:-4px 0 16px;padding:10px 14px;border:1px dashed var(--gold);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.teams{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px}
 .pair{display:flex;gap:8px;flex:1 1 250px;min-width:0}
 .pair select{flex:1 1 0}
 .versus{font-family:'Teko',sans-serif;font-weight:700;font-size:18px;letter-spacing:.06em;text-transform:uppercase;color:var(--bronze-lit)}
+.sheet{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-bottom:14px}
+.innings{border:1px solid var(--hair-soft);border-radius:2px;padding:12px 14px}
+.innings h4{margin:0 0 10px;font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--bronze-lit);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fields{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fields.two{grid-template-columns:repeat(2,1fr)}
+.field{display:flex;flex-direction:column;gap:5px}
+.field span{font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim);text-align:center}
+.sobox{border:1px solid var(--gold);border-radius:2px;padding:14px;margin-bottom:14px;background:rgba(255,228,99,.06)}
+.sobox h3{margin:0 0 12px;font-family:'Teko',sans-serif;font-weight:700;font-size:19px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+.sobox .sheet{margin-bottom:0}
+.reading{font-size:13.5px;color:var(--lilac);margin-bottom:14px;min-height:1.4em}
+.reading b{color:var(--gold);font-weight:700}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .btn{font-family:'Manrope',sans-serif;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:12px 20px;border-radius:2px;cursor:pointer;border:1px solid var(--hair);background:transparent;color:var(--white);transition:.16s ease;}
 .btn:hover{border-color:var(--gold);color:var(--gold)}
 .btn.fill{background:linear-gradient(180deg,var(--gold),#E8C63F);border-color:var(--gold);color:var(--royal-deep)}
 .btn.fill:hover{background:var(--white);border-color:var(--white);color:var(--royal-deep)}
 .btn.quiet{color:var(--lilac-dim);border-color:var(--hair-soft);padding:10px 14px}
+.btn[hidden]{display:none}
 .when{display:flex;align-items:center;gap:9px;font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim)}
 .flash{min-height:1.5em;margin-top:12px;font-size:13.5px;color:var(--gold)}
 .flash.bad{color:#FF9DA6}
+
+/* ---------------- results ---------------- */
 .log{list-style:none;margin:0;padding:0}
-.log li{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 12px;padding:13px 0;border-top:1px solid var(--hair-soft)}
+.log li{padding:14px 0;border-top:1px solid var(--hair-soft)}
+.log .line{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 12px}
 .log .day{flex:0 0 66px;font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--lilac-dim)}
 .log .won{font-weight:700;color:var(--gold)}
 .log .verb{font-family:'Teko',sans-serif;font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--lilac-dim)}
 .log .lost{color:var(--lilac)}
-.log .kill{margin-left:auto;background:none;border:0;color:var(--lilac-dim);font-size:17px;line-height:1;padding:2px 7px;cursor:pointer}
-.log .kill:hover{color:var(--gold)}
+.log .tools{margin-left:auto;display:flex;gap:4px;align-items:center}
+.log .tool{background:none;border:1px solid transparent;color:var(--lilac-dim);font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:4px 9px;cursor:pointer;border-radius:2px}
+.log .tool:hover{color:var(--gold);border-color:var(--hair)}
+.log .tool.kill{font-size:16px;letter-spacing:0;padding:1px 8px 3px}
+.card{margin:7px 0 0 78px;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-family:'Teko',sans-serif;font-size:18px;font-weight:500;letter-spacing:.02em;color:var(--lilac)}
+.card .sc{white-space:nowrap}
+.card .sc b{color:var(--white);font-weight:700}
+.card .dash{color:var(--lilac-dim)}
+.sotag{font-family:'Manrope',sans-serif;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--royal-deep);background:var(--gold);padding:3px 8px;border-radius:2px}
+@media (max-width:560px){.card{margin-left:0}}
 .log li.void{opacity:.42}
 .log li.void .won{color:var(--lilac)}
 .tag{font-size:9.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim);border:1px solid var(--hair);padding:2px 7px}
@@ -149,8 +180,8 @@ footer img{width:26px;height:auto;opacity:.7}
     <div>
       <div class="season">
         <span id="cycleName">Cycle I</span><span class="dot"></span>
-        <span id="cycleWindow">—</span><span class="dot"></span>
-        <span id="cycleClock">—</span>
+        <span id="cycleWindow">&mdash;</span><span class="dot"></span>
+        <span id="cycleClock">&mdash;</span>
       </div>
       <p class="lede">Two a side, twenty overs, <em>no fixture list</em>. Play whoever's around. Highest win percentage past seven wins takes the cycle.</p>
       <div class="tally">
@@ -189,9 +220,9 @@ footer img{width:26px;height:auto;opacity:.7}
     </table>
   </section>
 
-  <section>
+  <section id="entrySection">
     <div class="head">
-      <h2>Enter a Result</h2>
+      <h2 id="entryTitle">Enter a Result</h2>
       <span class="aside" id="entryAside">Locked</span>
     </div>
     <div class="hairline"></div>
@@ -210,13 +241,14 @@ footer img{width:26px;height:auto;opacity:.7}
   <section>
     <div class="head">
       <h2>Laws of the Cycle</h2>
-      <span class="aside">Six clauses</span>
+      <span class="aside">Seven clauses</span>
     </div>
     <div class="hairline"></div>
     <ol class="laws">
       <li>Every match is <b>two a side over twenty overs</b>. No schedule and no set number of games &mdash; the cycle simply runs for its window.</li>
-      <li>A result gives both winners a <b>W</b> and both losers an <b>L</b>. Nothing else about the match is recorded, and that is the point.</li>
-      <li><b>PCW</b> is wins as a percentage of matches played. It is the only ranking number, borrowed from the WTC &mdash; minus the points, since a twenty-over match cannot be tied.</li>
+      <li>A result gives both winners a <b>W</b> and both losers an <b>L</b>. Runs, wickets and overs may be recorded for the record, but <b>no scorecard figure ever ranks anybody</b>.</li>
+      <li><b>PCW</b> is wins as a percentage of matches played. It is the only ranking number, borrowed from the WTC &mdash; minus the points, since a match here cannot end level.</li>
+      <li>A tied match goes to a <b>two-over Super Over</b>. Whoever takes it takes the W, exactly as if they had won in regulation.</li>
       <li>The gate stands at <b>seven wins</b>. Below it you appear on the table but are not in contention.</li>
       <li>At the close, the highest PCW among those through the gate takes the cycle. Level on PCW, they settle it 2v2 until it breaks.</li>
       <li>Matches dated outside the window stay in the record but do not count toward the cycle.</li>
@@ -234,8 +266,13 @@ footer img{width:26px;height:auto;opacity:.7}
   ══════════════════════════════════════════════════════════════
   FIREBASE REALTIME DATABASE — RULES TO PASTE IN THE CONSOLE
   ══════════════════════════════════════════════════════════════
-  One-time setup, in the console:
-    rccl/config/key  =  "rccl2026"   (a plain string)
+  One-time setup, in the Data tab: create the node
+      rccl / config / key   =   rccl2026
+  (typed as a plain string — the console adds the quotes itself)
+
+  Rules can read that node even though no client ever can. If it
+  does not exist, every write is denied, because the rule compares
+  your key against null.
 
   {
     "rules": {
@@ -275,7 +312,7 @@ const FIREBASE = {
   appId: "1:204963758123:web:75ca7b3882000e2555aa6e"
 };
 
-const CYCLE_PATH = "rccl/cycle1";            // one node per cycle
+const CYCLE_PATH = "rccl/cycle1";
 const DB_PATH    = CYCLE_PATH + "/matches";
 const ADMIN_KEY  = "rccl2026";
 const LOGO       = "RCCL.png";
@@ -289,12 +326,17 @@ const CYCLE = {
 
 const PLAYERS = ["zombdapro","chrisp4two","loiteringmedic","partialcost","ninjaadarsh","northwestlease","milneristan"];
 
+// Old names already sitting in the database, mapped to current handles.
+// Anything listed here is translated on read, so legacy results still count.
+const ALIASES = {
+  "Rishit":"zombdapro",       "Arka":"chrisp4two",
+  "Neil":"milneristan",       "Adarsh":"ninjaadarsh",
+  "Girija":"partialcost",     "Tuhinangshu":"loiteringmedic",
+  "Prajyot":"northwestlease"
+};
+
 // Shown only while the database is unconfigured or unreachable.
-const SEED = [
-  { d:"2026-08-22", w:["zombdapro","chrisp4two"],       l:["loiteringmedic","milneristan"] },
-  { d:"2026-08-22", w:["zombdapro","chrisp4two"],       l:["northwestlease","milneristan"] },
-  { d:"2026-08-23", w:["zombdapro","loiteringmedic"],   l:["chrisp4two","ninjaadarsh"]      }
-];
+const SEED = [];
 
 /* ═════════════════════ end of editable block ══════════════════ */
 
@@ -305,23 +347,36 @@ var URN_PATH = 'M1.6 1.4H12.4V3.1H11.3C11.1 6.1 9.5 8.1 7.9 8.5V10.2H9V11.2H11.3
 
 var S = {
   matches: SEED.map(function(m,i){ return { id:"seed"+i, d:m.d, w:m.w, l:m.l }; }),
-  live: false, unlocked: false, fb: null
+  live:false, unlocked:false, editing:null, fb:null, entryKey:null
 };
 
 document.documentElement.style.setProperty('--wm', 'url("' + LOGO + '")');
 $("logo").src = LOGO;
 $("logo").onerror = function(){ var p = this.closest(".plate"); if(p) p.remove(); };
 
+/* ───────── helpers ───────── */
+function canon(n){ return ALIASES[n] || n; }
 function inWindow(m){ return m.d ? (m.d >= CYCLE.start && m.d <= CYCLE.end) : true; }
+function num(v){ if(v === "" || v === null || v === undefined) return null; var n = Number(v); return isNaN(n) ? null : n; }
+function findMatch(id){
+  for(var i = 0; i < S.matches.length; i++) if(S.matches[i].id === id) return S.matches[i];
+  return null;
+}
 
 function buildTable(){
-  var t = {};
-  PLAYERS.forEach(function(p){ t[p] = { name:p, m:0, w:0, l:0, pcw:0 }; });
+  var t = {}, order = [];
+  PLAYERS.forEach(function(p){ t[p] = { name:p, m:0, w:0, l:0, pcw:0, stray:false }; order.push(p); });
+  // Any name in the data that isn't a known player still gets a row, flagged.
+  // Silently dropping it is what made the whole table read zero after the rename.
+  function slot(p){
+    if(!t[p]){ t[p] = { name:p, m:0, w:0, l:0, pcw:0, stray:true }; order.push(p); }
+    return t[p];
+  }
   S.matches.filter(inWindow).forEach(function(mt){
-    (mt.w || []).forEach(function(p){ if(t[p]){ t[p].m++; t[p].w++; } });
-    (mt.l || []).forEach(function(p){ if(t[p]){ t[p].m++; t[p].l++; } });
+    (mt.w || []).forEach(function(p){ var r = slot(p); r.m++; r.w++; });
+    (mt.l || []).forEach(function(p){ var r = slot(p); r.m++; r.l++; });
   });
-  var rows = Object.keys(t).map(function(k){ return t[k]; });
+  var rows = order.map(function(k){ return t[k]; });
   rows.forEach(function(r){ r.pcw = r.m ? (r.w / r.m) * 100 : 0; });
   rows.sort(function(a,b){
     return b.pcw - a.pcw || b.w - a.w || a.m - b.m || a.name.localeCompare(b.name);
@@ -340,6 +395,7 @@ function daysLeft(){
   return Math.round((new Date(CYCLE.end + "T00:00:00") - now) / 86400000);
 }
 
+/* ───────── render: crest, table, verdict ───────── */
 function renderCrest(){
   $("cycleName").textContent   = CYCLE.name;
   $("cycleWindow").textContent = fmt(CYCLE.start) + " – " + fmt(CYCLE.end);
@@ -359,7 +415,7 @@ function renderWire(){
     ? "Live · results sync to every device"
     : (FIREBASE.databaseURL
         ? "Offline · showing the last table this device saw"
-        : "Database not linked · sample results, this tab only");
+        : "Database not linked · this tab only");
 }
 
 function plinth(w){
@@ -379,7 +435,8 @@ function renderTable(rows){
     var cls = r.w >= CYCLE.minWins ? "through" : (r.m === 0 ? "dnp" : "");
     return '<tr class="' + cls + '">' +
       '<td class="tl pos">' + (i+1) + '</td>' +
-      '<td class="tl who">' + esc(r.name) + '</td>' +
+      '<td class="tl who">' + esc(r.name) +
+        (r.stray ? '<span class="stray">Unknown name in results</span>' : '') + '</td>' +
       '<td class="tl plinth-cell">' + plinth(r.w) + '</td>' +
       '<td class="num">' + r.m + '</td>' +
       '<td class="num">' + r.w + '</td>' +
@@ -433,6 +490,27 @@ function renderVerdict(rows){
     (closed ? " The urn is theirs." : " Through the gate, but the window is still open — one bad evening moves this.");
 }
 
+/* ───────── results log ───────── */
+function innings(sc){
+  if(!sc || sc.r === null || sc.r === undefined) return "";
+  var s = "<b>" + sc.r + "</b>";
+  if(sc.k !== null && sc.k !== undefined) s += "/" + sc.k;
+  if(sc.o !== null && sc.o !== undefined) s += " (" + sc.o + ")";
+  return s;
+}
+
+function scoreCard(m){
+  var bits = [];
+  var main = innings(m.sw), lost = innings(m.sl);
+  if(main && lost) bits.push('<span class="sc">' + main + ' <span class="dash">&mdash;</span> ' + lost + '</span>');
+  if(m.sow && m.sol){
+    var sow = innings(m.sow), sol = innings(m.sol);
+    bits.push('<span class="sotag">Super Over</span>');
+    if(sow && sol) bits.push('<span class="sc">' + sow + ' <span class="dash">&mdash;</span> ' + sol + '</span>');
+  }
+  return bits.length ? '<div class="card">' + bits.join("") + '</div>' : "";
+}
+
 function renderLog(){
   $("logAside").textContent = S.matches.filter(inWindow).length + " counting toward the cycle";
   var list = S.matches.slice().reverse();
@@ -442,24 +520,51 @@ function renderLog(){
   }
   $("log").innerHTML = list.map(function(m){
     return '<li class="' + (inWindow(m) ? "" : "void") + '">' +
-      '<span class="day">' + (fmt(m.d) || "—") + '</span>' +
-      '<span class="won">' + esc((m.w || []).join(" & ")) + '</span>' +
-      '<span class="verb">beat</span>' +
-      '<span class="lost">' + esc((m.l || []).join(" & ")) + '</span>' +
-      (inWindow(m) ? "" : '<span class="tag">Outside window</span>') +
-      (S.unlocked ? '<button class="kill" data-id="' + esc(m.id) +
-        '" title="Remove this result" aria-label="Remove this result">&times;</button>' : '') +
+      '<div class="line">' +
+        '<span class="day">' + (fmt(m.d) || "—") + '</span>' +
+        '<span class="won">' + esc((m.w || []).join(" & ")) + '</span>' +
+        '<span class="verb">beat</span>' +
+        '<span class="lost">' + esc((m.l || []).join(" & ")) + '</span>' +
+        (inWindow(m) ? "" : '<span class="tag">Outside window</span>') +
+        (S.unlocked
+          ? '<span class="tools">' +
+              '<button class="tool go" data-id="' + esc(m.id) + '">Edit</button>' +
+              '<button class="tool kill" data-id="' + esc(m.id) + '" aria-label="Remove this result">&times;</button>' +
+            '</span>'
+          : '') +
+      '</div>' + scoreCard(m) +
     '</li>';
   }).join("");
+
   Array.prototype.forEach.call($("log").querySelectorAll(".kill"), function(b){
     b.onclick = function(){ removeMatch(b.dataset.id); };
   });
+  Array.prototype.forEach.call($("log").querySelectorAll(".go"), function(b){
+    b.onclick = function(){ startEdit(b.dataset.id); };
+  });
+}
+
+/* ───────── entry form ───────── */
+function inningsBlock(tag, label, withOvers){
+  return '<div class="innings">' +
+    '<h4 id="lab' + tag + '">' + label + '</h4>' +
+    '<div class="fields' + (withOvers ? '' : ' two') + '">' +
+      '<label class="field"><span>Runs</span><input class="n" type="number" min="0" id="r' + tag + '"></label>' +
+      '<label class="field"><span>Wkts</span><input class="n" type="number" min="0" max="10" id="k' + tag + '"></label>' +
+      (withOvers ? '<label class="field"><span>Overs</span><input class="n" type="number" min="0" step="0.1" id="o' + tag + '"></label>' : '') +
+    '</div></div>';
 }
 
 function renderEntry(){
+  var key = (S.unlocked ? "open" : "shut") + "|" + (S.editing || "");
+  if(key === S.entryKey) return;      // don't nuke half-typed input on every sync
+  S.entryKey = key;
+
   var box = $("entry");
+  box.classList.toggle("editing", !!S.editing);
 
   if(!S.unlocked){
+    $("entryTitle").textContent = "Enter a Result";
     $("entryAside").textContent = "Locked";
     box.innerHTML =
       '<div class="lock">' +
@@ -476,12 +581,17 @@ function renderEntry(){
     return;
   }
 
-  $("entryAside").textContent = "Unlocked";
+  var editing = S.editing ? findMatch(S.editing) : null;
+  $("entryTitle").textContent = editing ? "Edit a Result" : "Enter a Result";
+  $("entryAside").textContent = editing ? "Editing" : "Unlocked";
+
   var opts = PLAYERS.map(function(p){
     return '<option value="' + esc(p) + '">' + esc(p) + '</option>';
   }).join("");
 
   box.innerHTML =
+    (editing ? '<div class="editbar"><span>Editing the match of ' + (fmt(editing.d) || "no date") +
+       '</span><button class="btn quiet" id="cancel" style="margin-left:auto">Cancel</button></div>' : '') +
     '<div class="teams">' +
       '<div class="pair"><select id="a1" aria-label="First player, left pair">' + opts + '</select>' +
       '<select id="a2" aria-label="Second player, left pair">' + opts + '</select></div>' +
@@ -489,20 +599,104 @@ function renderEntry(){
       '<div class="pair"><select id="b1" aria-label="First player, right pair">' + opts + '</select>' +
       '<select id="b2" aria-label="Second player, right pair">' + opts + '</select></div>' +
     '</div>' +
+    '<div class="sheet">' + inningsBlock("A","Left pair",true) + inningsBlock("B","Right pair",true) + '</div>' +
+    '<div class="sobox" id="soBox" hidden>' +
+      '<h3>Super Over &middot; two overs</h3>' +
+      '<div class="sheet">' + inningsBlock("SA","Left pair",false) + inningsBlock("SB","Right pair",false) + '</div>' +
+    '</div>' +
+    '<div class="reading" id="reading"></div>' +
     '<div class="row">' +
+      '<button class="btn fill" id="save" hidden>Save result</button>' +
       '<button class="btn fill" id="winA">Left pair won</button>' +
       '<button class="btn fill" id="winB">Right pair won</button>' +
       '<span class="when"><label for="played">Played</label><input type="date" id="played"></span>' +
       '<button class="btn quiet" id="lock" style="margin-left:auto">Lock</button>' +
     '</div><div class="flash" id="flash"></div>';
 
-  ["a1","a2","b1","b2"].forEach(function(id,k){
-    $(id).selectedIndex = Math.min(k, PLAYERS.length - 1);
+  // prefill
+  if(editing){
+    var A = editing.w || [], B = editing.l || [];
+    setSel("a1", A[0]); setSel("a2", A[1]); setSel("b1", B[0]); setSel("b2", B[1]);
+    fillInnings("A", editing.sw); fillInnings("B", editing.sl);
+    fillInnings("SA", editing.sow); fillInnings("SB", editing.sol);
+    $("played").value = editing.d || new Date().toISOString().slice(0,10);
+  } else {
+    ["a1","a2","b1","b2"].forEach(function(id,k){ $(id).selectedIndex = Math.min(k, PLAYERS.length - 1); });
+    $("played").value = new Date().toISOString().slice(0,10);
+  }
+
+  ["a1","a2","b1","b2"].forEach(function(id){ $(id).onchange = refresh; });
+  ["rA","kA","oA","rB","kB","oB","rSA","kSA","rSB","kSB"].forEach(function(id){
+    if($(id)) $(id).oninput = refresh;
   });
-  $("played").value = new Date().toISOString().slice(0,10);
-  $("winA").onclick = function(){ submit("A"); };
-  $("winB").onclick = function(){ submit("B"); };
-  $("lock").onclick = function(){ S.unlocked = false; render(); };
+
+  $("winA").onclick = function(){ commit("A"); };
+  $("winB").onclick = function(){ commit("B"); };
+  $("save").onclick = function(){ commit(null); };
+  $("lock").onclick = function(){ S.unlocked = false; S.editing = null; render(); };
+  if($("cancel")) $("cancel").onclick = function(){ S.editing = null; render(); };
+
+  refresh();
+}
+
+function setSel(id, val){
+  var s = $(id); if(!s) return;
+  for(var i = 0; i < s.options.length; i++) if(s.options[i].value === val){ s.selectedIndex = i; return; }
+}
+function fillInnings(tag, sc){
+  if(!sc) return;
+  if($("r" + tag) && sc.r !== undefined && sc.r !== null) $("r" + tag).value = sc.r;
+  if($("k" + tag) && sc.k !== undefined && sc.k !== null) $("k" + tag).value = sc.k;
+  if($("o" + tag) && sc.o !== undefined && sc.o !== null) $("o" + tag).value = sc.o;
+}
+function readInnings(tag){
+  var r = num($("r" + tag) ? $("r" + tag).value : "");
+  var k = num($("k" + tag) ? $("k" + tag).value : "");
+  var o = $("o" + tag) ? num($("o" + tag).value) : null;
+  if(r === null && k === null && o === null) return null;
+  var out = {};
+  if(r !== null) out.r = r;
+  if(k !== null) out.k = k;
+  if(o !== null) out.o = o;
+  return out;
+}
+
+// Works out who won from the scores, or says why it can't.
+function verdictFromScores(){
+  var rA = num($("rA").value), rB = num($("rB").value);
+  if(rA === null || rB === null) return { side:null, tied:false, msg:"Enter both runs to settle it automatically, or just pick the winner." };
+  if(rA > rB) return { side:"A", tied:false, msg:"Left pair take it by <b>" + (rA - rB) + "</b> run" + (rA - rB === 1 ? "" : "s") + "." };
+  if(rB > rA) return { side:"B", tied:false, msg:"Right pair take it by <b>" + (rB - rA) + "</b> run" + (rB - rA === 1 ? "" : "s") + "." };
+
+  var sA = num($("rSA").value), sB = num($("rSB").value);
+  if(sA === null || sB === null) return { side:null, tied:true, msg:"Scores level on <b>" + rA + "</b>. Enter the Super Over to settle it." };
+  if(sA > sB) return { side:"A", tied:true, msg:"Tied on <b>" + rA + "</b>. Left pair take the Super Over <b>" + sA + "&ndash;" + sB + "</b>." };
+  if(sB > sA) return { side:"B", tied:true, msg:"Tied on <b>" + rA + "</b>. Right pair take the Super Over <b>" + sB + "&ndash;" + sA + "</b>." };
+  return { side:null, tied:true, msg:"Super Over tied too. Play another and enter that one instead." };
+}
+
+function refresh(){
+  var rA = num($("rA").value), rB = num($("rB").value);
+  var level = rA !== null && rB !== null && rA === rB;
+  $("soBox").hidden = !level;
+
+  var A = [$("a1").value, $("a2").value], B = [$("b1").value, $("b2").value];
+  if($("labA")) $("labA").textContent = A.join(" & ");
+  if($("labB")) $("labB").textContent = B.join(" & ");
+  if($("labSA")) $("labSA").textContent = A.join(" & ");
+  if($("labSB")) $("labSB").textContent = B.join(" & ");
+
+  var v = verdictFromScores();
+  $("reading").innerHTML = v.msg;
+  var auto = !!v.side;
+  $("save").hidden = !auto;
+  $("winA").hidden = auto;
+  $("winB").hidden = auto;
+  if(auto) $("save").textContent = (S.editing ? "Update result" : "Save result");
+  else {
+    $("winA").textContent = (S.editing ? "Update: left pair won" : "Left pair won");
+    $("winB").textContent = (S.editing ? "Update: right pair won" : "Right pair won");
+  }
 }
 
 function say(t, bad){
@@ -510,38 +704,86 @@ function say(t, bad){
   if(f){ f.className = "flash" + (bad ? " bad" : ""); f.textContent = t; }
 }
 
-function render(){
-  var rows = buildTable();
-  renderCrest(); renderWire(); renderTable(rows); renderVerdict(rows); renderEntry(); renderLog();
+function startEdit(id){
+  if(!S.unlocked) return;
+  S.editing = id;
+  render();
+  $("entrySection").scrollIntoView({ behavior:"smooth", block:"start" });
 }
 
-function submit(side){
+/* ───────── save ───────── */
+function commit(forced){
   var picks = ["a1","a2","b1","b2"].map(function(id){ return $(id).value; });
   var uniq = picks.filter(function(p,i){ return picks.indexOf(p) === i; });
   if(uniq.length !== 4){ say("Pick four different players.", true); return; }
 
+  var side = forced;
+  if(!side){
+    var v = verdictFromScores();
+    if(!v.side){ say(v.msg.replace(/<[^>]+>/g, ""), true); return; }
+    side = v.side;
+  }
+
   var A = [picks[0], picks[1]], B = [picks[2], picks[3]];
+  var scA = readInnings("A"), scB = readInnings("B");
+  var soA = readInnings("SA"), soB = readInnings("SB");
+  var levelled = scA && scB && scA.r !== undefined && scB.r !== undefined && scA.r === scB.r;
+
+  var k = num($("kA").value), k2 = num($("kB").value);
+  if((k !== null && (k < 0 || k > 10)) || (k2 !== null && (k2 < 0 || k2 > 10))){
+    say("Wickets have to be between 0 and 10.", true); return;
+  }
+  var oA = num($("oA").value), oB = num($("oB").value);
+  var badOvers = [oA, oB].some(function(o){
+    if(o === null) return false;
+    if(o < 0 || o > 20) return true;
+    return Math.round((o % 1) * 10) > 5;      // 19.6 isn't an over
+  });
+  if(badOvers){ say("Overs must be 0 to 20, and the ball count can't go past .5.", true); return; }
+
   var d = $("played").value || new Date().toISOString().slice(0,10);
-  var rec = side === "A" ? { d:d, w:A, l:B } : { d:d, w:B, l:A };
-  var note = rec.w.join(" & ") + " logged" + (inWindow(rec) ? "." : " — outside the window, so it won't count.");
+  var rec = { d:d, w: side === "A" ? A : B, l: side === "A" ? B : A, ts: Date.now() };
+  if(scA || scB){ 
+    if(side === "A"){ if(scA) rec.sw = scA; if(scB) rec.sl = scB; }
+    else            { if(scB) rec.sw = scB; if(scA) rec.sl = scA; }
+  }
+  if(levelled && soA && soB){
+    if(side === "A"){ rec.sow = soA; rec.sol = soB; }
+    else            { rec.sow = soB; rec.sol = soA; }
+  }
+
+  var verb = S.editing ? "updated" : "logged";
+  var note = rec.w.join(" & ") + " " + verb +
+    (inWindow(rec) ? "." : " — outside the window, so it won't count.");
 
   if(S.fb){
-    var id = S.fb.push(S.fb.ref(S.fb.db, DB_PATH)).key;
+    var id = S.editing && S.editing.indexOf("local") !== 0 && S.editing.indexOf("seed") !== 0
+      ? S.editing
+      : S.fb.push(S.fb.ref(S.fb.db, DB_PATH)).key;
     var patch = {};
-    patch["matches/" + id] = { d:rec.d, w:rec.w, l:rec.l, ts:Date.now() };
+    patch["matches/" + id] = rec;
     patch["proof/" + id]   = ADMIN_KEY;
     S.fb.update(S.fb.ref(S.fb.db, CYCLE_PATH), patch)
-      .then(function(){ say(note); })
+      .then(function(){ S.editing = null; render(); say(note); })
       .catch(function(e){ say("The database refused that write: " + (e.code || e.message), true); });
   } else {
-    S.matches.push({ id:"local" + Date.now(), d:rec.d, w:rec.w, l:rec.l });
+    if(S.editing){
+      var m = findMatch(S.editing);
+      if(m){ for(var key in m) if(key !== "id") delete m[key];
+             for(var key2 in rec) m[key2] = rec[key2]; }
+      S.editing = null;
+    } else {
+      rec.id = "local" + Date.now();
+      S.matches.push(rec);
+    }
     render();
-    say(note + " Link the database to keep it.");
+    say(note);
   }
 }
 
 function removeMatch(id){
   var remote = S.fb && id.indexOf("local") !== 0 && id.indexOf("seed") !== 0;
+  if(S.editing === id) S.editing = null;
   if(remote){
     var patch = {};
     patch["matches/" + id] = null;
@@ -554,6 +796,14 @@ function removeMatch(id){
   }
 }
 
+/* ───────── render ───────── */
+function render(){
+  if(S.editing && !findMatch(S.editing)) S.editing = null;   // deleted under us
+  var rows = buildTable();
+  renderCrest(); renderWire(); renderTable(rows); renderVerdict(rows); renderEntry(); renderLog();
+}
+
+/* ───────── firebase ───────── */
 (function connect(){
   render();
   if(!FIREBASE.databaseURL) return;
@@ -573,7 +823,11 @@ function removeMatch(id){
         var v = snap.val() || {};
         S.matches = Object.keys(v).map(function(id){
           var m = v[id];
-          return { id:id, d:m.d || "", w:m.w || [], l:m.l || [], ts:m.ts || 0 };
+          return {
+            id:id, d:m.d || "", ts:m.ts || 0,
+            w:(m.w || []).map(canon), l:(m.l || []).map(canon),
+            sw:m.sw || null, sl:m.sl || null, sow:m.sow || null, sol:m.sol || null
+          };
         }).sort(function(a,b){
           return (a.d || "").localeCompare(b.d || "") || a.ts - b.ts;
         });
