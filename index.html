@@ -123,7 +123,12 @@ input::placeholder{color:var(--lilac-dim)}
 .versus{font-family:'Teko',sans-serif;font-weight:700;font-size:18px;letter-spacing:.06em;text-transform:uppercase;color:var(--bronze-lit)}
 .sheet{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-bottom:14px}
 .innings{border:1px solid var(--hair-soft);border-radius:2px;padding:12px 14px}
-.innings h4{margin:0 0 10px;font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--bronze-lit);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.innings h4{margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.innings h4 .nm{font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--bronze-lit);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.innbadge{flex:0 0 auto;margin-left:auto;font-size:8px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:3px 7px;border-radius:2px;border:1px solid var(--hair-soft);color:var(--lilac-dim)}
+.innbadge[hidden]{display:none}
+.innbadge.first{background:var(--gold);border-color:var(--gold);color:var(--royal-deep)}
+.innbadge.chase{border-color:var(--bronze-lit);color:var(--bronze-lit)}
 .fields{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .fields.two{grid-template-columns:repeat(2,1fr)}
 .field{display:flex;flex-direction:column;gap:5px}
@@ -175,8 +180,8 @@ footer{margin-top:var(--stack);padding-top:18px;border-top:1px solid var(--hair)
 footer img{width:26px;height:auto;opacity:.7}
 
 /* ---------------- batted-first chips ---------------- */
-.bfrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
-.bflabel{font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim);margin-right:4px}
+.bfrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;padding:12px 14px;border:1px solid var(--hair-soft);border-radius:2px}
+.bflabel{font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--bronze-lit);margin-right:4px}
 .chip{font-family:'Manrope',sans-serif;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:8px 13px;border-radius:2px;cursor:pointer;border:1px solid var(--hair-soft);background:transparent;color:var(--lilac-dim);transition:.15s}
 .chip:hover{border-color:var(--gold);color:var(--gold)}
 .chip.on{background:var(--gold);border-color:var(--gold);color:var(--royal-deep)}
@@ -197,13 +202,14 @@ footer img{width:26px;height:auto;opacity:.7}
 .mgate{margin-bottom:22px}
 .mtitle{font-family:'Teko',sans-serif;font-weight:600;font-size:20px;letter-spacing:.06em;text-transform:uppercase;color:var(--bronze-lit);margin:0 0 10px;padding-top:4px;border-top:1px solid var(--hair-soft)}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(142px,1fr));gap:9px;margin-bottom:22px}
-.stat{border:1px solid var(--hair-soft);border-radius:2px;padding:11px 13px;position:relative}
+.stat{border:1px solid var(--hair-soft);border-radius:2px;padding:11px 13px;display:flex;flex-direction:column}
 .stat.lead{border-color:var(--gold);background:rgba(255,228,99,.07)}
-.stat s{display:block;font-size:8.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim);text-decoration:none;margin-bottom:5px}
+.stat s{display:block;font-size:8.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim);text-decoration:none;margin-bottom:5px;line-height:1.35}
 .stat b{display:block;font-family:'Teko',sans-serif;font-weight:700;font-size:29px;line-height:1;color:var(--white)}
 .stat.lead b{color:var(--gold)}
 .stat i{font-style:normal;display:block;font-size:11px;color:var(--lilac);margin-top:3px}
-.stat .crown{position:absolute;top:8px;right:9px;font-size:8px;font-weight:800;letter-spacing:.1em;color:var(--gold)}
+.stat u{display:inline-block;margin-top:auto;padding-top:9px;text-decoration:none;font-size:8px;font-weight:800;letter-spacing:.12em;color:var(--gold)}
+.stat u::before{content:"\2605";margin-right:4px}
 .mtab{width:100%;border-collapse:collapse;margin-bottom:22px}
 .mtab td,.mtab th{padding:8px 0;font-size:13.5px;border-top:1px solid var(--hair-soft);text-align:right}
 .mtab th{font-size:8.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim);padding-top:0;border-top:0}
@@ -221,6 +227,7 @@ footer img{width:26px;height:auto;opacity:.7}
 .mlist .sc2{margin-left:auto;font-family:'Teko',sans-serif;font-size:16px;color:var(--lilac);white-space:nowrap}
 .mlist .by{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--bronze-lit)}
 .mlist li.void{opacity:.4}
+.mfoot{font-size:12px;color:var(--lilac-dim);margin:-12px 0 22px;line-height:1.5}
 .mnone{padding:22px 0;color:var(--lilac-dim);font-size:14px;border-top:1px solid var(--hair-soft)}
 @media (max-width:520px){.mlist .sc2{margin-left:0;flex-basis:100%}}
 </style>
@@ -594,7 +601,9 @@ function statsFor(name){
     name:name, real:realName(name), m:0, w:0, l:0, pcw:0,
     runs:0, inns:0, ballsFaced:0, high:null, low:null, wktsLost:0,
     conceded:0, ballsBowled:0, wkts:0, bestBowl:null, bestBowlRuns:null,
-    lowDefended:null, highChased:null, wonFirst:0, wonSecond:0,
+    lowDefended:null, highDefended:null, highChased:null, lowChased:null,
+    wonFirst:0, wonSecond:0, batFirst:{p:0,w:0,l:0}, chasing:{p:0,w:0,l:0},
+    runsFirst:0, innsFirst:0, runsChase:0, innsChase:0,
     soPlayed:0, soWon:0, bigWin:null, bigLoss:null,
     streak:0, bestStreak:0, partners:{}, foes:{}, list:[]
   };
@@ -660,15 +669,27 @@ function statsFor(name){
 
     var haveBoth = mine && theirs && mine.r !== undefined && theirs.r !== undefined &&
                    mine.r !== null && theirs.r !== null;
+    if(first === true){
+      s.batFirst.p++; s.batFirst[won ? "w" : "l"]++;
+      if(mine && mine.r !== undefined && mine.r !== null){ s.runsFirst += mine.r; s.innsFirst++; }
+    }
+    if(first === false){
+      s.chasing.p++; s.chasing[won ? "w" : "l"]++;
+      if(mine && mine.r !== undefined && mine.r !== null){ s.runsChase += mine.r; s.innsChase++; }
+    }
     if(won && first === true){
       s.wonFirst++;
-      if(mine && mine.r !== undefined && mine.r !== null &&
-         (s.lowDefended === null || mine.r < s.lowDefended)) s.lowDefended = mine.r;
+      if(mine && mine.r !== undefined && mine.r !== null){
+        if(s.lowDefended  === null || mine.r < s.lowDefended)  s.lowDefended  = mine.r;
+        if(s.highDefended === null || mine.r > s.highDefended) s.highDefended = mine.r;
+      }
     }
     if(won && first === false){
       s.wonSecond++;
-      if(theirs && theirs.r !== undefined && theirs.r !== null &&
-         (s.highChased === null || theirs.r > s.highChased)) s.highChased = theirs.r;
+      if(theirs && theirs.r !== undefined && theirs.r !== null){
+        if(s.highChased === null || theirs.r > s.highChased) s.highChased = theirs.r;
+        if(s.lowChased  === null || theirs.r < s.lowChased)  s.lowChased  = theirs.r;
+      }
     }
     if(haveBoth){
       var diff = mine.r - theirs.r;
@@ -683,11 +704,12 @@ function statsFor(name){
 }
 
 function leagueBests(){
-  var best = { high:null, lowDefended:null, highChased:null, runs:null, wkts:null, bestBowl:null };
+  var best = { high:null, lowDefended:null, highDefended:null, highChased:null, runs:null, wkts:null, bestBowl:null };
   PLAYERS.forEach(function(p){
     var s = statsFor(p);
     if(s.high !== null && (best.high === null || s.high > best.high)) best.high = s.high;
     if(s.lowDefended !== null && (best.lowDefended === null || s.lowDefended < best.lowDefended)) best.lowDefended = s.lowDefended;
+    if(s.highDefended !== null && (best.highDefended === null || s.highDefended > best.highDefended)) best.highDefended = s.highDefended;
     if(s.highChased !== null && (best.highChased === null || s.highChased > best.highChased)) best.highChased = s.highChased;
     if(s.runs > 0 && (best.runs === null || s.runs > best.runs)) best.runs = s.runs;
     if(s.wkts > 0 && (best.wkts === null || s.wkts > best.wkts)) best.wkts = s.wkts;
@@ -700,9 +722,9 @@ function leagueBests(){
 function statCard(label, value, sub, isBest){
   if(value === null || value === undefined || value === "") value = "&mdash;";
   return '<div class="stat' + (isBest ? ' lead' : '') + '">' +
-    (isBest ? '<span class="crown">LEAGUE BEST</span>' : '') +
     '<s>' + label + '</s><b>' + value + '</b>' +
-    (sub ? '<i>' + sub + '</i>' : '') + '</div>';
+    (sub ? '<i>' + sub + '</i>' : '') +
+    (isBest ? '<u>League best</u>' : '') + '</div>';
 }
 
 function wlTable(map, heading){
@@ -762,22 +784,44 @@ function renderModal(){
     statCard("Wickets lost", s.wktsLost, null, false) +
   '</div>';
 
-  html += '<h4 class="mtitle">Defending &amp; chasing</h4><div class="stats">' +
-    statCard("Lowest defended", s.lowDefended, s.wonFirst + " won batting first",
+  var bf = s.batFirst, ch = s.chasing;
+  var bfPct = bf.p ? ((bf.w / bf.p) * 100).toFixed(0) + "% won" : "none recorded";
+  var chPct = ch.p ? ((ch.w / ch.p) * 100).toFixed(0) + "% won" : "none recorded";
+  var unset = s.m - bf.p - ch.p;
+
+  html += '<h4 class="mtitle">Batting first</h4><div class="stats">' +
+    statCard("Record", bf.p ? bf.w + "&ndash;" + bf.l : null, bfPct, false) +
+    statCard("Lowest defended", s.lowDefended, "successfully",
              s.lowDefended !== null && s.lowDefended === best.lowDefended) +
-    statCard("Highest chased", s.highChased, s.wonSecond + " won batting second",
+    statCard("Highest defended", s.highDefended, "successfully",
+             s.highDefended !== null && s.highDefended === best.highDefended) +
+    statCard("Average set", s.innsFirst ? Math.round(s.runsFirst / s.innsFirst) : null,
+             s.innsFirst + " innings", false) +
+  '</div>';
+
+  html += '<h4 class="mtitle">Chasing</h4><div class="stats">' +
+    statCard("Record", ch.p ? ch.w + "&ndash;" + ch.l : null, chPct, false) +
+    statCard("Highest chased", s.highChased, "target hauled down",
              s.highChased !== null && s.highChased === best.highChased) +
+    statCard("Lowest chased", s.lowChased, "target hauled down", false) +
+    statCard("Average scored", s.innsChase ? Math.round(s.runsChase / s.innsChase) : null,
+             s.innsChase + " innings", false) +
+  '</div>' +
+  (unset > 0 ? '<p class="mfoot">' + unset + ' match' + (unset === 1 ? '' : 'es') +
+     ' have no innings order recorded, so they sit outside these two sections. Edit them to fill it in.</p>' : '') +
+
+  '<h4 class="mtitle">Margins</h4><div class="stats">' +
     statCard("Biggest win", s.bigWin === null ? null : "+" + s.bigWin, "runs", false) +
     statCard("Heaviest loss", s.bigLoss === null ? null : "&minus;" + s.bigLoss, "runs", false) +
+    statCard("Super overs", s.soPlayed ? s.soWon + "/" + s.soPlayed : null, "won of played", false) +
+    statCard("Through the gate", s.w >= CYCLE.minWins ? "YES" : (CYCLE.minWins - s.w),
+             s.w >= CYCLE.minWins ? "in contention" : "wins still needed", false) +
   '</div>';
 
   html += '<h4 class="mtitle">Form</h4><div class="stats">' +
     statCard("Current streak", s.streak > 0 ? s.streak + "W" : (s.l ? "&mdash;" : null),
              s.streak > 0 ? "unbeaten" : "last one lost", false) +
     statCard("Longest streak", s.bestStreak || null, "consecutive wins", false) +
-    statCard("Super overs", s.soPlayed ? s.soWon + "/" + s.soPlayed : null, "won of played", false) +
-    statCard("Through the gate", s.w >= CYCLE.minWins ? "YES" : (CYCLE.minWins - s.w),
-             s.w >= CYCLE.minWins ? "in contention" : "wins still needed", false) +
   '</div>';
 
   html += wlTable(s.partners, "Alongside");
@@ -877,7 +921,8 @@ function renderLog(){
 /* ───────── entry form ───────── */
 function inningsBlock(tag, label, withOvers){
   return '<div class="innings">' +
-    '<h4 id="lab' + tag + '">' + label + '</h4>' +
+    '<h4><span class="nm" id="lab' + tag + '">' + label + '</span>' +
+      (withOvers ? '<span class="innbadge" id="bad' + tag + '" hidden></span>' : '') + '</h4>' +
     '<div class="fields' + (withOvers ? '' : ' two') + '">' +
       '<label class="field"><span>Runs</span><input class="n" type="number" min="0" id="r' + tag + '"></label>' +
       '<label class="field"><span>Wkts</span><input class="n" type="number" min="0" max="10" id="k' + tag + '"></label>' +
@@ -929,13 +974,13 @@ function renderEntry(){
       '<div class="pair"><select id="b1" aria-label="First player, right pair">' + opts + '</select>' +
       '<select id="b2" aria-label="Second player, right pair">' + opts + '</select></div>' +
     '</div>' +
-    '<div class="sheet">' + inningsBlock("A","Left pair",true) + inningsBlock("B","Right pair",true) + '</div>' +
     '<div class="bfrow">' +
-      '<span class="bflabel">Batted first</span>' +
+      '<span class="bflabel">Who batted first</span>' +
       '<button class="chip" id="bfA" type="button">Left pair</button>' +
       '<button class="chip" id="bfB" type="button">Right pair</button>' +
       '<button class="chip" id="bfN" type="button">Not recorded</button>' +
     '</div>' +
+    '<div class="sheet">' + inningsBlock("A","Left pair",true) + inningsBlock("B","Right pair",true) + '</div>' +
     '<div class="sobox" id="soBox" hidden>' +
       '<h3>Super Over &middot; two overs</h3>' +
       '<div class="sheet">' + inningsBlock("SA","Left pair",false) + inningsBlock("SB","Right pair",false) + '</div>' +
@@ -970,7 +1015,7 @@ function renderEntry(){
   });
 
   ["A","B","N"].forEach(function(t){
-    $("bf" + t).onclick = function(){ S.formBF = (t === "N" ? null : t); paintBF(); };
+    $("bf" + t).onclick = function(){ S.formBF = (t === "N" ? null : t); paintBF(); refresh(); };
   });
   paintBF();
 
@@ -980,6 +1025,19 @@ function renderEntry(){
   $("lock").onclick = function(){ S.unlocked = false; S.editing = null; render(); };
   if($("cancel")) $("cancel").onclick = function(){ S.editing = null; render(); };
 
+  refresh();
+}
+
+// After a save the panel isn't rebuilt (that would nuke half-typed input),
+// so the scores and innings order have to be cleared by hand or they carry
+// straight into the next match.
+function clearForm(){
+  ["rA","kA","oA","rB","kB","oB","rSA","kSA","rSB","kSB"].forEach(function(id){
+    if($(id)) $(id).value = "";
+  });
+  S.formBF = null;
+  if($("soBox")) $("soBox").hidden = true;
+  paintBF();
   refresh();
 }
 
@@ -1037,6 +1095,16 @@ function refresh(){
   if($("labB")) $("labB").textContent = B.join(" & ");
   if($("labSA")) $("labSA").textContent = A.join(" & ");
   if($("labSB")) $("labSB").textContent = B.join(" & ");
+
+  ["A","B"].forEach(function(t){
+    var b = $("bad" + t); if(!b) return;
+    if(!S.formBF){ b.hidden = true; return; }
+    var first = (S.formBF === t);
+    b.hidden = false;
+    b.textContent = first ? "Batted first" : "Chasing";
+    b.classList.toggle("first", first);
+    b.classList.toggle("chase", !first);
+  });
 
   var v = verdictFromScores();
   $("reading").innerHTML = v.msg;
@@ -1116,8 +1184,9 @@ function commit(forced){
     var patch = {};
     patch["matches/" + id] = rec;
     patch["proof/" + id]   = ADMIN_KEY;
+    var wasEdit = !!S.editing;
     S.fb.update(S.fb.ref(S.fb.db, CYCLE_PATH), patch)
-      .then(function(){ S.editing = null; render(); say(note); })
+      .then(function(){ S.editing = null; render(); if(!wasEdit) clearForm(); say(note); })
       .catch(function(e){ say("The database refused that write: " + (e.code || e.message), true); });
   } else {
     if(S.editing){
@@ -1125,11 +1194,13 @@ function commit(forced){
       if(m){ for(var key in m) if(key !== "id") delete m[key];
              for(var key2 in rec) m[key2] = rec[key2]; }
       S.editing = null;
+      render();
     } else {
       rec.id = "local" + Date.now();
       S.matches.push(rec);
+      render();
+      clearForm();
     }
-    render();
     say(note);
   }
 }
