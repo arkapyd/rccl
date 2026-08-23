@@ -82,8 +82,10 @@ tbody tr{border-top:1px solid var(--hair-soft)}
 tbody td{padding:14px 0;text-align:right;vertical-align:middle}
 tbody td.tl{text-align:left}
 .pos{width:30px;padding-right:14px!important;font-family:'Teko',sans-serif;font-weight:600;font-size:19px;color:var(--lilac-dim)}
-.who{font-weight:700;font-size:16px;white-space:nowrap;transition:color .15s ease,text-shadow .15s ease}
-tr:hover .who{color:var(--gold);text-shadow:0 0 10px rgba(255,228,99,.55)}
+.who{font-weight:700;font-size:16px;white-space:nowrap}
+.namebtn{font:inherit;font-weight:700;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left;transition:color .15s ease,text-shadow .15s ease}
+tr:hover .namebtn,.namebtn:focus-visible{color:var(--gold);text-shadow:0 0 10px rgba(255,228,99,.55)}
+tr:hover .namebtn::after{content:"›";margin-left:7px;color:var(--gold);font-family:'Teko',sans-serif}
 .who .stray{display:block;font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#FF9DA6;margin-top:2px}
 .num{width:46px;color:var(--lilac);font-weight:500}
 .pcw{width:88px;font-family:'Teko',sans-serif;font-size:clamp(22px,3.2vw,28px);font-weight:700}
@@ -171,6 +173,56 @@ input::placeholder{color:var(--lilac-dim)}
 @media (max-width:700px){.laws{columns:1}}
 footer{margin-top:var(--stack);padding-top:18px;border-top:1px solid var(--hair);display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-dim);font-weight:600;}
 footer img{width:26px;height:auto;opacity:.7}
+
+/* ---------------- batted-first chips ---------------- */
+.bfrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+.bflabel{font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim);margin-right:4px}
+.chip{font-family:'Manrope',sans-serif;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:8px 13px;border-radius:2px;cursor:pointer;border:1px solid var(--hair-soft);background:transparent;color:var(--lilac-dim);transition:.15s}
+.chip:hover{border-color:var(--gold);color:var(--gold)}
+.chip.on{background:var(--gold);border-color:var(--gold);color:var(--royal-deep)}
+
+/* ---------------- player dossier modal ---------------- */
+.modal[hidden]{display:none}
+.modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:clamp(10px,3vw,40px)}
+.scrim{position:absolute;inset:0;background:rgba(18,0,38,.8)}
+.mbox{position:relative;width:min(780px,100%);max-height:90vh;overflow-y:auto;background:linear-gradient(180deg,var(--royal-panel) 0%,var(--royal-deep) 100%);border:1px solid var(--gold);border-radius:3px;padding:clamp(20px,4vw,34px);box-shadow:0 30px 90px rgba(0,0,0,.65)}
+.mx{position:absolute;top:10px;right:12px;background:none;border:0;color:var(--lilac-dim);font-size:26px;line-height:1;padding:4px 10px;cursor:pointer}
+.mx:hover{color:var(--gold)}
+.mhead{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:flex-end;border-bottom:1px solid var(--hair);padding-bottom:16px;margin-bottom:20px}
+.mhandle{font-family:'Teko',sans-serif;font-weight:700;font-size:clamp(32px,6.5vw,52px);line-height:.94;text-transform:uppercase;color:var(--gold);margin:0}
+.mreal{font-size:12px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--lilac-dim);margin:4px 0 0}
+.mrec{margin-left:auto;text-align:right}
+.mrec b{display:block;font-family:'Teko',sans-serif;font-weight:700;font-size:clamp(26px,4.6vw,38px);line-height:1;color:var(--white)}
+.mrec span{font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--lilac-dim)}
+.mgate{margin-bottom:22px}
+.mtitle{font-family:'Teko',sans-serif;font-weight:600;font-size:20px;letter-spacing:.06em;text-transform:uppercase;color:var(--bronze-lit);margin:0 0 10px;padding-top:4px;border-top:1px solid var(--hair-soft)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(142px,1fr));gap:9px;margin-bottom:22px}
+.stat{border:1px solid var(--hair-soft);border-radius:2px;padding:11px 13px;position:relative}
+.stat.lead{border-color:var(--gold);background:rgba(255,228,99,.07)}
+.stat s{display:block;font-size:8.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim);text-decoration:none;margin-bottom:5px}
+.stat b{display:block;font-family:'Teko',sans-serif;font-weight:700;font-size:29px;line-height:1;color:var(--white)}
+.stat.lead b{color:var(--gold)}
+.stat i{font-style:normal;display:block;font-size:11px;color:var(--lilac);margin-top:3px}
+.stat .crown{position:absolute;top:8px;right:9px;font-size:8px;font-weight:800;letter-spacing:.1em;color:var(--gold)}
+.mtab{width:100%;border-collapse:collapse;margin-bottom:22px}
+.mtab td,.mtab th{padding:8px 0;font-size:13.5px;border-top:1px solid var(--hair-soft);text-align:right}
+.mtab th{font-size:8.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim);padding-top:0;border-top:0}
+.mtab td.tl,.mtab th.tl{text-align:left}
+.mtab td.tl{color:var(--lilac)}
+.mtab .wl{font-family:'Teko',sans-serif;font-size:18px;font-weight:600;color:var(--white)}
+.mlist{list-style:none;margin:0;padding:0}
+.mlist li{padding:11px 0;border-top:1px solid var(--hair-soft);display:flex;flex-wrap:wrap;gap:4px 11px;align-items:baseline;font-size:13.5px}
+.mlist .d{flex:0 0 58px;font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--lilac-dim)}
+.mlist .res{font-family:'Teko',sans-serif;font-size:16px;font-weight:700;letter-spacing:.08em;flex:0 0 42px}
+.mlist .res.w{color:var(--gold)}
+.mlist .res.l{color:var(--lilac-dim)}
+.mlist .vs{color:var(--lilac)}
+.mlist .vs b{color:var(--white);font-weight:600}
+.mlist .sc2{margin-left:auto;font-family:'Teko',sans-serif;font-size:16px;color:var(--lilac);white-space:nowrap}
+.mlist .by{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--bronze-lit)}
+.mlist li.void{opacity:.4}
+.mnone{padding:22px 0;color:var(--lilac-dim);font-size:14px;border-top:1px solid var(--hair-soft)}
+@media (max-width:520px){.mlist .sc2{margin-left:0;flex-basis:100%}}
 </style>
 </head>
 
@@ -265,6 +317,14 @@ footer img{width:26px;height:auto;opacity:.7}
   </footer>
 </main>
 
+<div class="modal" id="modal" hidden>
+  <div class="scrim" id="scrim"></div>
+  <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="mHandle">
+    <button class="mx" id="modalX" aria-label="Close">&times;</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
 <!--
   ══════════════════════════════════════════════════════════════
   FIREBASE REALTIME DATABASE — RULES TO PASTE IN THE CONSOLE
@@ -355,7 +415,7 @@ var URN_PATH = 'M1.6 1.4H12.4V3.1H11.3C11.1 6.1 9.5 8.1 7.9 8.5V10.2H9V11.2H11.3
 
 var S = {
   matches: SEED.map(function(m,i){ return { id:"seed"+i, d:m.d, w:m.w, l:m.l }; }),
-  live:false, unlocked:false, editing:null, fb:null, entryKey:null
+  live:false, unlocked:false, editing:null, fb:null, entryKey:null, openPlayer:null, formBF:null
 };
 
 document.documentElement.style.setProperty('--wm', 'url("' + LOGO + '")');
@@ -444,7 +504,7 @@ function renderTable(rows){
     var cls = r.w >= CYCLE.minWins ? "through" : (r.m === 0 ? "dnp" : "");
     return '<tr class="' + cls + '">' +
       '<td class="tl pos">' + (i+1) + '</td>' +
-      '<td class="tl who">' + esc(r.name) +
+      '<td class="tl who"><button class="namebtn" data-p="' + esc(r.name) + '">' + esc(r.name) + '</button>' +
         (r.stray ? '<span class="stray">Unknown name in results</span>' : '') + '</td>' +
       '<td class="tl plinth-cell">' + plinth(r.w) + '</td>' +
       '<td class="num">' + r.m + '</td>' +
@@ -453,6 +513,9 @@ function renderTable(rows){
       '<td class="pcw">' + r.pcw.toFixed(2) + '</td>' +
     '</tr>';
   }).join("");
+  Array.prototype.forEach.call($("table").querySelectorAll(".namebtn"), function(b){
+    b.onclick = function(){ openPlayer(b.dataset.p); };
+  });
 }
 
 function renderVerdict(rows){
@@ -500,6 +563,262 @@ function renderVerdict(rows){
     c.pcw.toFixed(2) + " PCW</b>." +
     (closed ? " The urn is theirs." : " Through the gate, but the window is still open — one bad evening moves this.");
 }
+
+/* ───────── per-player record book ─────────
+   Every figure below is derived from the match records in Firebase.
+   Nothing here is stored separately, so editing a fixture corrects
+   the stats automatically instead of leaving a stale second copy. */
+
+function toBalls(o){
+  if(o === null || o === undefined) return 0;
+  var f = Math.floor(o), b = Math.round((o - f) * 10);
+  return f * 6 + b;
+}
+function oversText(balls){
+  if(!balls) return "0";
+  return Math.floor(balls / 6) + (balls % 6 ? "." + (balls % 6) : "");
+}
+function marginOf(mt){
+  if(mt.sow && mt.sol) return "Super Over";
+  if(!mt.sw || !mt.sl || mt.sw.r === undefined || mt.sl.r === undefined) return "";
+  if(mt.bf === "l"){                                   // winner batted second
+    var wk = 10 - (mt.sw.k === undefined || mt.sw.k === null ? 0 : mt.sw.k);
+    return wk + " wkt" + (wk === 1 ? "" : "s");
+  }
+  var d = mt.sw.r - mt.sl.r;
+  return d + " run" + (d === 1 ? "" : "s");
+}
+
+function statsFor(name){
+  var s = {
+    name:name, real:realName(name), m:0, w:0, l:0, pcw:0,
+    runs:0, inns:0, ballsFaced:0, high:null, low:null, wktsLost:0,
+    conceded:0, ballsBowled:0, wkts:0, bestBowl:null, bestBowlRuns:null,
+    lowDefended:null, highChased:null, wonFirst:0, wonSecond:0,
+    soPlayed:0, soWon:0, bigWin:null, bigLoss:null,
+    streak:0, bestStreak:0, partners:{}, foes:{}, list:[]
+  };
+  var run = 0;
+
+  S.matches.forEach(function(mt){
+    var won  = (mt.w || []).indexOf(name) >= 0;
+    var lost = (mt.l || []).indexOf(name) >= 0;
+    if(!won && !lost) return;
+
+    var side  = won ? (mt.w || []) : (mt.l || []);
+    var other = won ? (mt.l || []) : (mt.w || []);
+    var mine  = won ? mt.sw : mt.sl;
+    var theirs= won ? mt.sl : mt.sw;
+    var mineKey = won ? "w" : "l";
+    var first = mt.bf ? (mt.bf === mineKey) : null;
+    var counts = inWindow(mt);
+
+    s.list.push({
+      d:mt.d, won:won, counts:counts,
+      partner:side.filter(function(p){ return p !== name; })[0] || "",
+      foes:other.slice(), mine:mine, theirs:theirs,
+      margin:marginOf(mt), so:!!(mt.sow && mt.sol)
+    });
+
+    if(!counts) return;                 // out-of-window games don't feed the record
+
+    s.m++;
+    if(won){ s.w++; run++; if(run > s.bestStreak) s.bestStreak = run; }
+    else   { s.l++; run = 0; }
+    s.streak = run;
+
+    var mate = side.filter(function(p){ return p !== name; })[0];
+    if(mate){
+      if(!s.partners[mate]) s.partners[mate] = { w:0, l:0 };
+      s.partners[mate][won ? "w" : "l"]++;
+    }
+    other.forEach(function(o){
+      if(!s.foes[o]) s.foes[o] = { w:0, l:0 };
+      s.foes[o][won ? "w" : "l"]++;
+    });
+
+    if(mt.sow && mt.sol){ s.soPlayed++; if(won) s.soWon++; }
+
+    if(mine && mine.r !== undefined && mine.r !== null){
+      s.runs += mine.r; s.inns++;
+      s.ballsFaced += toBalls(mine.o);
+      if(mine.k !== undefined && mine.k !== null) s.wktsLost += mine.k;
+      if(s.high === null || mine.r > s.high) s.high = mine.r;
+      if(s.low  === null || mine.r < s.low)  s.low  = mine.r;
+    }
+    if(theirs && theirs.r !== undefined && theirs.r !== null){
+      s.conceded += theirs.r;
+      s.ballsBowled += toBalls(theirs.o);
+      if(theirs.k !== undefined && theirs.k !== null){
+        s.wkts += theirs.k;
+        if(s.bestBowl === null || theirs.k > s.bestBowl ||
+           (theirs.k === s.bestBowl && theirs.r < s.bestBowlRuns)){
+          s.bestBowl = theirs.k; s.bestBowlRuns = theirs.r;
+        }
+      }
+    }
+
+    var haveBoth = mine && theirs && mine.r !== undefined && theirs.r !== undefined &&
+                   mine.r !== null && theirs.r !== null;
+    if(won && first === true){
+      s.wonFirst++;
+      if(mine && mine.r !== undefined && mine.r !== null &&
+         (s.lowDefended === null || mine.r < s.lowDefended)) s.lowDefended = mine.r;
+    }
+    if(won && first === false){
+      s.wonSecond++;
+      if(theirs && theirs.r !== undefined && theirs.r !== null &&
+         (s.highChased === null || theirs.r > s.highChased)) s.highChased = theirs.r;
+    }
+    if(haveBoth){
+      var diff = mine.r - theirs.r;
+      if(won  && (s.bigWin  === null || diff >  s.bigWin))  s.bigWin  = diff;
+      if(!won && (s.bigLoss === null || -diff > s.bigLoss)) s.bigLoss = -diff;
+    }
+  });
+
+  s.pcw = s.m ? (s.w / s.m) * 100 : 0;
+  s.list.reverse();
+  return s;
+}
+
+function leagueBests(){
+  var best = { high:null, lowDefended:null, highChased:null, runs:null, wkts:null, bestBowl:null };
+  PLAYERS.forEach(function(p){
+    var s = statsFor(p);
+    if(s.high !== null && (best.high === null || s.high > best.high)) best.high = s.high;
+    if(s.lowDefended !== null && (best.lowDefended === null || s.lowDefended < best.lowDefended)) best.lowDefended = s.lowDefended;
+    if(s.highChased !== null && (best.highChased === null || s.highChased > best.highChased)) best.highChased = s.highChased;
+    if(s.runs > 0 && (best.runs === null || s.runs > best.runs)) best.runs = s.runs;
+    if(s.wkts > 0 && (best.wkts === null || s.wkts > best.wkts)) best.wkts = s.wkts;
+    if(s.bestBowl !== null && (best.bestBowl === null || s.bestBowl > best.bestBowl)) best.bestBowl = s.bestBowl;
+  });
+  return best;
+}
+
+/* ───────── the dossier modal ───────── */
+function statCard(label, value, sub, isBest){
+  if(value === null || value === undefined || value === "") value = "&mdash;";
+  return '<div class="stat' + (isBest ? ' lead' : '') + '">' +
+    (isBest ? '<span class="crown">LEAGUE BEST</span>' : '') +
+    '<s>' + label + '</s><b>' + value + '</b>' +
+    (sub ? '<i>' + sub + '</i>' : '') + '</div>';
+}
+
+function wlTable(map, heading){
+  var keys = Object.keys(map);
+  if(!keys.length) return "";
+  keys.sort(function(a,b){
+    return (map[b].w + map[b].l) - (map[a].w + map[a].l) || map[b].w - map[a].w;
+  });
+  return '<h4 class="mtitle">' + heading + '</h4><table class="mtab"><thead><tr>' +
+    '<th class="tl">Name</th><th>Played</th><th>W</th><th>L</th><th>PCW</th></tr></thead><tbody>' +
+    keys.map(function(k){
+      var r = map[k], n = r.w + r.l;
+      return '<tr><td class="tl">' + esc(realName(k)) + '</td>' +
+        '<td class="wl">' + n + '</td><td class="wl">' + r.w + '</td>' +
+        '<td class="wl">' + r.l + '</td>' +
+        '<td class="wl">' + (n ? ((r.w / n) * 100).toFixed(0) : "0") + '</td></tr>';
+    }).join("") + '</tbody></table>';
+}
+
+function renderModal(){
+  if(!S.openPlayer){ $("modal").hidden = true; return; }
+  var s = statsFor(S.openPlayer), best = leagueBests();
+  $("modal").hidden = false;
+
+  var econ = s.ballsBowled ? (s.conceded / (s.ballsBowled / 6)).toFixed(2) : null;
+  var rate = s.ballsFaced  ? (s.runs / (s.ballsFaced / 6)).toFixed(2) : null;
+  var avg  = s.inns ? Math.round(s.runs / s.inns) : null;
+
+  var html =
+    '<div class="mhead">' +
+      '<div><h3 class="mhandle" id="mHandle">' + esc(s.name) + '</h3>' +
+      '<p class="mreal">' + esc(s.real) + '</p></div>' +
+      '<div class="mrec"><b>' + s.w + '&ndash;' + s.l + '</b><span>' + s.pcw.toFixed(2) + ' PCW</span></div>' +
+    '</div>';
+
+  if(!s.m && !s.list.length){
+    html += '<div class="mnone">Nothing logged against ' + esc(s.name) + ' yet.</div>';
+    $("modalBody").innerHTML = html;
+    return;
+  }
+
+  html += '<div class="mgate">' + plinth(s.w) + '</div>';
+
+  html += '<h4 class="mtitle">With the bat</h4><div class="stats">' +
+    statCard("Runs scored", s.runs, s.inns + " innings", s.runs > 0 && s.runs === best.runs) +
+    statCard("Highest duo total", s.high, null, s.high !== null && s.high === best.high) +
+    statCard("Lowest duo total", s.low, null, false) +
+    statCard("Average total", avg, rate ? rate + " per over" : null, false) +
+  '</div>';
+
+  html += '<h4 class="mtitle">With the ball</h4><div class="stats">' +
+    statCard("Wickets taken", s.wkts, oversText(s.ballsBowled) + " overs bowled", s.wkts > 0 && s.wkts === best.wkts) +
+    statCard("Best effort", s.bestBowl === null ? null : s.bestBowl + " wkt" + (s.bestBowl === 1 ? "" : "s"),
+             s.bestBowlRuns === null ? null : "conceded " + s.bestBowlRuns,
+             s.bestBowl !== null && s.bestBowl === best.bestBowl) +
+    statCard("Runs conceded", s.conceded, econ ? econ + " an over" : null, false) +
+    statCard("Wickets lost", s.wktsLost, null, false) +
+  '</div>';
+
+  html += '<h4 class="mtitle">Defending &amp; chasing</h4><div class="stats">' +
+    statCard("Lowest defended", s.lowDefended, s.wonFirst + " won batting first",
+             s.lowDefended !== null && s.lowDefended === best.lowDefended) +
+    statCard("Highest chased", s.highChased, s.wonSecond + " won batting second",
+             s.highChased !== null && s.highChased === best.highChased) +
+    statCard("Biggest win", s.bigWin === null ? null : "+" + s.bigWin, "runs", false) +
+    statCard("Heaviest loss", s.bigLoss === null ? null : "&minus;" + s.bigLoss, "runs", false) +
+  '</div>';
+
+  html += '<h4 class="mtitle">Form</h4><div class="stats">' +
+    statCard("Current streak", s.streak > 0 ? s.streak + "W" : (s.l ? "&mdash;" : null),
+             s.streak > 0 ? "unbeaten" : "last one lost", false) +
+    statCard("Longest streak", s.bestStreak || null, "consecutive wins", false) +
+    statCard("Super overs", s.soPlayed ? s.soWon + "/" + s.soPlayed : null, "won of played", false) +
+    statCard("Through the gate", s.w >= CYCLE.minWins ? "YES" : (CYCLE.minWins - s.w),
+             s.w >= CYCLE.minWins ? "in contention" : "wins still needed", false) +
+  '</div>';
+
+  html += wlTable(s.partners, "Alongside");
+  html += wlTable(s.foes, "Against");
+
+  html += '<h4 class="mtitle">Every match on record</h4><ul class="mlist">' +
+    s.list.map(function(e){
+      var sc = "";
+      if(e.mine && e.mine.r !== undefined && e.mine.r !== null &&
+         e.theirs && e.theirs.r !== undefined && e.theirs.r !== null){
+        sc = e.mine.r + (e.mine.k === undefined || e.mine.k === null ? "" : "/" + e.mine.k) +
+             ' &ndash; ' +
+             e.theirs.r + (e.theirs.k === undefined || e.theirs.k === null ? "" : "/" + e.theirs.k);
+      }
+      return '<li class="' + (e.counts ? "" : "void") + '">' +
+        '<span class="d">' + (fmt(e.d) || "—") + '</span>' +
+        '<span class="res ' + (e.won ? "w" : "l") + '">' + (e.won ? "WON" : "LOST") + '</span>' +
+        '<span class="vs">with <b>' + esc(realName(e.partner)) + '</b> v ' +
+          esc(e.foes.map(realName).join(" &amp; ")) + '</span>' +
+        (e.margin ? '<span class="by">by ' + e.margin + '</span>' : '') +
+        (sc ? '<span class="sc2">' + sc + '</span>' : '') +
+      '</li>';
+    }).join("") + '</ul>';
+
+  $("modalBody").innerHTML = html;
+}
+
+function openPlayer(name){
+  S.openPlayer = name;
+  renderModal();
+  $("modalX").focus();
+}
+function closeModal(){
+  S.openPlayer = null;
+  $("modal").hidden = true;
+}
+$("modalX").onclick = closeModal;
+$("scrim").onclick  = closeModal;
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape" && S.openPlayer) closeModal();
+});
 
 /* ───────── results log ───────── */
 function innings(sc){
@@ -611,6 +930,12 @@ function renderEntry(){
       '<select id="b2" aria-label="Second player, right pair">' + opts + '</select></div>' +
     '</div>' +
     '<div class="sheet">' + inningsBlock("A","Left pair",true) + inningsBlock("B","Right pair",true) + '</div>' +
+    '<div class="bfrow">' +
+      '<span class="bflabel">Batted first</span>' +
+      '<button class="chip" id="bfA" type="button">Left pair</button>' +
+      '<button class="chip" id="bfB" type="button">Right pair</button>' +
+      '<button class="chip" id="bfN" type="button">Not recorded</button>' +
+    '</div>' +
     '<div class="sobox" id="soBox" hidden>' +
       '<h3>Super Over &middot; two overs</h3>' +
       '<div class="sheet">' + inningsBlock("SA","Left pair",false) + inningsBlock("SB","Right pair",false) + '</div>' +
@@ -631,7 +956,10 @@ function renderEntry(){
     fillInnings("A", editing.sw); fillInnings("B", editing.sl);
     fillInnings("SA", editing.sow); fillInnings("SB", editing.sol);
     $("played").value = editing.d || new Date().toISOString().slice(0,10);
+    // stored relative to winner/loser, so map it back onto left/right
+    S.formBF = editing.bf === "w" ? "A" : editing.bf === "l" ? "B" : null;
   } else {
+    S.formBF = null;
     ["a1","a2","b1","b2"].forEach(function(id,k){ $(id).selectedIndex = Math.min(k, PLAYERS.length - 1); });
     $("played").value = new Date().toISOString().slice(0,10);
   }
@@ -641,6 +969,11 @@ function renderEntry(){
     if($(id)) $(id).oninput = refresh;
   });
 
+  ["A","B","N"].forEach(function(t){
+    $("bf" + t).onclick = function(){ S.formBF = (t === "N" ? null : t); paintBF(); };
+  });
+  paintBF();
+
   $("winA").onclick = function(){ commit("A"); };
   $("winB").onclick = function(){ commit("B"); };
   $("save").onclick = function(){ commit(null); };
@@ -648,6 +981,14 @@ function renderEntry(){
   if($("cancel")) $("cancel").onclick = function(){ S.editing = null; render(); };
 
   refresh();
+}
+
+function paintBF(){
+  if(!$("bfA")) return;
+  ["A","B","N"].forEach(function(t){
+    var want = (t === "N" ? null : t);
+    $("bf" + t).classList.toggle("on", S.formBF === want);
+  });
 }
 
 function setSel(id, val){
@@ -754,6 +1095,7 @@ function commit(forced){
 
   var d = $("played").value || new Date().toISOString().slice(0,10);
   var rec = { d:d, w: side === "A" ? A : B, l: side === "A" ? B : A, ts: Date.now() };
+  if(S.formBF) rec.bf = (S.formBF === side) ? "w" : "l";   // stored winner-relative
   if(scA || scB){ 
     if(side === "A"){ if(scA) rec.sw = scA; if(scB) rec.sl = scB; }
     else            { if(scB) rec.sw = scB; if(scA) rec.sl = scA; }
@@ -812,6 +1154,7 @@ function render(){
   if(S.editing && !findMatch(S.editing)) S.editing = null;   // deleted under us
   var rows = buildTable();
   renderCrest(); renderWire(); renderTable(rows); renderVerdict(rows); renderEntry(); renderLog();
+  if(S.openPlayer) renderModal();
 }
 
 /* ───────── firebase ───────── */
@@ -837,7 +1180,7 @@ function render(){
           return {
             id:id, d:m.d || "", ts:m.ts || 0,
             w:(m.w || []).map(canon), l:(m.l || []).map(canon),
-            sw:m.sw || null, sl:m.sl || null, sow:m.sow || null, sol:m.sol || null
+            sw:m.sw || null, sl:m.sl || null, sow:m.sow || null, sol:m.sol || null, bf:m.bf || null
           };
         }).sort(function(a,b){
           return (a.d || "").localeCompare(b.d || "") || a.ts - b.ts;
