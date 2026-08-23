@@ -11,10 +11,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,700;1,6..96,400;1,6..96,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-/* ============================================================
-   RCCL — palette lifted straight off the trophy plate
-   ground #440353 · bronze #AA6B25 · gold #FFE463 · white
-   ============================================================ */
 :root{
   --royal:#440353;
   --royal-deep:#2B0136;
@@ -30,120 +26,55 @@
   --gutter:clamp(18px,4.5vw,56px);
   --stack:clamp(38px,7vw,74px);
 }
-
 *,*::before,*::after{box-sizing:border-box}
-html{
-  background:var(--royal);
-  scrollbar-width:thin;
-  scrollbar-color:var(--bronze) var(--royal-deep);
-}
-body{
-  margin:0;
-  background:
-    repeating-linear-gradient(180deg,rgba(255,255,255,.028) 0 1px,transparent 1px 5px),
-    radial-gradient(120% 70% at 50% -10%,#560A6A 0%,var(--royal) 46%,var(--royal-deep) 100%);
-  background-attachment:fixed;
-  color:var(--white);
-  font-family:'Manrope',system-ui,sans-serif;
-  font-size:15.5px;
-  line-height:1.5;
-  font-variant-numeric:tabular-nums;
-  -webkit-font-smoothing:antialiased;
-  padding-bottom:clamp(50px,9vw,96px);
-}
-
-/* themed scrollbar */
+html{background:var(--royal);scrollbar-width:thin;scrollbar-color:var(--bronze) var(--royal-deep);}
+body{margin:0;background:repeating-linear-gradient(180deg,rgba(255,255,255,.028) 0 1px,transparent 1px 5px),radial-gradient(120% 70% at 50% -10%,#560A6A 0%,var(--royal) 46%,var(--royal-deep) 100%);background-attachment:fixed;color:var(--white);font-family:'Manrope',system-ui,sans-serif;font-size:15.5px;line-height:1.5;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;padding-bottom:clamp(50px,9vw,96px);}
 ::-webkit-scrollbar{width:13px;height:13px}
 ::-webkit-scrollbar-track{background:var(--royal-deep);border-left:1px solid var(--hair-soft)}
-::-webkit-scrollbar-thumb{
-  background:linear-gradient(180deg,var(--bronze-lit),var(--bronze) 55%,#8A5518);
-  border:3px solid var(--royal-deep);
-  border-radius:99px;
-}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--bronze-lit),var(--bronze) 55%,#8A5518);border:3px solid var(--royal-deep);border-radius:99px;}
 ::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,var(--gold),var(--bronze-lit))}
 ::-webkit-scrollbar-corner{background:var(--royal-deep)}
 ::selection{background:var(--gold);color:var(--royal-deep)}
-
 .shell{width:min(1080px,100%);margin:0 auto;padding:0 var(--gutter)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 :focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
-
-/* ---------------- crest ---------------- */
 .crest{padding:clamp(20px,4vw,44px) 0 clamp(30px,5vw,56px)}
 .crest-grid{display:grid;grid-template-columns:minmax(0,330px) minmax(0,1fr);gap:clamp(20px,4vw,52px);align-items:center}
 .plate{position:relative;line-height:0}
 .plate img{width:100%;height:auto;display:block;filter:drop-shadow(0 22px 44px rgba(0,0,0,.5))}
-.plate::after{
-  content:"";position:absolute;inset:-4%;pointer-events:none;
-  background:radial-gradient(60% 40% at 50% 42%,rgba(255,228,99,.15),transparent 70%);
-}
-.season{
-  font-size:11px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;
-  color:var(--bronze-lit);display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;
-}
+.plate::after{content:"";position:absolute;inset:-4%;pointer-events:none;background:radial-gradient(60% 40% at 50% 42%,rgba(255,228,99,.15),transparent 70%);}
+.season{font-size:11px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:var(--bronze-lit);display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;}
 .season .dot{width:4px;height:4px;background:var(--bronze);border-radius:50%;display:inline-block}
-.lede{
-  font-family:'Bodoni Moda',Georgia,serif;font-weight:400;font-style:italic;
-  font-size:clamp(21px,3.4vw,34px);line-height:1.24;margin:16px 0 22px;
-}
+.lede{font-family:'Bodoni Moda',Georgia,serif;font-weight:400;font-style:italic;font-size:clamp(21px,3.4vw,34px);line-height:1.24;margin:16px 0 22px;}
 .lede em{font-style:normal;color:var(--gold)}
 .tally{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}
 .tally div{padding:14px 12px 14px 0}
 .tally div+div{border-left:1px solid var(--hair-soft);padding-left:14px}
 .tally b{display:block;font-family:'Bodoni Moda',serif;font-size:clamp(24px,4vw,34px);line-height:1;color:var(--gold)}
 .tally span{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--lilac-dim);font-weight:700}
-.wire{
-  margin-top:18px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--lilac-dim);display:flex;align-items:center;gap:8px;font-weight:600;
-}
+.wire{margin-top:18px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-dim);display:flex;align-items:center;gap:8px;font-weight:600;}
 .pip{width:7px;height:7px;border-radius:50%;background:var(--lilac-dim);flex:0 0 auto}
 .wire.live{color:var(--lilac)}
 .wire.live .pip{background:var(--gold);box-shadow:0 0 0 3px rgba(255,228,99,.18)}
-@media (max-width:760px){
-  .crest-grid{grid-template-columns:1fr;gap:26px}
-  .plate{max-width:290px;margin:0 auto}
-}
-
-/* ---------------- verdict ---------------- */
-.verdict{
-  position:relative;overflow:hidden;
-  border:1px solid var(--hair);background:var(--royal-panel);
-  padding:clamp(22px,4.5vw,40px);
-}
-.verdict::before{
-  content:"";position:absolute;right:-6%;top:50%;translate:0 -50%;
-  width:min(360px,55%);aspect-ratio:4/5;opacity:.07;pointer-events:none;
-  background:var(--wm) center/contain no-repeat;
-}
-.verdict.crowned{
-  border-color:var(--bronze);
-  background:linear-gradient(112deg,rgba(255,228,99,.13),transparent 58%),var(--royal-panel);
-}
+@media (max-width:760px){.crest-grid{grid-template-columns:1fr;gap:26px}.plate{max-width:290px;margin:0 auto}}
+.verdict{position:relative;overflow:hidden;border:1px solid var(--hair);background:var(--royal-panel);padding:clamp(22px,4.5vw,40px);}
+.verdict::before{content:"";position:absolute;right:-6%;top:50%;translate:0 -50%;width:min(360px,55%);aspect-ratio:4/5;opacity:.07;pointer-events:none;background:var(--wm) center/contain no-repeat;}
+.verdict.crowned{border-color:var(--bronze);background:linear-gradient(112deg,rgba(255,228,99,.13),transparent 58%),var(--royal-panel);}
 .verdict.crowned::before{opacity:.14}
 .v-kicker{position:relative;font-size:10.5px;font-weight:800;letter-spacing:.28em;text-transform:uppercase;color:var(--bronze-lit)}
-.v-name{
-  position:relative;font-family:'Bodoni Moda',serif;font-weight:700;
-  font-size:clamp(32px,7.4vw,68px);line-height:1.02;margin:12px 0;letter-spacing:-.01em;
-}
+.v-name{position:relative;font-family:'Bodoni Moda',serif;font-weight:700;font-size:clamp(32px,7.4vw,68px);line-height:1.02;margin:12px 0;letter-spacing:-.01em;}
 .verdict.crowned .v-name{color:var(--gold)}
 .v-note{position:relative;font-size:15px;color:var(--lilac);max-width:54ch}
 .v-note b{color:var(--white);font-weight:700}
 .verdict.crowned .v-note b{color:var(--gold)}
-
-/* ---------------- section frame ---------------- */
 section{margin-top:var(--stack)}
 .head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:8px}
 .head h2{margin:0;font-family:'Bodoni Moda',serif;font-weight:500;font-size:clamp(20px,3vw,27px)}
 .head .aside{font-size:10.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--lilac-dim);text-align:right}
 .hairline{height:1px;background:linear-gradient(90deg,var(--bronze),var(--hair) 42%,transparent);margin-bottom:6px}
-
-/* ---------------- the table ---------------- */
 table{width:100%;border-collapse:collapse}
-thead th{
-  font-size:10px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
-  color:var(--lilac-dim);text-align:right;padding:14px 0 10px;white-space:nowrap;
-}
+thead th{font-size:10px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--lilac-dim);text-align:right;padding:14px 0 10px;white-space:nowrap;}
 thead th.tl{text-align:left}
 tbody tr{border-top:1px solid var(--hair-soft)}
 tbody td{padding:14px 0;text-align:right;vertical-align:middle}
@@ -156,8 +87,6 @@ tr.through{background:linear-gradient(90deg,rgba(255,228,99,.11),transparent 62%
 tr.through .who,tr.through .pcw{color:var(--gold)}
 tr.through .pos{color:var(--bronze-lit)}
 tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
-
-/* signature — THE PLINTH: seven steps up to the urn */
 .plinth-cell{padding-left:20px!important;width:136px}
 .plinth{display:flex;align-items:flex-end;gap:3px;height:30px}
 .step{width:8px;background:rgba(255,255,255,.11);border-radius:1px 1px 0 0}
@@ -171,27 +100,17 @@ tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
 .tail.over{color:var(--gold)}
 @media (max-width:620px){.plinth{height:24px}.step{width:6px}.step:nth-child(7){width:8px}.tail{display:none}}
 @media (max-width:470px){.plinth-cell{display:none}}
-
-/* ---------------- entry ---------------- */
 .panel{border:1px solid var(--hair);background:var(--royal-panel);padding:clamp(18px,3.6vw,28px)}
 .lock{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
 .lock p{margin:0;flex:1 1 240px;font-size:14px;color:var(--lilac)}
-input,select{
-  font-family:inherit;font-size:14.5px;color:var(--white);
-  background:var(--royal-deep);border:1px solid var(--hair);
-  padding:11px 12px;border-radius:2px;min-width:0;
-}
+input,select{font-family:inherit;font-size:14.5px;color:var(--white);background:var(--royal-deep);border:1px solid var(--hair);padding:11px 12px;border-radius:2px;min-width:0;}
 input::placeholder{color:var(--lilac-dim)}
 .teams{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:14px}
 .pair{display:flex;gap:8px;flex:1 1 250px;min-width:0}
 .pair select{flex:1 1 0}
 .versus{font-family:'Bodoni Moda',serif;font-style:italic;font-size:19px;color:var(--bronze-lit)}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.btn{
-  font-family:'Manrope',sans-serif;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
-  padding:12px 20px;border-radius:2px;cursor:pointer;border:1px solid var(--hair);
-  background:transparent;color:var(--white);transition:.16s ease;
-}
+.btn{font-family:'Manrope',sans-serif;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:12px 20px;border-radius:2px;cursor:pointer;border:1px solid var(--hair);background:transparent;color:var(--white);transition:.16s ease;}
 .btn:hover{border-color:var(--gold);color:var(--gold)}
 .btn.fill{background:linear-gradient(180deg,var(--gold),#E8C63F);border-color:var(--gold);color:var(--royal-deep)}
 .btn.fill:hover{background:var(--white);border-color:var(--white);color:var(--royal-deep)}
@@ -199,8 +118,6 @@ input::placeholder{color:var(--lilac-dim)}
 .when{display:flex;align-items:center;gap:9px;font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim)}
 .flash{min-height:1.5em;margin-top:12px;font-size:13.5px;color:var(--gold)}
 .flash.bad{color:#FF9DA6}
-
-/* ---------------- results ---------------- */
 .log{list-style:none;margin:0;padding:0}
 .log li{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 12px;padding:13px 0;border-top:1px solid var(--hair-soft)}
 .log .day{flex:0 0 66px;font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--lilac-dim)}
@@ -213,22 +130,12 @@ input::placeholder{color:var(--lilac-dim)}
 .log li.void .won{color:var(--lilac)}
 .tag{font-size:9.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim);border:1px solid var(--hair);padding:2px 7px}
 .blank{padding:20px 0;border-top:1px solid var(--hair-soft);color:var(--lilac-dim);font-size:14.5px}
-
-/* ---------------- laws ---------------- */
 .laws{list-style:none;margin:0;padding:0;counter-reset:law;columns:2;column-gap:clamp(24px,4vw,52px)}
 .laws li{break-inside:avoid;padding:14px 0;border-top:1px solid var(--hair-soft);font-size:14px;color:var(--lilac)}
-.laws li::before{
-  counter-increment:law;content:counter(law,upper-roman);
-  display:block;font-family:'Bodoni Moda',serif;font-size:13px;color:var(--bronze-lit);margin-bottom:5px;letter-spacing:.1em;
-}
+.laws li::before{counter-increment:law;content:counter(law,upper-roman);display:block;font-family:'Bodoni Moda',serif;font-size:13px;color:var(--bronze-lit);margin-bottom:5px;letter-spacing:.1em;}
 .laws b{color:var(--white);font-weight:700}
 @media (max-width:700px){.laws{columns:1}}
-
-footer{
-  margin-top:var(--stack);padding-top:18px;border-top:1px solid var(--hair);
-  display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;
-  font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-dim);font-weight:600;
-}
+footer{margin-top:var(--stack);padding-top:18px;border-top:1px solid var(--hair);display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-dim);font-weight:600;}
 footer img{width:26px;height:auto;opacity:.7}
 </style>
 </head>
@@ -330,12 +237,6 @@ footer img{width:26px;height:auto;opacity:.7}
   One-time setup, in the console:
     rccl/config/key  =  "rccl2026"   (a plain string)
 
-  Rules can read that node even though no client ever can. Each
-  write lands in two places at once: the public match record, and
-  a private "proof" node holding the key. The rule only accepts
-  the match if the proof matches config. So the password is
-  checked by the server and never appears in readable data.
-
   {
     "rules": {
       "rccl": {
@@ -356,12 +257,6 @@ footer img{width:26px;height:auto;opacity:.7}
       }
     }
   }
-
-  Caveat worth knowing: .validate does not run on deletes, so this
-  stops anyone without the key from ADDING or EDITING a result, but
-  a friend with devtools could still delete one. If that matters,
-  move to Firebase Auth with a single admin account and gate writes
-  on auth.uid instead.
   ══════════════════════════════════════════════════════════════
 -->
 
@@ -370,7 +265,7 @@ footer img{width:26px;height:auto;opacity:.7}
    EDIT THIS BLOCK ONLY
    ══════════════════════════════════════════════════════════════ */
 
-const firebaseConfig = {
+const FIREBASE = {
   apiKey: "AIzaSyCzTYh9gXEooeBnL2h6ITU6kR8VR0byDnA",
   authDomain: "rcwc-9b4ee.firebaseapp.com",
   databaseURL: "https://rcwc-9b4ee-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -417,7 +312,6 @@ document.documentElement.style.setProperty('--wm', 'url("' + LOGO + '")');
 $("logo").src = LOGO;
 $("logo").onerror = function(){ var p = this.closest(".plate"); if(p) p.remove(); };
 
-/* ───────── maths ───────── */
 function inWindow(m){ return m.d ? (m.d >= CYCLE.start && m.d <= CYCLE.end) : true; }
 
 function buildTable(){
@@ -446,7 +340,6 @@ function daysLeft(){
   return Math.round((new Date(CYCLE.end + "T00:00:00") - now) / 86400000);
 }
 
-/* ───────── render ───────── */
 function renderCrest(){
   $("cycleName").textContent   = CYCLE.name;
   $("cycleWindow").textContent = fmt(CYCLE.start) + " – " + fmt(CYCLE.end);
@@ -622,7 +515,6 @@ function render(){
   renderCrest(); renderWire(); renderTable(rows); renderVerdict(rows); renderEntry(); renderLog();
 }
 
-/* ───────── writes ───────── */
 function submit(side){
   var picks = ["a1","a2","b1","b2"].map(function(id){ return $(id).value; });
   var uniq = picks.filter(function(p,i){ return picks.indexOf(p) === i; });
@@ -634,8 +526,6 @@ function submit(side){
   var note = rec.w.join(" & ") + " logged" + (inWindow(rec) ? "." : " — outside the window, so it won't count.");
 
   if(S.fb){
-    // The key rides in a private sibling node, never in the readable record,
-    // and both land atomically so the rule can check one against the other.
     var id = S.fb.push(S.fb.ref(S.fb.db, DB_PATH)).key;
     var patch = {};
     patch["matches/" + id] = { d:rec.d, w:rec.w, l:rec.l, ts:Date.now() };
@@ -664,7 +554,6 @@ function removeMatch(id){
   }
 }
 
-/* ───────── firebase ───────── */
 (function connect(){
   render();
   if(!FIREBASE.databaseURL) return;
