@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RCCL — Real Cricket Champions' League</title>
 <link rel="icon" href="RCCL.png">
-<meta name="theme-color" content="#7000E0">
+<meta name="theme-color" content="#5A00C4">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
 :root{
-  --royal:#7000E0;
-  --royal-deep:#2C0060;
-  --royal-panel:#54009E;
+  --royal:#5A00C4;
+  --royal-deep:#1E0044;
+  --royal-panel:#43008A;
   --bronze:#AA6B25;
   --bronze-lit:#F0C878;
   --gold:#FFE463;
@@ -28,7 +28,7 @@
 }
 *,*::before,*::after{box-sizing:border-box}
 html{background:var(--royal);scrollbar-width:thin;scrollbar-color:var(--bronze) var(--royal-deep);}
-body{margin:0;background:repeating-linear-gradient(180deg,rgba(255,255,255,.035) 0 1px,transparent 1px 5px),radial-gradient(120% 70% at 50% -10%,#8A1AF0 0%,var(--royal) 46%,var(--royal-deep) 100%);background-attachment:fixed;color:var(--white);font-family:'Manrope',system-ui,sans-serif;font-size:15.5px;line-height:1.5;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;padding-bottom:clamp(50px,9vw,96px);}
+body{margin:0;background:repeating-linear-gradient(180deg,rgba(255,255,255,.026) 0 1px,transparent 1px 5px),radial-gradient(150% 100% at 50% -25%,#7A1FE0 0%,#661AD1 22%,var(--royal) 50%,#3A0092 75%,var(--royal-deep) 100%);background-attachment:fixed;color:var(--white);font-family:'Manrope',system-ui,sans-serif;font-size:15.5px;line-height:1.5;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;padding-bottom:clamp(50px,9vw,96px);}
 ::-webkit-scrollbar{width:13px;height:13px}
 ::-webkit-scrollbar-track{background:var(--royal-deep);border-left:1px solid var(--hair-soft)}
 ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--bronze-lit),var(--bronze) 55%,#8A5518);border:3px solid var(--royal-deep);border-radius:99px;}
@@ -884,7 +884,7 @@ function renderModal(){
         '<span class="d">' + (fmt(e.d) || "—") + '</span>' +
         '<span class="res ' + (e.won ? "w" : "l") + '">' + (e.won ? "WON" : "LOST") + '</span>' +
         '<span class="vs">with <b>' + esc(realName(e.partner)) + '</b> v ' +
-          esc(e.foes.map(realName).join(" &amp; ")) + '</span>' +
+          esc(e.foes.map(realName).join(" & ")) + '</span>' +
         (e.margin ? '<span class="by">by ' + e.margin + '</span>' : '') +
         (sc ? '<span class="sc2">' + sc + '</span>' : '') +
       '</li>';
