@@ -4,466 +4,701 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RCCL — Real Cricket Champions' League</title>
+<link rel="icon" href="RCCL.png">
+<meta name="theme-color" content="#440353">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,700;1,6..96,400;1,6..96,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
+/* ============================================================
+   RCCL — palette lifted straight off the trophy plate
+   ground #440353 · bronze #AA6B25 · gold #FFE463 · white
+   ============================================================ */
 :root{
-  --ground:#1B0921;
-  --panel:#260E2E;
-  --panel-2:#2E1038;
-  --rule:#43204F;
-  --rule-soft:#351843;
-  --gold:#FFC107;
-  --gold-deep:#8F6605;
-  --gold-glow:rgba(255,193,7,.14);
-  --paper:#F1EAE0;
-  --dim:#A08CAB;
-  --dimmer:#6E5A79;
-  --loss:#5B3A66;
-  --pad:clamp(16px,4vw,40px);
+  --royal:#440353;
+  --royal-deep:#2B0136;
+  --royal-panel:#3A0347;
+  --bronze:#AA6B25;
+  --bronze-lit:#C98833;
+  --gold:#FFE463;
+  --white:#FFFFFF;
+  --lilac:#BFA3CB;
+  --lilac-dim:#8A6A99;
+  --hair:rgba(255,228,99,.16);
+  --hair-soft:rgba(255,228,99,.08);
+  --gutter:clamp(18px,4.5vw,56px);
+  --stack:clamp(38px,7vw,74px);
 }
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
+
+*,*::before,*::after{box-sizing:border-box}
+html{
+  background:var(--royal);
+  scrollbar-width:thin;
+  scrollbar-color:var(--bronze) var(--royal-deep);
+}
 body{
-  background:var(--ground);
-  color:var(--paper);
-  font-family:'Space Grotesk',system-ui,sans-serif;
-  font-size:15px;
-  line-height:1.45;
-  -webkit-font-smoothing:antialiased;
+  margin:0;
+  background:
+    repeating-linear-gradient(180deg,rgba(255,255,255,.028) 0 1px,transparent 1px 5px),
+    radial-gradient(120% 70% at 50% -10%,#560A6A 0%,var(--royal) 46%,var(--royal-deep) 100%);
+  background-attachment:fixed;
+  color:var(--white);
+  font-family:'Manrope',system-ui,sans-serif;
+  font-size:15.5px;
+  line-height:1.5;
   font-variant-numeric:tabular-nums;
-  padding-bottom:64px;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:clamp(50px,9vw,96px);
 }
-.wrap{max-width:960px;margin:0 auto;padding:0 var(--pad)}
-h1,h2,h3{margin:0}
-button{font-family:inherit;font-size:inherit;cursor:pointer}
-button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
-/* ---------- masthead ---------- */
-.masthead{border-bottom:1px solid var(--rule);padding:clamp(28px,6vw,54px) 0 clamp(20px,4vw,30px);margin-bottom:clamp(24px,5vw,40px)}
-.eyebrow{
-  font-size:11px;letter-spacing:.22em;text-transform:uppercase;
-  color:var(--dim);font-weight:600;margin-bottom:14px;
-  display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;
+/* themed scrollbar */
+::-webkit-scrollbar{width:13px;height:13px}
+::-webkit-scrollbar-track{background:var(--royal-deep);border-left:1px solid var(--hair-soft)}
+::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg,var(--bronze-lit),var(--bronze) 55%,#8A5518);
+  border:3px solid var(--royal-deep);
+  border-radius:99px;
 }
-.eyebrow .sep{color:var(--dimmer)}
-.title{
-  font-family:'Anton',sans-serif;color:var(--gold);
-  font-size:clamp(38px,9.2vw,92px);line-height:.86;letter-spacing:-.01em;
-  text-transform:uppercase;
-}
-.title .sm{display:block;font-size:.55em;color:var(--paper);letter-spacing:.02em}
-.mast-meta{
-  margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 26px;
-  font-size:13px;color:var(--dim);
-}
-.mast-meta b{color:var(--paper);font-weight:600}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,var(--gold),var(--bronze-lit))}
+::-webkit-scrollbar-corner{background:var(--royal-deep)}
+::selection{background:var(--gold);color:var(--royal-deep)}
 
-/* ---------- verdict ---------- */
+.shell{width:min(1080px,100%);margin:0 auto;padding:0 var(--gutter)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------------- crest ---------------- */
+.crest{padding:clamp(20px,4vw,44px) 0 clamp(30px,5vw,56px)}
+.crest-grid{display:grid;grid-template-columns:minmax(0,330px) minmax(0,1fr);gap:clamp(20px,4vw,52px);align-items:center}
+.plate{position:relative;line-height:0}
+.plate img{width:100%;height:auto;display:block;filter:drop-shadow(0 22px 44px rgba(0,0,0,.5))}
+.plate::after{
+  content:"";position:absolute;inset:-4%;pointer-events:none;
+  background:radial-gradient(60% 40% at 50% 42%,rgba(255,228,99,.15),transparent 70%);
+}
+.season{
+  font-size:11px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--bronze-lit);display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;
+}
+.season .dot{width:4px;height:4px;background:var(--bronze);border-radius:50%;display:inline-block}
+.lede{
+  font-family:'Bodoni Moda',Georgia,serif;font-weight:400;font-style:italic;
+  font-size:clamp(21px,3.4vw,34px);line-height:1.24;margin:16px 0 22px;
+}
+.lede em{font-style:normal;color:var(--gold)}
+.tally{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}
+.tally div{padding:14px 12px 14px 0}
+.tally div+div{border-left:1px solid var(--hair-soft);padding-left:14px}
+.tally b{display:block;font-family:'Bodoni Moda',serif;font-size:clamp(24px,4vw,34px);line-height:1;color:var(--gold)}
+.tally span{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--lilac-dim);font-weight:700}
+.wire{
+  margin-top:18px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--lilac-dim);display:flex;align-items:center;gap:8px;font-weight:600;
+}
+.pip{width:7px;height:7px;border-radius:50%;background:var(--lilac-dim);flex:0 0 auto}
+.wire.live{color:var(--lilac)}
+.wire.live .pip{background:var(--gold);box-shadow:0 0 0 3px rgba(255,228,99,.18)}
+@media (max-width:760px){
+  .crest-grid{grid-template-columns:1fr;gap:26px}
+  .plate{max-width:290px;margin:0 auto}
+}
+
+/* ---------------- verdict ---------------- */
 .verdict{
-  border:1px solid var(--rule);background:var(--panel);
-  padding:clamp(18px,4vw,26px);margin-bottom:clamp(24px,5vw,38px);
+  position:relative;overflow:hidden;
+  border:1px solid var(--hair);background:var(--royal-panel);
+  padding:clamp(22px,4.5vw,40px);
 }
-.verdict.crowned{border-color:var(--gold);background:linear-gradient(180deg,var(--gold-glow),transparent 70%),var(--panel)}
-.v-label{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);font-weight:600}
-.v-name{font-family:'Anton',sans-serif;font-size:clamp(28px,7vw,58px);line-height:1;text-transform:uppercase;margin:10px 0 8px}
+.verdict::before{
+  content:"";position:absolute;right:-6%;top:50%;translate:0 -50%;
+  width:min(360px,55%);aspect-ratio:4/5;opacity:.07;pointer-events:none;
+  background:var(--wm) center/contain no-repeat;
+}
+.verdict.crowned{
+  border-color:var(--bronze);
+  background:linear-gradient(112deg,rgba(255,228,99,.13),transparent 58%),var(--royal-panel);
+}
+.verdict.crowned::before{opacity:.14}
+.v-kicker{position:relative;font-size:10.5px;font-weight:800;letter-spacing:.28em;text-transform:uppercase;color:var(--bronze-lit)}
+.v-name{
+  position:relative;font-family:'Bodoni Moda',serif;font-weight:700;
+  font-size:clamp(32px,7.4vw,68px);line-height:1.02;margin:12px 0;letter-spacing:-.01em;
+}
 .verdict.crowned .v-name{color:var(--gold)}
-.v-note{font-size:14px;color:var(--dim);max-width:56ch}
-.v-note b{color:var(--paper);font-weight:600}
+.v-note{position:relative;font-size:15px;color:var(--lilac);max-width:54ch}
+.v-note b{color:var(--white);font-weight:700}
+.verdict.crowned .v-note b{color:var(--gold)}
 
-/* ---------- ledger ---------- */
-.section-head{
-  display:flex;align-items:baseline;justify-content:space-between;gap:16px;
-  border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:4px;
-}
-.section-head h2{font-size:12px;letter-spacing:.22em;text-transform:uppercase;font-weight:600}
-.section-head .hint{font-size:11px;color:var(--dimmer);letter-spacing:.06em;text-transform:uppercase}
-section{margin-bottom:clamp(30px,6vw,52px)}
+/* ---------------- section frame ---------------- */
+section{margin-top:var(--stack)}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:8px}
+.head h2{margin:0;font-family:'Bodoni Moda',serif;font-weight:500;font-size:clamp(20px,3vw,27px)}
+.head .aside{font-size:10.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--lilac-dim);text-align:right}
+.hairline{height:1px;background:linear-gradient(90deg,var(--bronze),var(--hair) 42%,transparent);margin-bottom:6px}
 
+/* ---------------- the table ---------------- */
 table{width:100%;border-collapse:collapse}
 thead th{
-  font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--dimmer);
-  font-weight:600;text-align:right;padding:12px 0 8px;
+  font-size:10px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--lilac-dim);text-align:right;padding:14px 0 10px;white-space:nowrap;
 }
-thead th.l{text-align:left}
-thead th.gate{text-align:left;padding-left:18px}
-tbody tr{border-top:1px solid var(--rule-soft)}
-tbody td{padding:13px 0;text-align:right;font-size:15px}
-tbody td.l{text-align:left}
-.rank{color:var(--dimmer);font-size:12px;width:26px;padding-right:12px !important}
-.who{font-weight:600;letter-spacing:.01em;white-space:nowrap}
-.pcw{font-weight:700;width:76px}
-.mwl{color:var(--dim);width:44px}
-tr.qualified{background:linear-gradient(90deg,var(--gold-glow),transparent 60%)}
-tr.qualified .who{color:var(--gold)}
-tr.qualified .pcw{color:var(--gold)}
-tr.idle .who,tr.idle .pcw,tr.idle .mwl{color:var(--dimmer)}
+thead th.tl{text-align:left}
+tbody tr{border-top:1px solid var(--hair-soft)}
+tbody td{padding:14px 0;text-align:right;vertical-align:middle}
+tbody td.tl{text-align:left}
+.pos{width:30px;padding-right:14px!important;font-family:'Bodoni Moda',serif;font-size:16px;color:var(--lilac-dim)}
+.who{font-weight:700;font-size:16px;white-space:nowrap}
+.num{width:46px;color:var(--lilac);font-weight:500}
+.pcw{width:88px;font-family:'Bodoni Moda',serif;font-size:clamp(18px,2.6vw,23px);font-weight:500}
+tr.through{background:linear-gradient(90deg,rgba(255,228,99,.11),transparent 62%)}
+tr.through .who,tr.through .pcw{color:var(--gold)}
+tr.through .pos{color:var(--bronze-lit)}
+tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
 
-/* signature: the gate */
-.gate{padding-left:18px !important;width:150px}
-.notches{display:flex;gap:3px;align-items:flex-end;height:20px}
-.notch{width:9px;height:12px;background:var(--loss);border-radius:1px}
-.notch.on{background:var(--gold)}
-.notch.key{height:20px;width:11px;background:transparent;border:1.5px solid var(--gold-deep);border-radius:1px}
-.notch.key.on{background:var(--gold);border-color:var(--gold)}
-.over{font-size:11px;color:var(--gold);margin-left:7px;font-weight:600;letter-spacing:.04em}
-.togo{font-size:11px;color:var(--dimmer);margin-left:7px;letter-spacing:.04em}
+/* signature — THE PLINTH: seven steps up to the urn */
+.plinth-cell{padding-left:20px!important;width:136px}
+.plinth{display:flex;align-items:flex-end;gap:3px;height:30px}
+.step{width:8px;background:rgba(255,255,255,.11);border-radius:1px 1px 0 0}
+.step.cut{background:linear-gradient(180deg,var(--bronze-lit),var(--bronze))}
+.step:nth-child(1){height:8px}.step:nth-child(2){height:11px}.step:nth-child(3){height:14px}
+.step:nth-child(4){height:17px}.step:nth-child(5){height:20px}.step:nth-child(6){height:23px}
+.step:nth-child(7){height:26px;width:10px}
+.urn{width:15px;height:15px;margin:0 0 12px 5px;fill:rgba(255,255,255,.14);flex:0 0 auto}
+.urn.lit{fill:var(--gold)}
+.tail{font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--lilac-dim);margin-left:8px;white-space:nowrap}
+.tail.over{color:var(--gold)}
+@media (max-width:620px){.plinth{height:24px}.step{width:6px}.step:nth-child(7){width:8px}.tail{display:none}}
+@media (max-width:470px){.plinth-cell{display:none}}
 
-/* ---------- forms ---------- */
-.card{border:1px solid var(--rule);background:var(--panel);padding:clamp(16px,3.5vw,24px)}
-.rowline{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
-.side{display:flex;gap:8px;flex:1 1 260px;min-width:0}
-.vs{font-family:'Anton',sans-serif;color:var(--dimmer);font-size:18px;padding:0 4px;letter-spacing:.06em}
-select,input[type=date]{
-  flex:1 1 0;min-width:0;background:var(--panel-2);color:var(--paper);
-  border:1px solid var(--rule);padding:10px 10px;font-family:inherit;font-size:14px;border-radius:2px;
+/* ---------------- entry ---------------- */
+.panel{border:1px solid var(--hair);background:var(--royal-panel);padding:clamp(18px,3.6vw,28px)}
+.lock{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.lock p{margin:0;flex:1 1 240px;font-size:14px;color:var(--lilac)}
+input,select{
+  font-family:inherit;font-size:14.5px;color:var(--white);
+  background:var(--royal-deep);border:1px solid var(--hair);
+  padding:11px 12px;border-radius:2px;min-width:0;
 }
-.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:6px}
+input::placeholder{color:var(--lilac-dim)}
+.teams{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:14px}
+.pair{display:flex;gap:8px;flex:1 1 250px;min-width:0}
+.pair select{flex:1 1 0}
+.versus{font-family:'Bodoni Moda',serif;font-style:italic;font-size:19px;color:var(--bronze-lit)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .btn{
-  background:transparent;color:var(--paper);border:1px solid var(--rule);
-  padding:11px 18px;border-radius:2px;font-weight:600;font-size:13px;
-  letter-spacing:.08em;text-transform:uppercase;transition:.15s;
+  font-family:'Manrope',sans-serif;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  padding:12px 20px;border-radius:2px;cursor:pointer;border:1px solid var(--hair);
+  background:transparent;color:var(--white);transition:.16s ease;
 }
 .btn:hover{border-color:var(--gold);color:var(--gold)}
-.btn.solid{background:var(--gold);border-color:var(--gold);color:#200B27}
-.btn.solid:hover{background:#ffd04a;color:#200B27}
-.btn.ghost{color:var(--dim);border-color:var(--rule-soft)}
-.msg{font-size:13px;color:var(--gold);min-height:1.4em;margin-top:10px}
-.datefield{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
-.datefield input{flex:0 0 auto}
+.btn.fill{background:linear-gradient(180deg,var(--gold),#E8C63F);border-color:var(--gold);color:var(--royal-deep)}
+.btn.fill:hover{background:var(--white);border-color:var(--white);color:var(--royal-deep)}
+.btn.quiet{color:var(--lilac-dim);border-color:var(--hair-soft);padding:10px 14px}
+.when{display:flex;align-items:center;gap:9px;font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim)}
+.flash{min-height:1.5em;margin-top:12px;font-size:13.5px;color:var(--gold)}
+.flash.bad{color:#FF9DA6}
 
-/* ---------- log ---------- */
+/* ---------------- results ---------------- */
 .log{list-style:none;margin:0;padding:0}
-.log li{
-  display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;
-  padding:12px 0;border-top:1px solid var(--rule-soft);font-size:14px;
-}
-.log .date{font-size:11px;color:var(--dimmer);letter-spacing:.08em;width:74px;flex:0 0 auto}
-.log .won{color:var(--gold);font-weight:600}
-.log .beat{color:var(--dimmer);font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:0 2px}
-.log .lost{color:var(--dim)}
-.log .del{margin-left:auto;background:none;border:none;color:var(--dimmer);font-size:16px;line-height:1;padding:2px 6px}
-.log .del:hover{color:var(--gold)}
-.log li.void{opacity:.45}
-.log li.void .won{color:var(--dim)}
-.void-tag{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dimmer);border:1px solid var(--rule);padding:2px 6px}
-.empty{padding:18px 0;color:var(--dimmer);font-size:14px;border-top:1px solid var(--rule-soft)}
+.log li{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 12px;padding:13px 0;border-top:1px solid var(--hair-soft)}
+.log .day{flex:0 0 66px;font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--lilac-dim)}
+.log .won{font-weight:700;color:var(--gold)}
+.log .verb{font-family:'Bodoni Moda',serif;font-style:italic;font-size:14px;color:var(--lilac-dim)}
+.log .lost{color:var(--lilac)}
+.log .kill{margin-left:auto;background:none;border:0;color:var(--lilac-dim);font-size:17px;line-height:1;padding:2px 7px;cursor:pointer}
+.log .kill:hover{color:var(--gold)}
+.log li.void{opacity:.42}
+.log li.void .won{color:var(--lilac)}
+.tag{font-size:9.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim);border:1px solid var(--hair);padding:2px 7px}
+.blank{padding:20px 0;border-top:1px solid var(--hair-soft);color:var(--lilac-dim);font-size:14.5px}
 
-/* ---------- export ---------- */
-textarea{
-  width:100%;min-height:130px;background:var(--panel-2);color:var(--paper);
-  border:1px solid var(--rule);padding:12px;font-family:ui-monospace,Menlo,Consolas,monospace;
-  font-size:12px;line-height:1.6;border-radius:2px;resize:vertical;
+/* ---------------- laws ---------------- */
+.laws{list-style:none;margin:0;padding:0;counter-reset:law;columns:2;column-gap:clamp(24px,4vw,52px)}
+.laws li{break-inside:avoid;padding:14px 0;border-top:1px solid var(--hair-soft);font-size:14px;color:var(--lilac)}
+.laws li::before{
+  counter-increment:law;content:counter(law,upper-roman);
+  display:block;font-family:'Bodoni Moda',serif;font-size:13px;color:var(--bronze-lit);margin-bottom:5px;letter-spacing:.1em;
 }
-.rules{font-size:13px;color:var(--dim);max-width:62ch}
-.rules li{margin-bottom:7px}
-.rules b{color:var(--paper);font-weight:600}
-footer{border-top:1px solid var(--rule);padding-top:16px;font-size:12px;color:var(--dimmer);letter-spacing:.04em}
+.laws b{color:var(--white);font-weight:700}
+@media (max-width:700px){.laws{columns:1}}
 
-@media (max-width:640px){
-  .gate{display:none}
-  thead th.gate{display:none}
-  .pcw{width:64px}
-  .vs{width:100%;text-align:center;padding:2px 0}
-  .side{flex:1 1 100%}
+footer{
+  margin-top:var(--stack);padding-top:18px;border-top:1px solid var(--hair);
+  display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-dim);font-weight:600;
 }
-@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+footer img{width:26px;height:auto;opacity:.7}
 </style>
 </head>
-<body>
 
-<header class="masthead">
-  <div class="wrap">
-    <div class="eyebrow">
-      <span id="cycleName">Cycle I</span><span class="sep">/</span>
-      <span id="cycleDates">—</span><span class="sep">/</span>
-      <span id="cycleClock">—</span>
-    </div>
-    <h1 class="title">Real Cricket<br>Champions'<br>League<span class="sm">2v2 · 20 overs · no fixtures</span></h1>
-    <div class="mast-meta">
-      <span><b id="statPlayers">0</b> players</span>
-      <span><b id="statMatches">0</b> matches played</span>
-      <span>gate at <b id="statGate">7</b> wins</span>
+<body>
+<h1 class="sr">Real Cricket Champions' League</h1>
+
+<header class="crest">
+  <div class="shell crest-grid">
+    <div class="plate"><img id="logo" src="RCCL.png" alt="Real Cricket Champions' League 2026"></div>
+    <div>
+      <div class="season">
+        <span id="cycleName">Cycle I</span><span class="dot"></span>
+        <span id="cycleWindow">—</span><span class="dot"></span>
+        <span id="cycleClock">—</span>
+      </div>
+      <p class="lede">Two a side, twenty overs, <em>no fixture list</em>. Play whoever's around. Highest win percentage past seven wins takes the cycle.</p>
+      <div class="tally">
+        <div><b id="tPlayers">0</b><span>Players</span></div>
+        <div><b id="tMatches">0</b><span>Matches</span></div>
+        <div><b id="tGate">7</b><span>Wins to qualify</span></div>
+      </div>
+      <div class="wire" id="wire"><span class="pip"></span><span id="wireText">Connecting</span></div>
     </div>
   </div>
 </header>
 
-<main class="wrap">
+<main class="shell">
 
   <div class="verdict" id="verdict">
-    <div class="v-label" id="vLabel">Cycle open</div>
-    <div class="v-name" id="vName">—</div>
+    <div class="v-kicker" id="vKicker">Cycle open</div>
+    <div class="v-name" id="vName">&mdash;</div>
     <div class="v-note" id="vNote"></div>
   </div>
 
   <section>
-    <div class="section-head">
-      <h2>Standings</h2>
-      <span class="hint">by PCW · gate at 7 wins</span>
+    <div class="head">
+      <h2>The Table</h2>
+      <span class="aside">Ranked by PCW &middot; gate at seven</span>
     </div>
+    <div class="hairline"></div>
     <table>
       <thead>
         <tr>
-          <th class="l" colspan="2">Player</th>
-          <th class="gate">The gate</th>
+          <th class="tl" colspan="2">Player</th>
+          <th class="tl plinth-cell">The Plinth</th>
           <th>M</th><th>W</th><th>L</th><th>PCW</th>
         </tr>
       </thead>
-      <tbody id="standings"></tbody>
+      <tbody id="table"></tbody>
     </table>
   </section>
 
   <section>
-    <div class="section-head">
-      <h2>Add a result</h2>
-      <span class="hint">pick four, tap the winners</span>
+    <div class="head">
+      <h2>Enter a Result</h2>
+      <span class="aside" id="entryAside">Locked</span>
     </div>
-    <div class="card">
-      <div class="rowline">
-        <div class="side"><select id="a1"></select><select id="a2"></select></div>
-        <div class="vs">v</div>
-        <div class="side"><select id="b1"></select><select id="b2"></select></div>
-      </div>
-      <div class="actions">
-        <button class="btn solid" id="winA">Left pair won</button>
-        <button class="btn solid" id="winB">Right pair won</button>
-        <span class="datefield"><label for="mdate">Played</label><input type="date" id="mdate"></span>
-      </div>
-      <div class="msg" id="msg"></div>
-    </div>
+    <div class="hairline"></div>
+    <div class="panel" id="entry"></div>
   </section>
 
   <section>
-    <div class="section-head">
+    <div class="head">
       <h2>Results</h2>
-      <span class="hint" id="logCount"></span>
+      <span class="aside" id="logAside"></span>
     </div>
+    <div class="hairline"></div>
     <ul class="log" id="log"></ul>
   </section>
 
   <section>
-    <div class="section-head">
-      <h2>Save the cycle</h2>
-      <span class="hint">paste back into this file</span>
+    <div class="head">
+      <h2>Laws of the Cycle</h2>
+      <span class="aside">Six clauses</span>
     </div>
-    <div class="card">
-      <p class="rules" style="margin:0 0 12px">Nothing here is stored in the browser. Copy this block and replace the <code>MATCHES</code> array near the top of the script tag, then commit.</p>
-      <textarea id="export" readonly spellcheck="false"></textarea>
-      <div class="actions"><button class="btn" id="copy">Copy block</button></div>
-    </div>
+    <div class="hairline"></div>
+    <ol class="laws">
+      <li>Every match is <b>two a side over twenty overs</b>. No schedule and no set number of games &mdash; the cycle simply runs for its window.</li>
+      <li>A result gives both winners a <b>W</b> and both losers an <b>L</b>. Nothing else about the match is recorded, and that is the point.</li>
+      <li><b>PCW</b> is wins as a percentage of matches played. It is the only ranking number, borrowed from the WTC &mdash; minus the points, since a twenty-over match cannot be tied.</li>
+      <li>The gate stands at <b>seven wins</b>. Below it you appear on the table but are not in contention.</li>
+      <li>At the close, the highest PCW among those through the gate takes the cycle. Level on PCW, they settle it 2v2 until it breaks.</li>
+      <li>Matches dated outside the window stay in the record but do not count toward the cycle.</li>
+    </ol>
   </section>
 
-  <section>
-    <div class="section-head"><h2>How the cycle is won</h2></div>
-    <ul class="rules">
-      <li>Every match is <b>2v2 over 20 overs</b>. No fixture list, no fixed count — play whoever's around.</li>
-      <li>A result gives both winners a W and both losers an L. Nothing else is recorded.</li>
-      <li><b>PCW</b> is wins as a percentage of matches played. It's the only ranking number.</li>
-      <li>The gate: <b>7 wins minimum</b> to be crowned. Below that you're on the board but not in contention.</li>
-      <li>At the cycle's close, the highest PCW among those through the gate takes it. Level on PCW, they play a decider.</li>
-      <li>Matches dated outside the cycle window don't count toward it.</li>
-    </ul>
-  </section>
-
-  <footer>RCCL · <span id="footYear"></span> · a smaller table, a longer road</footer>
+  <footer>
+    <img src="RCCL.png" alt="" onerror="this.remove()">
+    <span>Real Cricket Champions' League</span>
+    <span id="footWindow"></span>
+  </footer>
 </main>
 
-<script>
-/* ==================================================================
-   EDIT THIS BLOCK — everything else is machinery
-   ================================================================== */
+<!--
+  ══════════════════════════════════════════════════════════════
+  FIREBASE REALTIME DATABASE — RULES TO PASTE IN THE CONSOLE
+  ══════════════════════════════════════════════════════════════
+  One-time setup, in the console:
+    rccl/config/key  =  "rccl2026"   (a plain string)
 
-const CONFIG = {
-  cycleName: "Cycle I",
-  start: "2026-08-22",   // first day matches count
-  end:   "2026-09-22",   // last day matches count
-  minWins: 7             // the gate
+  Rules can read that node even though no client ever can. Each
+  write lands in two places at once: the public match record, and
+  a private "proof" node holding the key. The rule only accepts
+  the match if the proof matches config. So the password is
+  checked by the server and never appears in readable data.
+
+  {
+    "rules": {
+      "rccl": {
+        "config": { ".read": false, ".write": false },
+        "cycle1": {
+          "matches": {
+            ".read": true,
+            "$m": {
+              ".write": true,
+              ".validate": "newData.parent().parent().child('proof').child($m).val() === root.child('rccl/config/key').val()"
+            }
+          },
+          "proof": {
+            ".read": false,
+            "$m": { ".write": true }
+          }
+        }
+      }
+    }
+  }
+
+  Caveat worth knowing: .validate does not run on deletes, so this
+  stops anyone without the key from ADDING or EDITING a result, but
+  a friend with devtools could still delete one. If that matters,
+  move to Firebase Auth with a single admin account and gate writes
+  on auth.uid instead.
+  ══════════════════════════════════════════════════════════════
+-->
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   EDIT THIS BLOCK ONLY
+   ══════════════════════════════════════════════════════════════ */
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCzTYh9gXEooeBnL2h6ITU6kR8VR0byDnA",
+  authDomain: "rcwc-9b4ee.firebaseapp.com",
+  databaseURL: "https://rcwc-9b4ee-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "rcwc-9b4ee",
+  storageBucket: "rcwc-9b4ee.firebasestorage.app",
+  messagingSenderId: "204963758123",
+  appId: "1:204963758123:web:75ca7b3882000e2555aa6e"
+};
+
+const CYCLE_PATH = "rccl/cycle1";            // one node per cycle
+const DB_PATH    = CYCLE_PATH + "/matches";
+const ADMIN_KEY  = "rccl2026";
+const LOGO       = "RCCL.png";
+
+const CYCLE = {
+  name:    "Cycle I",
+  start:   "2026-08-22",
+  end:     "2026-09-30",
+  minWins: 7
 };
 
 const PLAYERS = ["Rishit","Arka","Tuhinangshu","Girija","Adarsh","Prajyot","Neil"];
 
-// d = date played, w = winning pair, l = losing pair
-let MATCHES = [
+// Shown only while the database is unconfigured or unreachable.
+const SEED = [
   { d:"2026-08-22", w:["Rishit","Arka"],        l:["Tuhinangshu","Neil"] },
   { d:"2026-08-22", w:["Rishit","Arka"],        l:["Prajyot","Neil"]     },
   { d:"2026-08-23", w:["Rishit","Tuhinangshu"], l:["Arka","Adarsh"]      }
 ];
 
-/* ================= end of editable block ========================= */
+/* ═════════════════════ end of editable block ══════════════════ */
 
-const $ = id => document.getElementById(id);
-const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+var $ = function(id){ return document.getElementById(id); };
+var esc = function(s){ return String(s).replace(/[&<>"]/g, function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+var URN_PATH = 'M1.6 1.4H12.4V3.1H11.3C11.1 6.1 9.5 8.1 7.9 8.5V10.2H9V11.2H11.3V12.8H2.7V11.2H5V10.2H6.1V8.5C4.5 8.1 2.9 6.1 2.7 3.1H1.6Z';
 
-function counts(m){ return m.d ? (m.d >= CONFIG.start && m.d <= CONFIG.end) : true; }
+var S = {
+  matches: SEED.map(function(m,i){ return { id:"seed"+i, d:m.d, w:m.w, l:m.l }; }),
+  live: false, unlocked: false, fb: null
+};
 
-function standings(){
-  const t = {};
-  PLAYERS.forEach(p => t[p] = { name:p, m:0, w:0, l:0 });
-  MATCHES.filter(counts).forEach(mt => {
-    mt.w.forEach(p => { if(t[p]){ t[p].m++; t[p].w++; } });
-    mt.l.forEach(p => { if(t[p]){ t[p].m++; t[p].l++; } });
+document.documentElement.style.setProperty('--wm', 'url("' + LOGO + '")');
+$("logo").src = LOGO;
+$("logo").onerror = function(){ var p = this.closest(".plate"); if(p) p.remove(); };
+
+/* ───────── maths ───────── */
+function inWindow(m){ return m.d ? (m.d >= CYCLE.start && m.d <= CYCLE.end) : true; }
+
+function buildTable(){
+  var t = {};
+  PLAYERS.forEach(function(p){ t[p] = { name:p, m:0, w:0, l:0, pcw:0 }; });
+  S.matches.filter(inWindow).forEach(function(mt){
+    (mt.w || []).forEach(function(p){ if(t[p]){ t[p].m++; t[p].w++; } });
+    (mt.l || []).forEach(function(p){ if(t[p]){ t[p].m++; t[p].l++; } });
   });
-  const rows = Object.values(t);
-  rows.forEach(r => r.pcw = r.m ? (r.w / r.m) * 100 : 0);
-  rows.sort((a,b) => b.pcw - a.pcw || b.w - a.w || a.m - b.m || a.name.localeCompare(b.name));
+  var rows = Object.keys(t).map(function(k){ return t[k]; });
+  rows.forEach(function(r){ r.pcw = r.m ? (r.w / r.m) * 100 : 0; });
+  rows.sort(function(a,b){
+    return b.pcw - a.pcw || b.w - a.w || a.m - b.m || a.name.localeCompare(b.name);
+  });
   return rows;
 }
 
-function fmtDate(iso){
+function fmt(iso){
   if(!iso) return "";
-  const d = new Date(iso + "T00:00:00");
-  return d.toLocaleDateString("en-GB", { day:"2-digit", month:"short" }).toUpperCase();
+  return new Date(iso + "T00:00:00")
+    .toLocaleDateString("en-GB",{ day:"2-digit", month:"short" }).toUpperCase();
 }
 
 function daysLeft(){
-  const today = new Date(); today.setHours(0,0,0,0);
-  const end = new Date(CONFIG.end + "T00:00:00");
-  return Math.round((end - today) / 86400000);
+  var now = new Date(); now.setHours(0,0,0,0);
+  return Math.round((new Date(CYCLE.end + "T00:00:00") - now) / 86400000);
 }
 
-function renderHeader(){
-  $("cycleName").textContent = CONFIG.cycleName;
-  $("cycleDates").textContent = fmtDate(CONFIG.start) + " – " + fmtDate(CONFIG.end);
-  const dl = daysLeft();
-  $("cycleClock").textContent = dl > 1 ? dl + " days left"
-    : dl === 1 ? "final day tomorrow"
-    : dl === 0 ? "closes today" : "cycle closed";
-  $("statPlayers").textContent = PLAYERS.length;
-  $("statMatches").textContent = MATCHES.filter(counts).length;
-  $("statGate").textContent = CONFIG.minWins;
-  $("footYear").textContent = new Date(CONFIG.start + "T00:00:00").getFullYear();
+/* ───────── render ───────── */
+function renderCrest(){
+  $("cycleName").textContent   = CYCLE.name;
+  $("cycleWindow").textContent = fmt(CYCLE.start) + " – " + fmt(CYCLE.end);
+  var d = daysLeft();
+  $("cycleClock").textContent = d > 1 ? d + " days left"
+    : d === 1 ? "Final day tomorrow"
+    : d === 0 ? "Closes today" : "Cycle closed";
+  $("tPlayers").textContent = PLAYERS.length;
+  $("tMatches").textContent = S.matches.filter(inWindow).length;
+  $("tGate").textContent    = CYCLE.minWins;
+  $("footWindow").textContent = CYCLE.name + " · " + fmt(CYCLE.start) + " – " + fmt(CYCLE.end);
 }
 
-function gateCell(w){
-  let n = "";
-  for(let i = 1; i <= CONFIG.minWins; i++){
-    const key = i === CONFIG.minWins ? " key" : "";
-    n += '<span class="notch' + key + (w >= i ? " on" : "") + '"></span>';
-  }
-  let tail = "";
-  if(w > CONFIG.minWins) tail = '<span class="over">+' + (w - CONFIG.minWins) + '</span>';
-  else if(w < CONFIG.minWins) tail = '<span class="togo">' + (CONFIG.minWins - w) + ' to go</span>';
-  return '<div class="notches">' + n + tail + '</div>';
+function renderWire(){
+  $("wire").classList.toggle("live", S.live);
+  $("wireText").textContent = S.live
+    ? "Live · results sync to every device"
+    : (FIREBASE.databaseURL
+        ? "Offline · showing the last table this device saw"
+        : "Database not linked · sample results, this tab only");
+}
+
+function plinth(w){
+  var s = "", i;
+  for(i = 1; i <= CYCLE.minWins; i++) s += '<span class="step' + (w >= i ? " cut" : "") + '"></span>';
+  s += '<svg class="urn' + (w >= CYCLE.minWins ? " lit" : "") +
+       '" viewBox="0 0 14 14" aria-hidden="true"><path d="' + URN_PATH + '"/></svg>';
+  var left = CYCLE.minWins - w;
+  if(left > 0)      s += '<span class="tail">' + left + ' to go</span>';
+  else if(left < 0) s += '<span class="tail over">+' + (-left) + '</span>';
+  else              s += '<span class="tail over">Through</span>';
+  return '<div class="plinth">' + s + '</div>';
 }
 
 function renderTable(rows){
-  $("standings").innerHTML = rows.map((r,i) => {
-    const cls = r.w >= CONFIG.minWins ? "qualified" : (r.m === 0 ? "idle" : "");
+  $("table").innerHTML = rows.map(function(r,i){
+    var cls = r.w >= CYCLE.minWins ? "through" : (r.m === 0 ? "dnp" : "");
     return '<tr class="' + cls + '">' +
-      '<td class="l rank">' + (i+1) + '</td>' +
-      '<td class="l who">' + esc(r.name) + '</td>' +
-      '<td class="l gate">' + gateCell(r.w) + '</td>' +
-      '<td class="mwl">' + r.m + '</td>' +
-      '<td class="mwl">' + r.w + '</td>' +
-      '<td class="mwl">' + r.l + '</td>' +
+      '<td class="tl pos">' + (i+1) + '</td>' +
+      '<td class="tl who">' + esc(r.name) + '</td>' +
+      '<td class="tl plinth-cell">' + plinth(r.w) + '</td>' +
+      '<td class="num">' + r.m + '</td>' +
+      '<td class="num">' + r.w + '</td>' +
+      '<td class="num">' + r.l + '</td>' +
       '<td class="pcw">' + r.pcw.toFixed(2) + '</td>' +
     '</tr>';
   }).join("");
 }
 
 function renderVerdict(rows){
-  const box = $("verdict"), dl = daysLeft(), closed = dl < 0;
-  const through = rows.filter(r => r.w >= CONFIG.minWins);
+  var box = $("verdict"), closed = daysLeft() < 0;
+  var through = rows.filter(function(r){ return r.w >= CYCLE.minWins; });
   box.classList.remove("crowned");
 
   if(!through.length){
-    const chaser = rows.slice().sort((a,b) => b.w - a.w || b.pcw - a.pcw)[0];
-    $("vLabel").textContent = closed ? "Cycle closed · no champion" : "Cycle open";
+    var chase = rows.slice().sort(function(a,b){ return b.w - a.w || b.pcw - a.pcw; })[0];
+    $("vKicker").textContent = closed ? "Cycle closed · uncrowned" : "Cycle open · nobody through the gate";
     if(closed){
-      $("vName").textContent = "Nobody made it";
-      $("vNote").innerHTML = "No one reached <b>" + CONFIG.minWins + " wins</b> before the window shut, so the cycle goes uncrowned. Carry the gate over or lower it next time.";
-    } else if(!chaser || chaser.w === 0){
-      $("vName").textContent = "No one through yet";
-      $("vNote").innerHTML = "First result gets the table moving. <b>" + CONFIG.minWins + " wins</b> opens the gate.";
+      $("vName").textContent = "No champion";
+      $("vNote").innerHTML = "The window shut with nobody on <b>" + CYCLE.minWins +
+        " wins</b>, so the cycle goes uncrowned. Carry the gate over, or lower it next time.";
+    } else if(!chase || chase.w === 0){
+      $("vName").textContent = "Nothing on the board";
+      $("vNote").innerHTML = "The first result gets the cycle moving. <b>" + CYCLE.minWins + " wins</b> opens the gate.";
     } else {
-      $("vName").textContent = chaser.name + " leads the chase";
-      $("vNote").innerHTML = "On <b>" + chaser.w + " wins</b> at <b>" + chaser.pcw.toFixed(2) + " PCW</b> — <b>" +
-        (CONFIG.minWins - chaser.w) + " more</b> to reach the gate. Nobody is in contention until someone does.";
+      $("vName").textContent = chase.name + " leads the chase";
+      $("vNote").innerHTML = "On <b>" + chase.w + " wins</b> at <b>" + chase.pcw.toFixed(2) +
+        " PCW</b>, with <b>" + (CYCLE.minWins - chase.w) +
+        " more</b> to reach the gate. Nobody is in contention until someone does.";
     }
     return;
   }
 
-  const top = through[0].pcw;
-  const level = through.filter(r => Math.abs(r.pcw - top) < 1e-9);
+  var top = through[0].pcw;
+  var level = through.filter(function(r){ return Math.abs(r.pcw - top) < 1e-9; });
 
   if(level.length > 1){
-    $("vLabel").textContent = "Decider required";
-    $("vName").textContent = level.map(r => r.name).join(" · ");
-    $("vNote").innerHTML = "Level through the gate on <b>" + top.toFixed(2) + " PCW</b>. They play it off 2v2 until the tie breaks.";
+    $("vKicker").textContent = "Decider required";
+    $("vName").textContent = level.map(function(r){ return r.name; }).join(" · ");
+    $("vNote").innerHTML = "Level through the gate on <b>" + top.toFixed(2) +
+      " PCW</b>. They settle it 2v2 until the tie breaks.";
     return;
   }
 
-  const c = level[0];
+  var c = level[0];
   box.classList.add("crowned");
-  $("vLabel").textContent = closed ? "Champion of " + CONFIG.cycleName : "Champion as it stands";
+  $("vKicker").textContent = closed ? "Champion of " + CYCLE.name : "Champion as it stands";
   $("vName").textContent = c.name;
-  $("vNote").innerHTML = "<b>" + c.w + "–" + c.l + "</b> from " + c.m + " matches · <b>" + c.pcw.toFixed(2) + " PCW</b>." +
-    (closed ? "" : " Through the gate, but the window is still open — one bad night moves this.");
+  $("vNote").innerHTML = "<b>" + c.w + "–" + c.l + "</b> from " + c.m + " matches at <b>" +
+    c.pcw.toFixed(2) + " PCW</b>." +
+    (closed ? " The urn is theirs." : " Through the gate, but the window is still open — one bad evening moves this.");
 }
 
 function renderLog(){
-  const list = MATCHES.map((m,i) => ({ m, i })).reverse();
-  $("logCount").textContent = MATCHES.filter(counts).length + " counting";
-  if(!list.length){ $("log").innerHTML = '<li class="empty">No results yet. Add the first one above.</li>'; return; }
-  $("log").innerHTML = list.map(({m,i}) =>
-    '<li class="' + (counts(m) ? "" : "void") + '">' +
-      '<span class="date">' + (fmtDate(m.d) || "—") + '</span>' +
-      '<span class="won">' + esc(m.w.join(" & ")) + '</span>' +
-      '<span class="beat">beat</span>' +
-      '<span class="lost">' + esc(m.l.join(" & ")) + '</span>' +
-      (counts(m) ? "" : '<span class="void-tag">outside window</span>') +
-      '<button class="del" data-i="' + i + '" title="Remove this result" aria-label="Remove this result">&times;</button>' +
-    '</li>'
-  ).join("");
-  $("log").querySelectorAll(".del").forEach(b => b.onclick = () => {
-    MATCHES.splice(+b.dataset.i, 1);
-    say("Result removed.");
+  $("logAside").textContent = S.matches.filter(inWindow).length + " counting toward the cycle";
+  var list = S.matches.slice().reverse();
+  if(!list.length){
+    $("log").innerHTML = '<li class="blank">Nothing played yet. The first result goes in above.</li>';
+    return;
+  }
+  $("log").innerHTML = list.map(function(m){
+    return '<li class="' + (inWindow(m) ? "" : "void") + '">' +
+      '<span class="day">' + (fmt(m.d) || "—") + '</span>' +
+      '<span class="won">' + esc((m.w || []).join(" & ")) + '</span>' +
+      '<span class="verb">beat</span>' +
+      '<span class="lost">' + esc((m.l || []).join(" & ")) + '</span>' +
+      (inWindow(m) ? "" : '<span class="tag">Outside window</span>') +
+      (S.unlocked ? '<button class="kill" data-id="' + esc(m.id) +
+        '" title="Remove this result" aria-label="Remove this result">&times;</button>' : '') +
+    '</li>';
+  }).join("");
+  Array.prototype.forEach.call($("log").querySelectorAll(".kill"), function(b){
+    b.onclick = function(){ removeMatch(b.dataset.id); };
+  });
+}
+
+function renderEntry(){
+  var box = $("entry");
+
+  if(!S.unlocked){
+    $("entryAside").textContent = "Locked";
+    box.innerHTML =
+      '<div class="lock">' +
+        '<p>Results go in by the keeper of the cycle. Everyone else just reads the table.</p>' +
+        '<input type="password" id="pw" placeholder="Admin password" autocomplete="off" aria-label="Admin password">' +
+        '<button class="btn fill" id="unlock">Unlock</button>' +
+      '</div><div class="flash" id="flash"></div>';
+    var go = function(){
+      if($("pw").value.trim() === ADMIN_KEY){ S.unlocked = true; render(); }
+      else { say("Wrong password.", true); $("pw").value = ""; $("pw").focus(); }
+    };
+    $("unlock").onclick = go;
+    $("pw").onkeydown = function(e){ if(e.key === "Enter") go(); };
+    return;
+  }
+
+  $("entryAside").textContent = "Unlocked";
+  var opts = PLAYERS.map(function(p){
+    return '<option value="' + esc(p) + '">' + esc(p) + '</option>';
+  }).join("");
+
+  box.innerHTML =
+    '<div class="teams">' +
+      '<div class="pair"><select id="a1" aria-label="First player, left pair">' + opts + '</select>' +
+      '<select id="a2" aria-label="Second player, left pair">' + opts + '</select></div>' +
+      '<span class="versus">v</span>' +
+      '<div class="pair"><select id="b1" aria-label="First player, right pair">' + opts + '</select>' +
+      '<select id="b2" aria-label="Second player, right pair">' + opts + '</select></div>' +
+    '</div>' +
+    '<div class="row">' +
+      '<button class="btn fill" id="winA">Left pair won</button>' +
+      '<button class="btn fill" id="winB">Right pair won</button>' +
+      '<span class="when"><label for="played">Played</label><input type="date" id="played"></span>' +
+      '<button class="btn quiet" id="lock" style="margin-left:auto">Lock</button>' +
+    '</div><div class="flash" id="flash"></div>';
+
+  ["a1","a2","b1","b2"].forEach(function(id,k){
+    $(id).selectedIndex = Math.min(k, PLAYERS.length - 1);
+  });
+  $("played").value = new Date().toISOString().slice(0,10);
+  $("winA").onclick = function(){ submit("A"); };
+  $("winB").onclick = function(){ submit("B"); };
+  $("lock").onclick = function(){ S.unlocked = false; render(); };
+}
+
+function say(t, bad){
+  var f = $("flash");
+  if(f){ f.className = "flash" + (bad ? " bad" : ""); f.textContent = t; }
+}
+
+function render(){
+  var rows = buildTable();
+  renderCrest(); renderWire(); renderTable(rows); renderVerdict(rows); renderEntry(); renderLog();
+}
+
+/* ───────── writes ───────── */
+function submit(side){
+  var picks = ["a1","a2","b1","b2"].map(function(id){ return $(id).value; });
+  var uniq = picks.filter(function(p,i){ return picks.indexOf(p) === i; });
+  if(uniq.length !== 4){ say("Pick four different players.", true); return; }
+
+  var A = [picks[0], picks[1]], B = [picks[2], picks[3]];
+  var d = $("played").value || new Date().toISOString().slice(0,10);
+  var rec = side === "A" ? { d:d, w:A, l:B } : { d:d, w:B, l:A };
+  var note = rec.w.join(" & ") + " logged" + (inWindow(rec) ? "." : " — outside the window, so it won't count.");
+
+  if(S.fb){
+    // The key rides in a private sibling node, never in the readable record,
+    // and both land atomically so the rule can check one against the other.
+    var id = S.fb.push(S.fb.ref(S.fb.db, DB_PATH)).key;
+    var patch = {};
+    patch["matches/" + id] = { d:rec.d, w:rec.w, l:rec.l, ts:Date.now() };
+    patch["proof/" + id]   = ADMIN_KEY;
+    S.fb.update(S.fb.ref(S.fb.db, CYCLE_PATH), patch)
+      .then(function(){ say(note); })
+      .catch(function(e){ say("The database refused that write: " + (e.code || e.message), true); });
+  } else {
+    S.matches.push({ id:"local" + Date.now(), d:rec.d, w:rec.w, l:rec.l });
     render();
-  });
+    say(note + " Link the database to keep it.");
+  }
 }
 
-function renderExport(){
-  const lines = MATCHES.map(m =>
-    '  { d:"' + m.d + '", w:' + JSON.stringify(m.w) + ', l:' + JSON.stringify(m.l) + ' }'
-  ).join(",\n");
-  $("export").value = "let MATCHES = [\n" + lines + "\n];";
+function removeMatch(id){
+  var remote = S.fb && id.indexOf("local") !== 0 && id.indexOf("seed") !== 0;
+  if(remote){
+    var patch = {};
+    patch["matches/" + id] = null;
+    patch["proof/" + id]   = null;
+    S.fb.update(S.fb.ref(S.fb.db, CYCLE_PATH), patch)
+      .catch(function(e){ say("Could not remove that result: " + (e.code || e.message), true); });
+  } else {
+    S.matches = S.matches.filter(function(m){ return m.id !== id; });
+    render();
+  }
 }
 
-function render(){ const r = standings(); renderHeader(); renderTable(r); renderVerdict(r); renderLog(); renderExport(); }
-
-/* ---- add-result form ---- */
-const SELECTS = ["a1","a2","b1","b2"];
-function fillSelects(){
-  SELECTS.forEach((id,k) => {
-    const s = $(id);
-    s.innerHTML = PLAYERS.map(p => '<option value="' + esc(p) + '">' + esc(p) + '</option>').join("");
-    s.selectedIndex = Math.min(k, PLAYERS.length - 1);
-  });
-}
-function say(t){ $("msg").textContent = t; }
-
-function submit(winnerSide){
-  const picks = SELECTS.map(id => $(id).value);
-  if(new Set(picks).size !== 4){ say("Pick four different players."); return; }
-  const a = [picks[0], picks[1]], b = [picks[2], picks[3]];
-  const d = $("mdate").value || new Date().toISOString().slice(0,10);
-  MATCHES.push(winnerSide === "A" ? { d, w:a, l:b } : { d, w:b, l:a });
-  const won = winnerSide === "A" ? a : b;
-  say(won.join(" & ") + " logged" + (counts({d}) ? "." : " — outside the cycle window, so it won't count."));
+/* ───────── firebase ───────── */
+(function connect(){
   render();
-}
+  if(!FIREBASE.databaseURL) return;
 
-$("winA").onclick = () => submit("A");
-$("winB").onclick = () => submit("B");
-$("copy").onclick = async () => {
-  try { await navigator.clipboard.writeText($("export").value); say("Block copied — paste it over MATCHES in the file."); }
-  catch { $("export").select(); say("Select the block and copy it manually."); }
-};
+  var V = "https://www.gstatic.com/firebasejs/10.12.5/";
+  Promise.all([import(V + "firebase-app.js"), import(V + "firebase-database.js")])
+    .then(function(mods){
+      var app = mods[0], rtdb = mods[1];
+      var db = rtdb.getDatabase(app.initializeApp(FIREBASE));
+      S.fb = { db:db, ref:rtdb.ref, push:rtdb.push, update:rtdb.update };
 
-fillSelects();
-$("mdate").value = new Date().toISOString().slice(0,10);
-render();
+      rtdb.onValue(rtdb.ref(db, ".info/connected"), function(s){
+        S.live = !!s.val(); renderWire();
+      });
+
+      rtdb.onValue(rtdb.ref(db, DB_PATH), function(snap){
+        var v = snap.val() || {};
+        S.matches = Object.keys(v).map(function(id){
+          var m = v[id];
+          return { id:id, d:m.d || "", w:m.w || [], l:m.l || [], ts:m.ts || 0 };
+        }).sort(function(a,b){
+          return (a.d || "").localeCompare(b.d || "") || a.ts - b.ts;
+        });
+        render();
+      }, function(err){
+        S.live = false; renderWire();
+        console.warn("Realtime Database read failed:", err);
+      });
+    })
+    .catch(function(e){
+      S.live = false; renderWire();
+      console.warn("Firebase SDK did not load:", e);
+    });
+})();
 </script>
 </body>
 </html>
