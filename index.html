@@ -200,7 +200,13 @@ footer img{width:26px;height:auto;opacity:.7}
 .mrec b{display:block;font-family:'Teko',sans-serif;font-weight:700;font-size:clamp(26px,4.6vw,38px);line-height:1;color:var(--white)}
 .mrec span{font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--lilac-dim)}
 .mgate{margin-bottom:22px}
-.mtitle{font-family:'Teko',sans-serif;font-weight:600;font-size:20px;letter-spacing:.06em;text-transform:uppercase;color:var(--bronze-lit);margin:0 0 10px;padding-top:4px;border-top:1px solid var(--hair-soft)}
+.mtitle{font-family:'Teko',sans-serif;font-weight:600;font-size:20px;letter-spacing:.06em;text-transform:uppercase;color:var(--bronze-lit);margin:0 0 10px;padding-top:4px;border-top:1px solid var(--hair-soft);display:flex;align-items:center;gap:10px}
+.scope{flex:0 0 auto;margin-left:auto;font-family:'Manrope',sans-serif;font-size:8px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;padding:3px 8px;border-radius:2px;white-space:nowrap}
+.scope.duo{border:1px solid var(--bronze-lit);color:var(--bronze-lit)}
+.scope.solo{background:var(--gold);color:var(--royal-deep);border:1px solid var(--gold)}
+.mnote{font-size:12.5px;line-height:1.6;color:var(--lilac);border-left:2px solid var(--bronze-lit);padding:3px 0 3px 13px;margin:0 0 24px}
+.mnote b{color:var(--white);font-weight:700}
+.mnote em{font-style:normal;color:var(--gold);font-weight:700}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(142px,1fr));gap:9px;margin-bottom:22px}
 .stat{border:1px solid var(--hair-soft);border-radius:2px;padding:11px 13px;display:flex;flex-direction:column}
 .stat.lead{border-color:var(--gold);background:rgba(255,228,99,.07)}
@@ -208,6 +214,8 @@ footer img{width:26px;height:auto;opacity:.7}
 .stat b{display:block;font-family:'Teko',sans-serif;font-weight:700;font-size:29px;line-height:1;color:var(--white)}
 .stat.lead b{color:var(--gold)}
 .stat i{font-style:normal;display:block;font-size:11px;color:var(--lilac);margin-top:3px}
+.stat.ref{border-style:dashed;border-color:var(--hair);background:rgba(255,255,255,.03)}
+.stat.ref b{color:var(--lilac)}
 .stat u{display:inline-block;margin-top:auto;padding-top:9px;text-decoration:none;font-size:8px;font-weight:800;letter-spacing:.12em;color:var(--gold)}
 .stat u::before{content:"\2605";margin-right:4px}
 .mtab{width:100%;border-collapse:collapse;margin-bottom:22px}
@@ -601,7 +609,7 @@ function statsFor(name){
     name:name, real:realName(name), m:0, w:0, l:0, pcw:0,
     runs:0, inns:0, ballsFaced:0, high:null, low:null, wktsLost:0,
     conceded:0, ballsBowled:0, wkts:0, bestBowl:null, bestBowlRuns:null,
-    lowDefended:null, highDefended:null, highChased:null, lowChased:null,
+    lowDefended:null, highChased:null,
     wonFirst:0, wonSecond:0, batFirst:{p:0,w:0,l:0}, chasing:{p:0,w:0,l:0},
     runsFirst:0, innsFirst:0, runsChase:0, innsChase:0,
     soPlayed:0, soWon:0, bigWin:null, bigLoss:null,
@@ -679,17 +687,13 @@ function statsFor(name){
     }
     if(won && first === true){
       s.wonFirst++;
-      if(mine && mine.r !== undefined && mine.r !== null){
-        if(s.lowDefended  === null || mine.r < s.lowDefended)  s.lowDefended  = mine.r;
-        if(s.highDefended === null || mine.r > s.highDefended) s.highDefended = mine.r;
-      }
+      if(mine && mine.r !== undefined && mine.r !== null &&
+         (s.lowDefended === null || mine.r < s.lowDefended)) s.lowDefended = mine.r;
     }
     if(won && first === false){
       s.wonSecond++;
-      if(theirs && theirs.r !== undefined && theirs.r !== null){
-        if(s.highChased === null || theirs.r > s.highChased) s.highChased = theirs.r;
-        if(s.lowChased  === null || theirs.r < s.lowChased)  s.lowChased  = theirs.r;
-      }
+      if(theirs && theirs.r !== undefined && theirs.r !== null &&
+         (s.highChased === null || theirs.r > s.highChased)) s.highChased = theirs.r;
     }
     if(haveBoth){
       var diff = mine.r - theirs.r;
@@ -703,13 +707,29 @@ function statsFor(name){
   return s;
 }
 
+// Average first-innings and second-innings total across the whole cycle.
+// Each match contributes one of each, whoever was batting.
+function leagueAverages(){
+  var f = { r:0, n:0 }, c = { r:0, n:0 };
+  S.matches.filter(inWindow).forEach(function(mt){
+    if(!mt.bf) return;
+    var one = mt.bf === "w" ? mt.sw : mt.sl;      // innings batted first
+    var two = mt.bf === "w" ? mt.sl : mt.sw;      // innings batted second
+    if(one && one.r !== undefined && one.r !== null){ f.r += one.r; f.n++; }
+    if(two && two.r !== undefined && two.r !== null){ c.r += two.r; c.n++; }
+  });
+  return {
+    first:  f.n ? Math.round(f.r / f.n) : null, firstN: f.n,
+    second: c.n ? Math.round(c.r / c.n) : null, secondN: c.n
+  };
+}
+
 function leagueBests(){
-  var best = { high:null, lowDefended:null, highDefended:null, highChased:null, runs:null, wkts:null, bestBowl:null };
+  var best = { high:null, lowDefended:null, highChased:null, runs:null, wkts:null, bestBowl:null };
   PLAYERS.forEach(function(p){
     var s = statsFor(p);
     if(s.high !== null && (best.high === null || s.high > best.high)) best.high = s.high;
     if(s.lowDefended !== null && (best.lowDefended === null || s.lowDefended < best.lowDefended)) best.lowDefended = s.lowDefended;
-    if(s.highDefended !== null && (best.highDefended === null || s.highDefended > best.highDefended)) best.highDefended = s.highDefended;
     if(s.highChased !== null && (best.highChased === null || s.highChased > best.highChased)) best.highChased = s.highChased;
     if(s.runs > 0 && (best.runs === null || s.runs > best.runs)) best.runs = s.runs;
     if(s.wkts > 0 && (best.wkts === null || s.wkts > best.wkts)) best.wkts = s.wkts;
@@ -719,12 +739,27 @@ function leagueBests(){
 }
 
 /* ───────── the dossier modal ───────── */
-function statCard(label, value, sub, isBest){
+function statCard(label, value, sub, isBest, cls){
   if(value === null || value === undefined || value === "") value = "&mdash;";
-  return '<div class="stat' + (isBest ? ' lead' : '') + '">' +
+  return '<div class="stat' + (isBest ? ' lead' : '') + (cls ? ' ' + cls : '') + '">' +
     '<s>' + label + '</s><b>' + value + '</b>' +
     (sub ? '<i>' + sub + '</i>' : '') +
     (isBest ? '<u>League best</u>' : '') + '</div>';
+}
+
+// Every scorecard figure in this league is a team total, so it belongs to
+// whichever pair the player turned out in. Only W/L-derived things are his.
+function gap(mine, league){
+  if(mine === null || league === null) return "";
+  var d = mine - league;
+  if(d === 0) return " &middot; level with league";
+  return " &middot; " + Math.abs(d) + (d > 0 ? " above" : " below") + " league";
+}
+
+function sectionTitle(text, scope, label){
+  return '<h4 class="mtitle">' + text +
+    '<span class="scope ' + scope + '">' +
+    (label || (scope === "duo" ? "Duo stat" : "Personal")) + '</span></h4>';
 }
 
 function wlTable(map, heading){
@@ -733,7 +768,7 @@ function wlTable(map, heading){
   keys.sort(function(a,b){
     return (map[b].w + map[b].l) - (map[a].w + map[a].l) || map[b].w - map[a].w;
   });
-  return '<h4 class="mtitle">' + heading + '</h4><table class="mtab"><thead><tr>' +
+  return sectionTitle(heading, "solo") + '<table class="mtab"><thead><tr>' +
     '<th class="tl">Name</th><th>Played</th><th>W</th><th>L</th><th>PCW</th></tr></thead><tbody>' +
     keys.map(function(k){
       var r = map[k], n = r.w + r.l;
@@ -757,7 +792,7 @@ function renderModal(){
     '<div class="mhead">' +
       '<div><h3 class="mhandle" id="mHandle">' + esc(s.name) + '</h3>' +
       '<p class="mreal">' + esc(s.real) + '</p></div>' +
-      '<div class="mrec"><b>' + s.w + '&ndash;' + s.l + '</b><span>' + s.pcw.toFixed(2) + ' PCW</span></div>' +
+      '<div class="mrec"><b>' + s.w + '&ndash;' + s.l + '</b><span>' + s.pcw.toFixed(2) + ' PCW &middot; personal</span></div>' +
     '</div>';
 
   if(!s.m && !s.list.length){
@@ -768,20 +803,26 @@ function renderModal(){
 
   html += '<div class="mgate">' + plinth(s.w) + '</div>';
 
-  html += '<h4 class="mtitle">With the bat</h4><div class="stats">' +
-    statCard("Runs scored", s.runs, s.inns + " innings", s.runs > 0 && s.runs === best.runs) +
+  html += '<p class="mnote">Runs, wickets, totals and margins here are <b>duo figures</b> &mdash; ' +
+    'they belong to whichever pair ' + esc(s.name) + ' turned out in, not to ' + esc(s.name) +
+    ' alone. This league records nothing individually, by design. ' +
+    'Only <em>Form</em>, <em>Alongside</em> and <em>Against</em> are personal, ' +
+    'because a win and a loss are the only things one player carries on their own.</p>';
+
+  html += sectionTitle("With the bat", "duo") + '<div class="stats">' +
+    statCard("Runs scored by the duo", s.runs, s.inns + " innings", s.runs > 0 && s.runs === best.runs) +
     statCard("Highest duo total", s.high, null, s.high !== null && s.high === best.high) +
     statCard("Lowest duo total", s.low, null, false) +
     statCard("Average total", avg, rate ? rate + " per over" : null, false) +
   '</div>';
 
-  html += '<h4 class="mtitle">With the ball</h4><div class="stats">' +
-    statCard("Wickets taken", s.wkts, oversText(s.ballsBowled) + " overs bowled", s.wkts > 0 && s.wkts === best.wkts) +
-    statCard("Best effort", s.bestBowl === null ? null : s.bestBowl + " wkt" + (s.bestBowl === 1 ? "" : "s"),
+  html += sectionTitle("With the ball", "duo") + '<div class="stats">' +
+    statCard("Wickets taken by the duo", s.wkts, oversText(s.ballsBowled) + " overs bowled", s.wkts > 0 && s.wkts === best.wkts) +
+    statCard("Best duo effort", s.bestBowl === null ? null : s.bestBowl + " wkt" + (s.bestBowl === 1 ? "" : "s"),
              s.bestBowlRuns === null ? null : "conceded " + s.bestBowlRuns,
              s.bestBowl !== null && s.bestBowl === best.bestBowl) +
-    statCard("Runs conceded", s.conceded, econ ? econ + " an over" : null, false) +
-    statCard("Wickets lost", s.wktsLost, null, false) +
+    statCard("Runs conceded by the duo", s.conceded, econ ? econ + " an over" : null, false) +
+    statCard("Wickets lost by the duo", s.wktsLost, null, false) +
   '</div>';
 
   var bf = s.batFirst, ch = s.chasing;
@@ -789,28 +830,31 @@ function renderModal(){
   var chPct = ch.p ? ((ch.w / ch.p) * 100).toFixed(0) + "% won" : "none recorded";
   var unset = s.m - bf.p - ch.p;
 
-  html += '<h4 class="mtitle">Batting first</h4><div class="stats">' +
+  var lg = leagueAverages();
+  var avgSet   = s.innsFirst ? Math.round(s.runsFirst / s.innsFirst) : null;
+  var avgChase = s.innsChase ? Math.round(s.runsChase / s.innsChase) : null;
+
+  html += sectionTitle("Batting first", "duo") + '<div class="stats">' +
     statCard("Record", bf.p ? bf.w + "&ndash;" + bf.l : null, bfPct, false) +
     statCard("Lowest defended", s.lowDefended, "successfully",
              s.lowDefended !== null && s.lowDefended === best.lowDefended) +
-    statCard("Highest defended", s.highDefended, "successfully",
-             s.highDefended !== null && s.highDefended === best.highDefended) +
-    statCard("Average set", s.innsFirst ? Math.round(s.runsFirst / s.innsFirst) : null,
-             s.innsFirst + " innings", false) +
+    statCard("Average set", avgSet, s.innsFirst + " innings" + gap(avgSet, lg.first), false) +
+    statCard("League bats first", lg.first,
+             lg.firstN ? "across " + lg.firstN + " first innings" : "none recorded", false, "ref") +
   '</div>';
 
-  html += '<h4 class="mtitle">Chasing</h4><div class="stats">' +
+  html += sectionTitle("Chasing", "duo") + '<div class="stats">' +
     statCard("Record", ch.p ? ch.w + "&ndash;" + ch.l : null, chPct, false) +
     statCard("Highest chased", s.highChased, "target hauled down",
              s.highChased !== null && s.highChased === best.highChased) +
-    statCard("Lowest chased", s.lowChased, "target hauled down", false) +
-    statCard("Average scored", s.innsChase ? Math.round(s.runsChase / s.innsChase) : null,
-             s.innsChase + " innings", false) +
+    statCard("Average scored", avgChase, s.innsChase + " innings" + gap(avgChase, lg.second), false) +
+    statCard("League chasing", lg.second,
+             lg.secondN ? "across " + lg.secondN + " second innings" : "none recorded", false, "ref") +
   '</div>' +
   (unset > 0 ? '<p class="mfoot">' + unset + ' match' + (unset === 1 ? '' : 'es') +
      ' have no innings order recorded, so they sit outside these two sections. Edit them to fill it in.</p>' : '') +
 
-  '<h4 class="mtitle">Margins</h4><div class="stats">' +
+  sectionTitle("Margins", "duo") + '<div class="stats">' +
     statCard("Biggest win", s.bigWin === null ? null : "+" + s.bigWin, "runs", false) +
     statCard("Heaviest loss", s.bigLoss === null ? null : "&minus;" + s.bigLoss, "runs", false) +
     statCard("Super overs", s.soPlayed ? s.soWon + "/" + s.soPlayed : null, "won of played", false) +
@@ -818,7 +862,7 @@ function renderModal(){
              s.w >= CYCLE.minWins ? "in contention" : "wins still needed", false) +
   '</div>';
 
-  html += '<h4 class="mtitle">Form</h4><div class="stats">' +
+  html += sectionTitle("Form", "solo") + '<div class="stats">' +
     statCard("Current streak", s.streak > 0 ? s.streak + "W" : (s.l ? "&mdash;" : null),
              s.streak > 0 ? "unbeaten" : "last one lost", false) +
     statCard("Longest streak", s.bestStreak || null, "consecutive wins", false) +
@@ -827,7 +871,7 @@ function renderModal(){
   html += wlTable(s.partners, "Alongside");
   html += wlTable(s.foes, "Against");
 
-  html += '<h4 class="mtitle">Every match on record</h4><ul class="mlist">' +
+  html += sectionTitle("Every match on record", "duo", "Duo scores") + '<ul class="mlist">' +
     s.list.map(function(e){
       var sc = "";
       if(e.mine && e.mine.r !== undefined && e.mine.r !== null &&
