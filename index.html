@@ -842,21 +842,21 @@ function renderModal(){
     'because a win and a loss are the only things one player carries on their own.</p>';
 
   html += sectionTitle("With the bat", "duo") + '<div class="stats">' +
-    statCard("Runs scored by the duo", s.runs, s.inns + " innings", s.runs > 0 && s.runs === best.runs) +
+    statCard("Runs scored in a duo", s.runs, s.inns + " innings", s.runs > 0 && s.runs === best.runs) +
     statCard("Highest duo total", s.high, null, s.high !== null && s.high === best.high) +
     statCard("Lowest duo total", s.low, null, false) +
     statCard("Average total", avg, rate ? rate + " per over" : null, false) +
   '</div>';
 
   html += sectionTitle("With the ball", "duo") + '<div class="stats">' +
-    statCard("Wickets taken by the duo", s.wkts, oversText(s.ballsBowled) + " overs bowled", s.wkts > 0 && s.wkts === best.wkts) +
+    statCard("Wickets taken in a duo", s.wkts, oversText(s.ballsBowled) + " overs bowled", s.wkts > 0 && s.wkts === best.wkts) +
     statCard("Best duo economy", s.bestEcon === null ? null : s.bestEcon.toFixed(2),
              s.bestEcon === null
                ? "no innings past " + (MIN_ECON_BALLS / 6) + " overs"
                : s.bestEconRuns + " off " + oversText(s.bestEconBalls),
              s.bestEcon !== null && best.econ !== null && Math.abs(s.bestEcon - best.econ) < 1e-9) +
-    statCard("Runs conceded by the duo", s.conceded, econ ? econ + " an over" : null, false) +
-    statCard("Wickets lost by the duo", s.wktsLost, null, false) +
+    statCard("Runs conceded in a duo", s.conceded, econ ? econ + " an over" : null, false) +
+    statCard("Wickets lost in a duo", s.wktsLost, null, false) +
   '</div>';
 
   var bf = s.batFirst, ch = s.chasing;
