@@ -402,6 +402,10 @@ const CYCLE = {
   minWins: 7
 };
 
+// An economy figure needs a real spell behind it, or a two-over cameo
+// sits at the top of the league forever.
+const MIN_ECON_BALLS = 30;
+
 const PLAYERS = ["zombdapro","chrisp4two","loiteringmedic","partialcost","ninjaadarsh","northwestlease","milneristan"];
 
 // Old names already sitting in the database, mapped to current handles.
@@ -593,8 +597,13 @@ function oversText(balls){
   if(!balls) return "0";
   return Math.floor(balls / 6) + (balls % 6 ? "." + (balls % 6) : "");
 }
+
+// A margin is runs if the side batting first won, wickets if the chase won.
+// With no innings order recorded there is no honest way to say which, so
+// the margin is simply left blank rather than guessed at.
 function marginOf(mt){
   if(mt.sow && mt.sol) return "Super Over";
+  if(!mt.bf) return "";
   if(!mt.sw || !mt.sl || mt.sw.r === undefined || mt.sl.r === undefined) return "";
   if(mt.bf === "l"){                                   // winner batted second
     var wk = 10 - (mt.sw.k === undefined || mt.sw.k === null ? 0 : mt.sw.k);
@@ -608,11 +617,12 @@ function statsFor(name){
   var s = {
     name:name, real:realName(name), m:0, w:0, l:0, pcw:0,
     runs:0, inns:0, ballsFaced:0, high:null, low:null, wktsLost:0,
-    conceded:0, ballsBowled:0, wkts:0, bestBowl:null, bestBowlRuns:null,
+    conceded:0, ballsBowled:0, wkts:0, bestEcon:null, bestEconRuns:null, bestEconBalls:0,
     lowDefended:null, highChased:null,
     wonFirst:0, wonSecond:0, batFirst:{p:0,w:0,l:0}, chasing:{p:0,w:0,l:0},
     runsFirst:0, innsFirst:0, runsChase:0, innsChase:0,
-    soPlayed:0, soWon:0, bigWin:null, bigLoss:null,
+    soPlayed:0, soWon:0,
+    winByRuns:null, winByWkts:null, lossByRuns:null, lossByWkts:null,
     streak:0, bestStreak:0, partners:{}, foes:{}, list:[]
   };
   var run = 0;
@@ -665,12 +675,15 @@ function statsFor(name){
     }
     if(theirs && theirs.r !== undefined && theirs.r !== null){
       s.conceded += theirs.r;
-      s.ballsBowled += toBalls(theirs.o);
-      if(theirs.k !== undefined && theirs.k !== null){
-        s.wkts += theirs.k;
-        if(s.bestBowl === null || theirs.k > s.bestBowl ||
-           (theirs.k === s.bestBowl && theirs.r < s.bestBowlRuns)){
-          s.bestBowl = theirs.k; s.bestBowlRuns = theirs.r;
+      var bb = toBalls(theirs.o);
+      s.ballsBowled += bb;
+      if(theirs.k !== undefined && theirs.k !== null) s.wkts += theirs.k;
+      // Best bowling is the tightest innings, not the biggest haul — in a
+      // 2v2 game everybody eventually bowls a side out for ten.
+      if(bb >= MIN_ECON_BALLS){
+        var ec = theirs.r / (bb / 6);
+        if(s.bestEcon === null || ec < s.bestEcon){
+          s.bestEcon = ec; s.bestEconRuns = theirs.r; s.bestEconBalls = bb;
         }
       }
     }
@@ -695,10 +708,29 @@ function statsFor(name){
       if(theirs && theirs.r !== undefined && theirs.r !== null &&
          (s.highChased === null || theirs.r > s.highChased)) s.highChased = theirs.r;
     }
-    if(haveBoth){
-      var diff = mine.r - theirs.r;
-      if(won  && (s.bigWin  === null || diff >  s.bigWin))  s.bigWin  = diff;
-      if(!won && (s.bigLoss === null || -diff > s.bigLoss)) s.bigLoss = -diff;
+
+    // Margins. Defend a total and the margin is runs; haul one down and it
+    // is wickets in hand. Losses are the mirror image: lose batting first
+    // and you lost by wickets, lose chasing and you lost by runs. A super
+    // over isn't a margin at all — the match was level.
+    var superOver = !!(mt.sow && mt.sol);
+    if(!superOver && first !== null){
+      if(first === true && won && haveBoth){
+        var dw = mine.r - theirs.r;
+        if(s.winByRuns === null || dw > s.winByRuns) s.winByRuns = dw;
+      }
+      if(first === false && !won && haveBoth){
+        var dl = theirs.r - mine.r;
+        if(s.lossByRuns === null || dl > s.lossByRuns) s.lossByRuns = dl;
+      }
+      if(first === false && won && mine && mine.k !== undefined && mine.k !== null){
+        var wkw = 10 - mine.k;
+        if(s.winByWkts === null || wkw > s.winByWkts) s.winByWkts = wkw;
+      }
+      if(first === true && !won && theirs && theirs.k !== undefined && theirs.k !== null){
+        var wkl = 10 - theirs.k;
+        if(s.lossByWkts === null || wkl > s.lossByWkts) s.lossByWkts = wkl;
+      }
     }
   });
 
@@ -725,7 +757,7 @@ function leagueAverages(){
 }
 
 function leagueBests(){
-  var best = { high:null, lowDefended:null, highChased:null, runs:null, wkts:null, bestBowl:null };
+  var best = { high:null, lowDefended:null, highChased:null, runs:null, wkts:null, econ:null };
   PLAYERS.forEach(function(p){
     var s = statsFor(p);
     if(s.high !== null && (best.high === null || s.high > best.high)) best.high = s.high;
@@ -733,7 +765,7 @@ function leagueBests(){
     if(s.highChased !== null && (best.highChased === null || s.highChased > best.highChased)) best.highChased = s.highChased;
     if(s.runs > 0 && (best.runs === null || s.runs > best.runs)) best.runs = s.runs;
     if(s.wkts > 0 && (best.wkts === null || s.wkts > best.wkts)) best.wkts = s.wkts;
-    if(s.bestBowl !== null && (best.bestBowl === null || s.bestBowl > best.bestBowl)) best.bestBowl = s.bestBowl;
+    if(s.bestEcon !== null && (best.econ === null || s.bestEcon < best.econ)) best.econ = s.bestEcon;
   });
   return best;
 }
@@ -818,9 +850,11 @@ function renderModal(){
 
   html += sectionTitle("With the ball", "duo") + '<div class="stats">' +
     statCard("Wickets taken by the duo", s.wkts, oversText(s.ballsBowled) + " overs bowled", s.wkts > 0 && s.wkts === best.wkts) +
-    statCard("Best duo effort", s.bestBowl === null ? null : s.bestBowl + " wkt" + (s.bestBowl === 1 ? "" : "s"),
-             s.bestBowlRuns === null ? null : "conceded " + s.bestBowlRuns,
-             s.bestBowl !== null && s.bestBowl === best.bestBowl) +
+    statCard("Best duo economy", s.bestEcon === null ? null : s.bestEcon.toFixed(2),
+             s.bestEcon === null
+               ? "no innings past " + (MIN_ECON_BALLS / 6) + " overs"
+               : s.bestEconRuns + " off " + oversText(s.bestEconBalls),
+             s.bestEcon !== null && best.econ !== null && Math.abs(s.bestEcon - best.econ) < 1e-9) +
     statCard("Runs conceded by the duo", s.conceded, econ ? econ + " an over" : null, false) +
     statCard("Wickets lost by the duo", s.wktsLost, null, false) +
   '</div>';
@@ -855,8 +889,10 @@ function renderModal(){
      ' have no innings order recorded, so they sit outside these two sections. Edit them to fill it in.</p>' : '') +
 
   sectionTitle("Margins", "duo") + '<div class="stats">' +
-    statCard("Biggest win", s.bigWin === null ? null : "+" + s.bigWin, "runs", false) +
-    statCard("Heaviest loss", s.bigLoss === null ? null : "&minus;" + s.bigLoss, "runs", false) +
+    statCard("Biggest win by runs", s.winByRuns === null ? null : "+" + s.winByRuns, "total defended", false) +
+    statCard("Biggest win by wickets", s.winByWkts, "in hand, chasing", false) +
+    statCard("Heaviest loss by runs", s.lossByRuns === null ? null : "&minus;" + s.lossByRuns, "chase fell short", false) +
+    statCard("Heaviest loss by wickets", s.lossByWkts, "spare, total hauled down", false) +
     statCard("Super overs", s.soPlayed ? s.soWon + "/" + s.soPlayed : null, "won of played", false) +
     statCard("Through the gate", s.w >= CYCLE.minWins ? "YES" : (CYCLE.minWins - s.w),
              s.w >= CYCLE.minWins ? "in contention" : "wins still needed", false) +
