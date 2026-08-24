@@ -735,6 +735,9 @@ function statsFor(name){
   });
 
   s.pcw = s.m ? (s.w / s.m) * 100 : 0;
+  // Bowling strike rate: balls per wicket, counted in real balls, so 1.2
+  // overs is eight of them rather than 1.2 × 6.
+  s.strikeRate = s.wkts ? (s.ballsBowled / s.wkts) : null;
   s.list.reverse();
   return s;
 }
@@ -757,7 +760,7 @@ function leagueAverages(){
 }
 
 function leagueBests(){
-  var best = { high:null, lowDefended:null, highChased:null, runs:null, wkts:null, econ:null };
+  var best = { high:null, lowDefended:null, highChased:null, runs:null, wkts:null, econ:null, sr:null };
   PLAYERS.forEach(function(p){
     var s = statsFor(p);
     if(s.high !== null && (best.high === null || s.high > best.high)) best.high = s.high;
@@ -766,6 +769,7 @@ function leagueBests(){
     if(s.runs > 0 && (best.runs === null || s.runs > best.runs)) best.runs = s.runs;
     if(s.wkts > 0 && (best.wkts === null || s.wkts > best.wkts)) best.wkts = s.wkts;
     if(s.bestEcon !== null && (best.econ === null || s.bestEcon < best.econ)) best.econ = s.bestEcon;
+    if(s.strikeRate !== null && (best.sr === null || s.strikeRate < best.sr)) best.sr = s.strikeRate;
   });
   return best;
 }
@@ -846,6 +850,7 @@ function renderModal(){
     statCard("Highest duo total", s.high, null, s.high !== null && s.high === best.high) +
     statCard("Lowest duo total", s.low, null, false) +
     statCard("Average total", avg, rate ? rate + " per over" : null, false) +
+    statCard("Wickets lost in a duo", s.wktsLost, null, false) +
   '</div>';
 
   html += sectionTitle("With the ball", "duo") + '<div class="stats">' +
@@ -855,8 +860,10 @@ function renderModal(){
                ? "no innings past " + (MIN_ECON_BALLS / 6) + " overs"
                : s.bestEconRuns + " off " + oversText(s.bestEconBalls),
              s.bestEcon !== null && best.econ !== null && Math.abs(s.bestEcon - best.econ) < 1e-9) +
+    statCard("Duo strike rate", s.strikeRate === null ? null : s.strikeRate.toFixed(1),
+             s.strikeRate === null ? "no wickets yet" : "balls per wicket",
+             s.strikeRate !== null && best.sr !== null && Math.abs(s.strikeRate - best.sr) < 1e-9) +
     statCard("Runs conceded in a duo", s.conceded, econ ? econ + " an over" : null, false) +
-    statCard("Wickets lost in a duo", s.wktsLost, null, false) +
   '</div>';
 
   var bf = s.batFirst, ch = s.chasing;
