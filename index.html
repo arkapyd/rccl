@@ -166,6 +166,11 @@ input::placeholder{color:var(--lilac-dim)}
 .dlsout .res{display:block;font-size:11px;color:var(--lilac-dim);letter-spacing:.06em;margin-top:5px}
 .dlstag{font-family:'Manrope',sans-serif;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--royal-deep);background:var(--bronze-lit);padding:3px 8px;border-radius:2px}
 
+/* ---------------- RCCL Highs ---------------- */
+#highs .mtitle:first-child{border-top:0;padding-top:0}
+#highs .stats:last-child{margin-bottom:0}
+.hnote{font-size:14px;color:var(--lilac-dim);margin:0}
+
 /* ---------------- results ---------------- */
 /* max-height is set from JS by measuring the first LOG_VISIBLE rows, because
    rows differ in height depending on whether they carry a scorecard line. */
@@ -312,6 +317,15 @@ footer img{width:26px;height:auto;opacity:.7}
       </thead>
       <tbody id="table"></tbody>
     </table>
+  </section>
+
+  <section id="highsSection">
+    <div class="head">
+      <h2>RCCL Highs</h2>
+      <span class="aside" id="highsAside">The record book</span>
+    </div>
+    <div class="hairline"></div>
+    <div class="panel" id="highs"></div>
   </section>
 
   <section id="entrySection">
@@ -701,6 +715,106 @@ function dlsVerdict(first, chase){
   };
 }
 
+/* ───────── the league record book ─────────
+   One pass over the same match records the table is built from. An innings
+   is credited to the pair that batted it; the bowling figures from that
+   same innings belong to the pair that was fielding. Nothing is stored. */
+function leagueRecords(){
+  var ms = S.matches.filter(inWindow);
+  var R = {
+    n: ms.length, runs:0, wkts:0, balls:0, so:0, dls:0,
+    firstWins:0, chaseWins:0, ordered:0,
+    high:null, low:null, agg:null, rate:null,
+    winRuns:null, winWkts:null, defended:null, chased:null,
+    econ:null, srate:null, pairs:{}
+  };
+
+  ms.forEach(function(mt){
+    var W = (mt.w || []).map(realName).join(" & ");
+    var L = (mt.l || []).map(realName).join(" & ");
+    var day = fmt(mt.d);
+    var total = 0, wholeMatch = true;
+
+    [{ sc:mt.sw, bat:W, bowl:L }, { sc:mt.sl, bat:L, bowl:W }].forEach(function(i){
+      var sc = i.sc;
+      if(!sc || sc.r === undefined || sc.r === null){ wholeMatch = false; return; }
+      var b = toBalls(sc.o);
+      R.runs += sc.r; R.balls += b; total += sc.r;
+      if(sc.k !== undefined && sc.k !== null) R.wkts += sc.k;
+
+      if(R.high === null || sc.r > R.high.v) R.high = { v:sc.r, who:i.bat, d:day };
+      if(R.low  === null || sc.r < R.low.v)  R.low  = { v:sc.r, who:i.bat, d:day };
+
+      // One run rate, read from both ends: the batting side's scoring rate is
+      // the fielding side's economy.
+      if(b >= MIN_ECON_BALLS){
+        var rr = sc.r / (b / 6);
+        var line = sc.r + " off " + oversText(b);
+        if(R.rate === null || rr > R.rate.v) R.rate = { v:rr, who:i.bat,  d:day, sub:line };
+        if(R.econ === null || rr < R.econ.v) R.econ = { v:rr, who:i.bowl, d:day, sub:line };
+      }
+      if(sc.k) {
+        var sr = b / sc.k;
+        if(R.srate === null || sr < R.srate.v)
+          R.srate = { v:sr, who:i.bowl, d:day, sub:sc.k + " in " + oversText(b) + " ov" };
+      }
+    });
+
+    if(wholeMatch && (R.agg === null || total > R.agg.v))
+      R.agg = { v:total, who:W + " v " + L, d:day };
+
+    if(mt.sow && mt.sol) R.so++;
+    if(mt.dls) R.dls++;
+
+    if(mt.bf){
+      R.ordered++;
+      if(mt.bf === "w") R.firstWins++; else R.chaseWins++;
+      // A Super Over ended level and a D/L game never finished, so neither
+      // sets a margin, a lowest total defended, or a highest chase.
+      var settled = !(mt.sow && mt.sol) && !mt.dls &&
+                    mt.sw && mt.sl && mt.sw.r !== undefined && mt.sw.r !== null &&
+                    mt.sl.r !== undefined && mt.sl.r !== null;
+      if(settled){
+        if(mt.bf === "w"){
+          var d = mt.sw.r - mt.sl.r;
+          if(R.winRuns === null || d > R.winRuns.v)
+            R.winRuns = { v:d, who:W, d:day, sub:"beat " + L };
+          if(R.defended === null || mt.sw.r < R.defended.v)
+            R.defended = { v:mt.sw.r, who:W, d:day, sub:"held off " + L };
+        } else {
+          var wk = 10 - (mt.sw.k === undefined || mt.sw.k === null ? 0 : mt.sw.k);
+          if(R.winWkts === null || wk > R.winWkts.v)
+            R.winWkts = { v:wk, who:W, d:day, sub:"beat " + L };
+          if(R.chased === null || mt.sl.r > R.chased.v)
+            R.chased = { v:mt.sl.r, who:W, d:day, sub:"hauled down v " + L };
+        }
+      }
+    }
+
+    [[mt.w, true], [mt.l, false]].forEach(function(e){
+      var side = e[0] || [];
+      if(side.length < 2) return;
+      var key = side.slice().sort().join("|");
+      if(!R.pairs[key]) R.pairs[key] = { names: side.map(realName).join(" & "), w:0, l:0 };
+      R.pairs[key][e[1] ? "w" : "l"]++;
+    });
+  });
+
+  return R;
+}
+
+// Best of a list, carrying every name that shares the mark.
+function topOf(list, val, better){
+  var mark = null, names = [];
+  list.forEach(function(s){
+    var v = val(s);
+    if(v === null || v === undefined) return;
+    if(mark === null || better(v, mark)){ mark = v; names = [s.real]; }
+    else if(v === mark) names.push(s.real);
+  });
+  return mark === null ? null : { v:mark, who:names.join(", ") };
+}
+
 /* ───────── per-player record book ─────────
    Every figure below is derived from the match records in Firebase.
    Nothing here is stored separately, so editing a fixture corrects
@@ -849,6 +963,7 @@ function statsFor(name){
   // Bowling strike rate: balls per wicket, counted in real balls, so 1.2
   // overs is eight of them rather than 1.2 × 6.
   s.strikeRate = s.wkts ? (s.ballsBowled / s.wkts) : null;
+  s.econOverall = s.ballsBowled ? (s.conceded / (s.ballsBowled / 6)) : null;
   s.list.reverse();
   return s;
 }
@@ -871,7 +986,7 @@ function leagueAverages(){
 }
 
 function leagueBests(){
-  var best = { high:null, lowDefended:null, highChased:null, runs:null, wkts:null, econ:null, sr:null };
+  var best = { high:null, lowDefended:null, highChased:null, runs:null, wkts:null, econ:null, sr:null, econOverall:null };
   PLAYERS.forEach(function(p){
     var s = statsFor(p);
     if(s.high !== null && (best.high === null || s.high > best.high)) best.high = s.high;
@@ -881,6 +996,7 @@ function leagueBests(){
     if(s.wkts > 0 && (best.wkts === null || s.wkts > best.wkts)) best.wkts = s.wkts;
     if(s.bestEcon !== null && (best.econ === null || s.bestEcon < best.econ)) best.econ = s.bestEcon;
     if(s.strikeRate !== null && (best.sr === null || s.strikeRate < best.sr)) best.sr = s.strikeRate;
+    if(s.econOverall !== null && (best.econOverall === null || s.econOverall < best.econOverall)) best.econOverall = s.econOverall;
   });
   return best;
 }
@@ -924,6 +1040,89 @@ function wlTable(map, heading){
         '<td class="wl">' + r.l + '</td>' +
         '<td class="wl">' + (n ? ((r.w / n) * 100).toFixed(0) : "0") + '</td></tr>';
     }).join("") + '</tbody></table>';
+}
+
+function renderHighs(){
+  var box = $("highs"); if(!box) return;
+  var R = leagueRecords();
+  $("highsAside").textContent = R.n ? "Across " + R.n + " match" + (R.n === 1 ? "" : "es") : "The record book";
+
+  if(!R.n){
+    box.innerHTML = '<p class="hnote">Nothing on record yet. The first result opens the book.</p>';
+    return;
+  }
+
+  // who · figures · date, skipping whatever isn't there
+  function line(e){
+    return [e.who, e.sub, e.d].filter(function(x){ return !!x; }).join(" &middot; ");
+  }
+  function rc(label, e, dp){
+    if(!e) return statCard(label, null, "nothing on record", false);
+    return statCard(label, dp === undefined ? e.v : e.v.toFixed(dp), line(e), false);
+  }
+
+  var stats = PLAYERS.map(statsFor);
+  var lg = leagueAverages();
+  var rr = R.balls ? (R.runs / (R.balls / 6)) : null;
+  var played = stats.filter(function(s){ return s.m > 0; });
+
+  var html = '<h4 class="mtitle">The cycle so far<span class="scope duo">League</span></h4><div class="stats">' +
+    statCard("Matches", R.n, R.so ? R.so + " to a Super Over" : "none to a Super Over", false) +
+    statCard("Runs scored", R.runs.toLocaleString(), rr ? rr.toFixed(2) + " an over" : null, false) +
+    statCard("Wickets fallen", R.wkts, oversText(R.balls) + " overs bowled", false) +
+    statCard("Bat first", R.ordered ? R.firstWins + "&ndash;" + R.chaseWins : null,
+             R.ordered ? Math.round(R.firstWins / R.ordered * 100) + "% of " + R.ordered + " with order known"
+                       : "no innings order recorded", false) +
+    statCard("Average 1st innings", lg.first, lg.firstN ? "over " + lg.firstN + " innings" : "none recorded", false, "ref") +
+    statCard("Average chase", lg.second, lg.secondN ? "over " + lg.secondN + " innings" : "none recorded", false, "ref") +
+    statCard("D/L results", R.dls || null, "settled on par", false) +
+    statCard("Biggest match", R.agg ? R.agg.v : null, R.agg ? line(R.agg) : "nothing on record", false) +
+  '</div>';
+
+  html += '<h4 class="mtitle">With the bat<span class="scope duo">Duo stat</span></h4><div class="stats">' +
+    rc("Highest total", R.high) +
+    rc("Lowest total", R.low) +
+    rc("Fastest innings", R.rate, 2) +
+    rc("Highest chased", R.chased) +
+  '</div>';
+
+  html += '<h4 class="mtitle">With the ball<span class="scope duo">Duo stat</span></h4><div class="stats">' +
+    rc("Best economy", R.econ, 2) +
+    rc("Best strike rate", R.srate, 1) +
+    rc("Lowest defended", R.defended) +
+    statCard("Season economy", rr ? rr.toFixed(2) : null, "every ball bowled in the cycle", false, "ref") +
+  '</div>';
+
+  html += '<h4 class="mtitle">Margins<span class="scope duo">Duo stat</span></h4><div class="stats">' +
+    rc("Biggest win by runs", R.winRuns) +
+    rc("Biggest win by wickets", R.winWkts) +
+  '</div>';
+
+  // Pairings and form are the only things one player carries alone, so this
+  // is the one block that ranks people rather than innings.
+  var pairs = Object.keys(R.pairs).map(function(k){
+    var p = R.pairs[k]; p.n = p.w + p.l; p.pcw = p.n ? p.w / p.n * 100 : 0; return p;
+  });
+  var settled = pairs.filter(function(p){ return p.n >= 2; });
+  var bestPair = settled.slice().sort(function(a,b){ return b.pcw - a.pcw || b.n - a.n; })[0];
+  var mostPair = pairs.slice().sort(function(a,b){ return b.n - a.n || b.w - a.w; })[0];
+
+  var streak  = topOf(played, function(s){ return s.bestStreak || null; }, function(a,b){ return a > b; });
+  var mostPl  = topOf(played, function(s){ return s.m; }, function(a,b){ return a > b; });
+  var bestPcw = topOf(played, function(s){ return s.pcw; }, function(a,b){ return a > b; });
+
+  html += '<h4 class="mtitle">Pairings &amp; form<span class="scope solo">Personal</span></h4><div class="stats">' +
+    statCard("Best pairing", bestPair ? bestPair.pcw.toFixed(0) : null,
+             bestPair ? bestPair.names + " &middot; " + bestPair.w + "&ndash;" + bestPair.l : "needs a pair with two games", false) +
+    statCard("Most played pairing", mostPair ? mostPair.n : null,
+             mostPair ? mostPair.names + " &middot; " + mostPair.w + "&ndash;" + mostPair.l : "nothing on record", false) +
+    statCard("Longest win streak", streak ? streak.v : null, streak ? streak.who : "nobody has strung two together", false) +
+    statCard("Best PCW", bestPcw ? bestPcw.v.toFixed(2) : null, bestPcw ? bestPcw.who : "nothing on record", false) +
+    statCard("Most matches", mostPl ? mostPl.v : null, mostPl ? mostPl.who : "nothing on record", false) +
+    statCard("Pairings used", pairs.length || null, "of the combinations available", false) +
+  '</div>';
+
+  box.innerHTML = html;
 }
 
 function renderModal(){
@@ -973,7 +1172,9 @@ function renderModal(){
     statCard("Duo strike rate", s.strikeRate === null ? null : s.strikeRate.toFixed(1),
              s.strikeRate === null ? "no wickets yet" : "balls per wicket",
              s.strikeRate !== null && best.sr !== null && Math.abs(s.strikeRate - best.sr) < 1e-9) +
-    statCard("Runs conceded in a duo", s.conceded, econ ? econ + " an over" : null, false) +
+    statCard("Duo economy", econ,
+             s.ballsBowled ? s.conceded + " conceded in " + oversText(s.ballsBowled) + " ov" : "nothing bowled yet",
+             s.econOverall !== null && best.econOverall !== null && Math.abs(s.econOverall - best.econOverall) < 1e-9) +
   '</div>';
 
   var bf = s.batFirst, ch = s.chasing;
@@ -1566,7 +1767,8 @@ function removeMatch(id){
 function render(){
   if(S.editing && !findMatch(S.editing)) S.editing = null;   // deleted under us
   var rows = buildTable();
-  renderCrest(); renderWire(); renderTable(rows); renderVerdict(rows); renderEntry(); renderLog();
+  renderCrest(); renderWire(); renderTable(rows); renderVerdict(rows);
+  renderHighs(); renderEntry(); renderLog();
   if(S.openPlayer) renderModal();
 }
 
