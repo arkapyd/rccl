@@ -122,16 +122,19 @@ input::placeholder{color:var(--lilac-dim)}
 .pair select{flex:1 1 0}
 .versus{font-family:'Teko',sans-serif;font-weight:700;font-size:18px;letter-spacing:.06em;text-transform:uppercase;color:var(--bronze-lit)}
 .sheet{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-bottom:14px}
-.innings{border:1px solid var(--hair-soft);border-radius:2px;padding:12px 14px}
+.innings{border:1px solid var(--hair-soft);border-radius:2px;padding:12px 14px;min-width:0}
 .innings h4{margin:0 0 10px;display:flex;align-items:center;gap:8px}
 .innings h4 .nm{font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--bronze-lit);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .innbadge{flex:0 0 auto;margin-left:auto;font-size:8px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:3px 7px;border-radius:2px;border:1px solid var(--hair-soft);color:var(--lilac-dim)}
 .innbadge[hidden]{display:none}
 .innbadge.first{background:var(--gold);border-color:var(--gold);color:var(--royal-deep)}
 .innbadge.chase{border-color:var(--bronze-lit);color:var(--bronze-lit)}
-.fields{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.fields.two{grid-template-columns:repeat(2,1fr)}
-.field{display:flex;flex-direction:column;gap:5px}
+/* minmax(0,1fr) + min-width:0 stop the number inputs' default intrinsic width
+   from forcing the grid tracks wider than the innings box that holds them. */
+.fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fields.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field input{width:100%}
 .field span{font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim);text-align:center}
 .sobox{border:1px solid var(--gold);border-radius:2px;padding:14px;margin-bottom:14px;background:rgba(255,228,99,.06)}
 .sobox h3{margin:0 0 12px;font-family:'Teko',sans-serif;font-weight:700;font-size:19px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
@@ -148,6 +151,20 @@ input::placeholder{color:var(--lilac-dim)}
 .when{display:flex;align-items:center;gap:9px;font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim)}
 .flash{min-height:1.5em;margin-top:12px;font-size:13.5px;color:var(--gold)}
 .flash.bad{color:#FF9DA6}
+
+/* ---------------- DLS ---------------- */
+.dlsrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.dlsbox{border:1px solid var(--bronze-lit);border-radius:2px;padding:14px;margin-bottom:14px;background:rgba(240,200,120,.06)}
+.dlsbox[hidden]{display:none}
+.dlsbox h3{margin:0 0 6px;font-family:'Teko',sans-serif;font-weight:700;font-size:19px;letter-spacing:.08em;text-transform:uppercase;color:var(--bronze-lit)}
+.dlsbox .why{font-size:12px;color:var(--lilac-dim);margin:0 0 12px;line-height:1.5;max-width:64ch}
+.dlsbox .why b{color:var(--lilac);font-weight:700}
+.dlsgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:12px}
+.dlsout{font-size:13.5px;color:var(--lilac);line-height:1.6;padding:11px 13px;border:1px solid var(--hair-soft);border-radius:2px;margin-bottom:12px;min-height:1.4em}
+.dlsout b{color:var(--gold);font-weight:700}
+.dlsout .par{font-family:'Teko',sans-serif;font-size:26px;font-weight:700;color:var(--gold);line-height:1;display:block;margin-bottom:3px}
+.dlsout .res{display:block;font-size:11px;color:var(--lilac-dim);letter-spacing:.06em;margin-top:5px}
+.dlstag{font-family:'Manrope',sans-serif;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--royal-deep);background:var(--bronze-lit);padding:3px 8px;border-radius:2px}
 
 /* ---------------- results ---------------- */
 .log{list-style:none;margin:0;padding:0}
@@ -185,6 +202,8 @@ footer img{width:26px;height:auto;opacity:.7}
 .chip{font-family:'Manrope',sans-serif;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:8px 13px;border-radius:2px;cursor:pointer;border:1px solid var(--hair-soft);background:transparent;color:var(--lilac-dim);transition:.15s}
 .chip:hover{border-color:var(--gold);color:var(--gold)}
 .chip.on{background:var(--gold);border-color:var(--gold);color:var(--royal-deep)}
+.chip.bronze:hover{border-color:var(--bronze-lit);color:var(--bronze-lit)}
+.chip.bronze.on{background:var(--bronze-lit);border-color:var(--bronze-lit);color:var(--royal-deep)}
 
 /* ---------------- player dossier modal ---------------- */
 .modal[hidden]{display:none}
@@ -311,7 +330,7 @@ footer img{width:26px;height:auto;opacity:.7}
   <section>
     <div class="head">
       <h2>Road to RCCL</h2>
-      <span class="aside">Six clauses</span>
+      <span class="aside">Seven clauses</span>
     </div>
     <div class="hairline"></div>
     <ol class="laws">
@@ -321,6 +340,7 @@ footer img{width:26px;height:auto;opacity:.7}
       <li>A tied match goes to a <b>two-over Super Over</b>. Whoever takes it takes the W, exactly as if they had won in regulation.</li>
       <li>The gate stands at <b>seven wins</b>. Below it you appear on the table but are not in contention.</li>
       <li>At the close, the highest PCW among those through the gate takes the cycle. Level on PCW, they settle it 2v2 until it breaks.</li>
+      <li>If the game falls over mid-chase, the result stands on the <b>DLS par score</b> at the moment it died. Level with par is a tie, and goes to a Super Over.</li>
     </ol>
   </section>
 
@@ -405,6 +425,29 @@ const CYCLE = {
 // sits at the top of the league forever.
 const MIN_ECON_BALLS = 30;
 
+// Standard match length — the default allotment on both sides of a DLS sum.
+const MATCH_OVERS = 20;
+
+/* ── Duckworth–Lewis resource model ────────────────────────────
+   Duckworth and Lewis never released the real Z0(w) and b(w): they
+   were withheld as commercially confidential, so nobody outside the
+   ICC can reproduce the official tables exactly. What follows is the
+   published *form* of the Standard Edition model,
+
+       Z(u,w) = F(w) · [1 − exp(−b·u / F(w))]
+
+   with b fitted so the zero-wicket column lands on the published
+   Standard Edition figures almost exactly:
+
+       50 ov 100.0 · 40 ov 90.3 · 30 ov 77.1
+       25 ov  68.7 · 20 ov 58.9 · 10 ov 34.0 · 5 ov 18.4
+
+   F(w) is the usual wicket-factor set. Good enough to settle a
+   crashed game between friends; not the official ICC calculation.
+   Better numbers can be dropped in here and everything follows. */
+const DLS_B = 0.031426;
+const DLS_F = [1.000, 0.900, 0.787, 0.663, 0.531, 0.400, 0.276, 0.168, 0.084, 0.028];
+
 const PLAYERS = ["zombdapro","chrisp4two","loiteringmedic","partialcost","ninjaadarsh","northwestlease","milneristan"];
 
 // Old names already sitting in the database, mapped to current handles.
@@ -433,7 +476,8 @@ var URN_PATH = 'M1.6 1.4H12.4V3.1H11.3C11.1 6.1 9.5 8.1 7.9 8.5V10.2H9V11.2H11.3
 
 var S = {
   matches: SEED.map(function(m,i){ return { id:"seed"+i, d:m.d, w:m.w, l:m.l }; }),
-  live:false, unlocked:false, editing:null, fb:null, entryKey:null, openPlayer:null, formBF:null
+  live:false, unlocked:false, editing:null, fb:null, entryKey:null, openPlayer:null,
+  formBF:null, dlsOpen:false
 };
 
 document.documentElement.style.setProperty('--wm', 'url("' + LOGO + '")');
@@ -582,11 +626,9 @@ function renderVerdict(rows){
     (closed ? " The urn is theirs." : " Through the gate, but the window is still open — one bad evening moves this.");
 }
 
-/* ───────── per-player record book ─────────
-   Every figure below is derived from the match records in Firebase.
-   Nothing here is stored separately, so editing a fixture corrects
-   the stats automatically instead of leaving a stale second copy. */
-
+/* ───────── overs arithmetic ─────────
+   Cricket overs are base-6 after the decimal point: 1.2 means one over
+   and two balls — eight balls, not 1.2 × 6. Everything counts balls. */
 function toBalls(o){
   if(o === null || o === undefined) return 0;
   var f = Math.floor(o), b = Math.round((o - f) * 10);
@@ -596,12 +638,52 @@ function oversText(balls){
   if(!balls) return "0";
   return Math.floor(balls / 6) + (balls % 6 ? "." + (balls % 6) : "");
 }
+function ovDec(o){ return toBalls(o) / 6; }      // 12.3 overs → 12.5 decimal overs
+
+/* ───────── DLS ─────────
+   Runs still to come with u overs left and w wickets down, on the model's
+   own scale. Normalised against a full 50-over innings so allotments of
+   unequal length stay comparable. */
+function dlsZ(u, w){
+  if(u <= 0 || w >= 10) return 0;
+  var f = DLS_F[w];
+  return f * (1 - Math.exp(-DLS_B * u / f));
+}
+function dlsRes(u, w){ return 100 * dlsZ(u, w) / dlsZ(50, 0); }
+
+// Resource a side actually got: all it started with, less whatever was
+// still sitting unused when play stopped.
+function dlsAvailable(allotted, oversFaced, wktsDown){
+  var used = Math.min(oversFaced, allotted);
+  var left = Math.max(0, allotted - used);
+  var w = Math.min(10, Math.max(0, wktsDown));
+  return Math.max(0, dlsRes(allotted, 0) - dlsRes(left, w));
+}
+
+// Par is what the chase needed to be level; one more than that wins it.
+function dlsVerdict(first, chase){
+  var r1 = dlsRes(first.allotted, 0);
+  var r2 = dlsAvailable(chase.allotted, chase.faced, chase.wkts);
+  if(!(r1 > 0)) return null;
+  var exact = first.runs * r2 / r1;
+  var par = Math.floor(exact);
+  return {
+    r1: r1, r2: r2, exact: exact, par: par, target: par + 1,
+    side: chase.runs > par ? "chase" : (chase.runs === par ? "tie" : "first")
+  };
+}
+
+/* ───────── per-player record book ─────────
+   Every figure below is derived from the match records in Firebase.
+   Nothing here is stored separately, so editing a fixture corrects
+   the stats automatically instead of leaving a stale second copy. */
 
 // A margin is runs if the side batting first won, wickets if the chase won.
 // With no innings order recorded there is no honest way to say which, so
 // the margin is simply left blank rather than guessed at.
 function marginOf(mt){
   if(mt.sow && mt.sol) return "Super Over";
+  if(mt.dls) return "DLS · par " + mt.dls.par;
   if(!mt.bf) return "";
   if(!mt.sw || !mt.sl || mt.sw.r === undefined || mt.sl.r === undefined) return "";
   if(mt.bf === "l"){                                   // winner batted second
@@ -620,7 +702,7 @@ function statsFor(name){
     lowDefended:null, highChased:null,
     wonFirst:0, wonSecond:0, batFirst:{p:0,w:0,l:0}, chasing:{p:0,w:0,l:0},
     runsFirst:0, innsFirst:0, runsChase:0, innsChase:0,
-    soPlayed:0, soWon:0,
+    soPlayed:0, soWon:0, dlsPlayed:0, dlsWon:0,
     winByRuns:null, winByWkts:null, lossByRuns:null, lossByWkts:null,
     streak:0, bestStreak:0, partners:{}, foes:{}, list:[]
   };
@@ -643,7 +725,7 @@ function statsFor(name){
       d:mt.d, won:won, counts:counts,
       partner:side.filter(function(p){ return p !== name; })[0] || "",
       foes:other.slice(), mine:mine, theirs:theirs,
-      margin:marginOf(mt), so:!!(mt.sow && mt.sol)
+      margin:marginOf(mt), so:!!(mt.sow && mt.sol), dls:!!mt.dls
     });
 
     if(!counts) return;                 // out-of-window games don't feed the record
@@ -664,6 +746,7 @@ function statsFor(name){
     });
 
     if(mt.sow && mt.sol){ s.soPlayed++; if(won) s.soWon++; }
+    if(mt.dls){ s.dlsPlayed++; if(won) s.dlsWon++; }
 
     if(mine && mine.r !== undefined && mine.r !== null){
       s.runs += mine.r; s.inns++;
@@ -710,10 +793,11 @@ function statsFor(name){
 
     // Margins. Defend a total and the margin is runs; haul one down and it
     // is wickets in hand. Losses are the mirror image: lose batting first
-    // and you lost by wickets, lose chasing and you lost by runs. A super
-    // over isn't a margin at all — the match was level.
-    var superOver = !!(mt.sow && mt.sol);
-    if(!superOver && first !== null){
+    // and you lost by wickets, lose chasing and you lost by runs. Super
+    // overs and DLS results are neither — the first ended level, the
+    // second never finished at all.
+    var noMargin = !!(mt.sow && mt.sol) || !!mt.dls;
+    if(!noMargin && first !== null){
       if(first === true && won && haveBoth){
         var dw = mine.r - theirs.r;
         if(s.winByRuns === null || dw > s.winByRuns) s.winByRuns = dw;
@@ -899,6 +983,7 @@ function renderModal(){
     statCard("Heaviest loss by runs", s.lossByRuns === null ? null : "&minus;" + s.lossByRuns, "chase fell short", false) +
     statCard("Heaviest loss by wickets", s.lossByWkts, "spare, total hauled down", false) +
     statCard("Super overs", s.soPlayed ? s.soWon + "/" + s.soPlayed : null, "won of played", false) +
+    statCard("DLS results", s.dlsPlayed ? s.dlsWon + "/" + s.dlsPlayed : null, "won of settled", false) +
     statCard("Through the gate", s.w >= CYCLE.minWins ? "YES" : (CYCLE.minWins - s.w),
              s.w >= CYCLE.minWins ? "in contention" : "wins still needed", false) +
   '</div>';
@@ -962,6 +1047,7 @@ function scoreCard(m){
   var bits = [];
   var main = innings(m.sw), lost = innings(m.sl);
   if(main && lost) bits.push('<span class="sc">' + main + ' <span class="dash">&mdash;</span> ' + lost + '</span>');
+  if(m.dls) bits.push('<span class="dlstag">DLS &middot; par ' + m.dls.par + '</span>');
   if(m.sow && m.sol){
     var sow = innings(m.sow), sol = innings(m.sol);
     bits.push('<span class="sotag">Super Over</span>');
@@ -1070,6 +1156,21 @@ function renderEntry(){
       '<h3>Super Over &middot; two overs</h3>' +
       '<div class="sheet">' + inningsBlock("SA","Left pair",false) + inningsBlock("SB","Right pair",false) + '</div>' +
     '</div>' +
+    '<div class="dlsrow">' +
+      '<button class="chip bronze" id="dlsToggle" type="button">Game died mid-chase? Settle on DLS</button>' +
+    '</div>' +
+    '<div class="dlsbox" id="dlsBox" hidden>' +
+      '<h3>DLS par score</h3>' +
+      '<p class="why">Fill the sheet above with the score as far as the game got, including the ' +
+        '<b>overs the chase had faced</b> when it died. Par comes off those overs and the wickets down. ' +
+        'Needs the <b>innings order</b> set — DLS can\u2019t tell a defence from a chase without it.</p>' +
+      '<div class="dlsgrid">' +
+        '<label class="field"><span>1st inns allotted</span><input class="n" type="number" min="1" max="50" step="0.1" id="dlsN1"></label>' +
+        '<label class="field"><span>Chase allotted</span><input class="n" type="number" min="1" max="50" step="0.1" id="dlsN2"></label>' +
+      '</div>' +
+      '<div class="dlsout" id="dlsOut"></div>' +
+      '<button class="btn fill" id="dlsApply" hidden>Save as DLS result</button>' +
+    '</div>' +
     '<div class="reading" id="reading"></div>' +
     '<div class="row">' +
       '<button class="btn fill" id="save" hidden>Save result</button>' +
@@ -1088,14 +1189,22 @@ function renderEntry(){
     $("played").value = editing.d || new Date().toISOString().slice(0,10);
     // stored relative to winner/loser, so map it back onto left/right
     S.formBF = editing.bf === "w" ? "A" : editing.bf === "l" ? "B" : null;
+    S.dlsOpen = !!editing.dls;
+    if(editing.dls){
+      if(editing.dls.n1 !== undefined && editing.dls.n1 !== null) $("dlsN1").value = editing.dls.n1;
+      if(editing.dls.n2 !== undefined && editing.dls.n2 !== null) $("dlsN2").value = editing.dls.n2;
+    }
   } else {
     S.formBF = null;
+    S.dlsOpen = false;
     ["a1","a2","b1","b2"].forEach(function(id,k){ $(id).selectedIndex = Math.min(k, PLAYERS.length - 1); });
     $("played").value = new Date().toISOString().slice(0,10);
   }
+  if(!$("dlsN1").value) $("dlsN1").value = MATCH_OVERS;
+  if(!$("dlsN2").value) $("dlsN2").value = MATCH_OVERS;
 
   ["a1","a2","b1","b2"].forEach(function(id){ $(id).onchange = refresh; });
-  ["rA","kA","oA","rB","kB","oB","rSA","kSA","rSB","kSB"].forEach(function(id){
+  ["rA","kA","oA","rB","kB","oB","rSA","kSA","rSB","kSB","dlsN1","dlsN2"].forEach(function(id){
     if($(id)) $(id).oninput = refresh;
   });
 
@@ -1104,6 +1213,8 @@ function renderEntry(){
   });
   paintBF();
 
+  $("dlsToggle").onclick = function(){ S.dlsOpen = !S.dlsOpen; refresh(); };
+  $("dlsApply").onclick  = function(){ commitDls(); };
   $("winA").onclick = function(){ commit("A"); };
   $("winB").onclick = function(){ commit("B"); };
   $("save").onclick = function(){ commit(null); };
@@ -1114,14 +1225,17 @@ function renderEntry(){
 }
 
 // After a save the panel isn't rebuilt (that would nuke half-typed input),
-// so the scores and innings order have to be cleared by hand or they carry
-// straight into the next match.
+// so the scores, innings order and DLS box have to be cleared by hand or
+// they carry straight into the next match.
 function clearForm(){
   ["rA","kA","oA","rB","kB","oB","rSA","kSA","rSB","kSB"].forEach(function(id){
     if($(id)) $(id).value = "";
   });
   S.formBF = null;
+  S.dlsOpen = false;
   if($("soBox")) $("soBox").hidden = true;
+  if($("dlsN1")) $("dlsN1").value = MATCH_OVERS;
+  if($("dlsN2")) $("dlsN2").value = MATCH_OVERS;
   paintBF();
   refresh();
 }
@@ -1170,6 +1284,68 @@ function verdictFromScores(){
   return { side:null, tied:true, msg:"Super Over tied too. Play another and enter that one instead." };
 }
 
+// Reads the sheet through the DLS lens: who set, who chased, and how far
+// the chase actually got. Returns { err } when it can't be run.
+function dlsRead(){
+  if(!S.formBF) return { err:"Set who batted first — DLS can't tell a defence from a chase without it." };
+  var firstTag = S.formBF, chaseTag = (S.formBF === "A") ? "B" : "A";
+  var fr = num($("r" + firstTag).value);
+  var cr = num($("r" + chaseTag).value);
+  var cw = num($("k" + chaseTag).value);
+  var co = num($("o" + chaseTag).value);
+  if(fr === null) return { err:"Enter the first innings total." };
+  if(cr === null) return { err:"Enter the chasing side's runs at the moment it died." };
+  if(co === null) return { err:"Enter the overs the chase had faced — that's what sets par." };
+  var n1 = num($("dlsN1").value), n2 = num($("dlsN2").value);
+  if(n1 === null || n1 <= 0) n1 = MATCH_OVERS;
+  if(n2 === null || n2 <= 0) n2 = MATCH_OVERS;
+  var faced = ovDec(co);
+  if(faced > ovDec(n2)) return { err:"The chase faced more overs than it was allotted — check the numbers." };
+  var v = dlsVerdict(
+    { runs:fr, allotted: ovDec(n1) },
+    { runs:cr, allotted: ovDec(n2), faced: faced, wkts: cw === null ? 0 : cw }
+  );
+  if(!v) return { err:"Those allotments leave the first innings no resource to work with." };
+  v.firstTag = firstTag; v.chaseTag = chaseTag;
+  v.firstRuns = fr; v.chaseRuns = cr; v.n1 = n1; v.n2 = n2;
+  v.wkts = (cw === null ? 0 : cw); v.facedTxt = oversText(toBalls(co));
+  return v;
+}
+
+function refreshDls(){
+  var boxEl = $("dlsBox"), outEl = $("dlsOut"), applyEl = $("dlsApply");
+  if(!boxEl) return;
+  boxEl.hidden = !S.dlsOpen;
+  $("dlsToggle").classList.toggle("on", S.dlsOpen);
+  if(!S.dlsOpen){ if(applyEl) applyEl.hidden = true; return; }
+
+  var v = dlsRead();
+  if(v.err){
+    outEl.innerHTML = '<span style="color:#FF9DA6">' + esc(v.err) + '</span>';
+    applyEl.hidden = true;
+    return;
+  }
+  var nameOf = function(tag){
+    return tag === "A"
+      ? [$("a1").value, $("a2").value].join(" & ")
+      : [$("b1").value, $("b2").value].join(" & ");
+  };
+  var chaseName = esc(nameOf(v.chaseTag)), firstName = esc(nameOf(v.firstTag));
+  var line;
+  if(v.side === "chase")     line = "<b>" + chaseName + "</b> are past par and take it.";
+  else if(v.side === "tie")  line = "Dead level with par — a <b>tie</b>. Play the Super Over and enter that instead.";
+  else                       line = "<b>" + firstName + "</b> hold on — the chase is short of par.";
+
+  outEl.innerHTML =
+    '<span class="par">Par ' + v.par + ' &middot; target ' + v.target + '</span>' +
+    chaseName + " were <b>" + v.chaseRuns + "/" + v.wkts + "</b> after <b>" + v.facedTxt +
+    "</b> ov, chasing " + v.firstRuns + ". " + line +
+    '<span class="res">Resources &middot; 1st innings ' + v.r1.toFixed(1) + '% &middot; chase ' +
+      v.r2.toFixed(1) + '% &middot; par exactly ' + v.exact.toFixed(2) + '</span>';
+  applyEl.hidden = (v.side === "tie");
+  applyEl.textContent = (S.editing ? "Update as DLS result" : "Save as DLS result");
+}
+
 function refresh(){
   var rA = num($("rA").value), rB = num($("rB").value);
   var level = rA !== null && rB !== null && rA === rB;
@@ -1191,8 +1367,12 @@ function refresh(){
     b.classList.toggle("chase", !first);
   });
 
+  refreshDls();
+
   var v = verdictFromScores();
-  $("reading").innerHTML = v.msg;
+  $("reading").innerHTML = S.dlsOpen
+    ? "Settling this one on DLS. The buttons below still save it as a normal result if you'd rather."
+    : v.msg;
   var auto = !!v.side;
   $("save").hidden = !auto;
   $("winA").hidden = auto;
@@ -1217,7 +1397,16 @@ function startEdit(id){
 }
 
 /* ───────── save ───────── */
-function commit(forced){
+function commitDls(){
+  var v = dlsRead();
+  if(v.err){ say(v.err, true); return; }
+  if(v.side === "tie"){ say("Level with par — that's a tie, so it goes to a Super Over.", true); return; }
+  var winTag = (v.side === "chase") ? v.chaseTag : v.firstTag;
+  commit(winTag, { par:v.par, target:v.target, n1:v.n1, n2:v.n2,
+                   r1:Math.round(v.r1 * 10) / 10, r2:Math.round(v.r2 * 10) / 10 });
+}
+
+function commit(forced, dlsInfo){
   var picks = ["a1","a2","b1","b2"].map(function(id){ return $(id).value; });
   var uniq = picks.filter(function(p,i){ return picks.indexOf(p) === i; });
   if(uniq.length !== 4){ say("Pick four different players.", true); return; }
@@ -1249,17 +1438,19 @@ function commit(forced){
   var d = $("played").value || new Date().toISOString().slice(0,10);
   var rec = { d:d, w: side === "A" ? A : B, l: side === "A" ? B : A, ts: Date.now() };
   if(S.formBF) rec.bf = (S.formBF === side) ? "w" : "l";   // stored winner-relative
+  if(dlsInfo) rec.dls = dlsInfo;
   if(scA || scB){ 
     if(side === "A"){ if(scA) rec.sw = scA; if(scB) rec.sl = scB; }
     else            { if(scB) rec.sw = scB; if(scA) rec.sl = scA; }
   }
-  if(levelled && soA && soB){
+  // A DLS result is settled on par, never on a Super Over — don't attach one.
+  if(levelled && soA && soB && !dlsInfo){
     if(side === "A"){ rec.sow = soA; rec.sol = soB; }
     else            { rec.sow = soB; rec.sol = soA; }
   }
 
   var verb = S.editing ? "updated" : "logged";
-  var note = rec.w.join(" & ") + " " + verb +
+  var note = rec.w.join(" & ") + " " + verb + (dlsInfo ? " on DLS (par " + dlsInfo.par + ")" : "") +
     (inWindow(rec) ? "." : " — outside the window, so it won't count.");
 
   if(S.fb){
@@ -1336,7 +1527,8 @@ function render(){
           return {
             id:id, d:m.d || "", ts:m.ts || 0,
             w:(m.w || []).map(canon), l:(m.l || []).map(canon),
-            sw:m.sw || null, sl:m.sl || null, sow:m.sow || null, sol:m.sol || null, bf:m.bf || null
+            sw:m.sw || null, sl:m.sl || null, sow:m.sow || null, sol:m.sol || null,
+            bf:m.bf || null, dls:m.dls || null
           };
         }).sort(function(a,b){
           return (a.d || "").localeCompare(b.d || "") || a.ts - b.ts;
