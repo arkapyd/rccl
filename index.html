@@ -345,7 +345,7 @@ footer img{width:26px;height:auto;opacity:.7}
       <li>A tied match goes to a <b>two-over Super Over</b>. Whoever takes it takes the W, exactly as if they had won in regulation.</li>
       <li>The gate stands at <b>seven wins</b>. Below it you appear on the table but are not in contention.</li>
       <li>At the close, the highest PCW among those through the gate takes the cycle. Level on PCW, they settle it 2v2 until it breaks.</li>
-      <li>If the game falls over mid-chase, the result stands on the <b>DLS par score</b> at the moment it died. Level with par is a tie, and goes to a Super Over.</li>
+      <li>If the game falls over mid-chase, the result stands on the <b>D/L par score</b> at the moment it died. The chase must <b>pass par outright</b> &mdash; short of it, however narrowly, is a loss.</li>
     </ol>
   </section>
 
@@ -455,6 +455,14 @@ const LOG_VISIBLE = 5;
    Better numbers can be dropped in here and everything follows. */
 const DLS_B = 0.031426;
 const DLS_F = [1.000, 0.900, 0.787, 0.663, 0.531, 0.400, 0.276, 0.168, 0.084, 0.028];
+
+/* Official D/L rounds par DOWN and calls a chase level with it a tie — the
+   2003 South Africa v Sri Lanka tie turned on exactly that reading. RCCL
+   doesn't: par is the exact figure, and a chase has to pass it outright.
+   With par at 125.33, 126 wins and 125 falls short, so a crashed game gives
+   a clean win or loss instead of a tie nobody played for.
+   Set this false for the official reading, where 125 would tie. */
+const DLS_STRICT_PAR = true;
 
 const PLAYERS = ["zombdapro","chrisp4two","loiteringmedic","partialcost","ninjaadarsh","northwestlease","milneristan"];
 
@@ -668,16 +676,28 @@ function dlsAvailable(allotted, oversFaced, wktsDown){
   return Math.max(0, dlsRes(allotted, 0) - dlsRes(left, w));
 }
 
-// Par is what the chase needed to be level; one more than that wins it.
+// Par is the exact break-even score. `need` is the lowest whole score that
+// clears it, and is the same number under either reading — the two rules only
+// differ on what happens to a chase sitting on the rounded-down figure.
 function dlsVerdict(first, chase){
   var r1 = dlsRes(first.allotted, 0);
   var r2 = dlsAvailable(chase.allotted, chase.faced, chase.wkts);
   if(!(r1 > 0)) return null;
   var exact = first.runs * r2 / r1;
-  var par = Math.floor(exact);
+  var floorPar = Math.floor(exact);
+  var need = floorPar + 1;
+  var side;
+  if(DLS_STRICT_PAR){
+    // Must beat the exact figure. 125 against a par of 125.33 is short.
+    side = chase.runs > exact ? "chase" : (chase.runs === exact ? "tie" : "first");
+  } else {
+    // Official: level with the rounded-down par is a tie.
+    side = chase.runs > floorPar ? "chase" : (chase.runs === floorPar ? "tie" : "first");
+  }
   return {
-    r1: r1, r2: r2, exact: exact, par: par, target: par + 1,
-    side: chase.runs > par ? "chase" : (chase.runs === par ? "tie" : "first")
+    r1: r1, r2: r2, exact: exact, floorPar: floorPar, need: need,
+    par: DLS_STRICT_PAR ? need : floorPar,
+    target: need, side: side
   };
 }
 
@@ -1362,16 +1382,17 @@ function refreshDls(){
   };
   var chaseName = esc(nameOf(v.chaseTag)), firstName = esc(nameOf(v.firstTag));
   var line;
-  if(v.side === "chase")     line = "<b>" + chaseName + "</b> are past par and take it.";
+  if(v.side === "chase")     line = "<b>" + chaseName + "</b> clear par and take it.";
   else if(v.side === "tie")  line = "Dead level with par — a <b>tie</b>. Play the Super Over and enter that instead.";
   else                       line = "<b>" + firstName + "</b> hold on — the chase is short of par.";
 
   outEl.innerHTML =
-    '<span class="par">Par ' + v.par + ' &middot; target ' + v.target + '</span>' +
+    '<span class="par">Par ' + v.par + '</span>' +
     chaseName + " were <b>" + v.chaseRuns + "/" + v.wkts + "</b> after <b>" + v.facedTxt +
     "</b> ov, chasing " + v.firstRuns + ". " + line +
-    '<span class="res">Resources &middot; 1st innings ' + v.r1.toFixed(1) + '% &middot; chase ' +
-      v.r2.toFixed(1) + '% &middot; par exactly ' + v.exact.toFixed(2) + '</span>';
+    '<span class="res">Break-even exactly ' + v.exact.toFixed(2) +
+      (DLS_STRICT_PAR ? ', so ' + v.need + ' wins it and ' + v.floorPar + ' falls short' : ', level at ' + v.floorPar + ' ties') +
+      ' &middot; resources ' + v.r1.toFixed(1) + '% v ' + v.r2.toFixed(1) + '%</span>';
   applyEl.hidden = (v.side === "tie");
   applyEl.textContent = (S.editing ? "Update as DLS result" : "Save as DLS result");
 }
