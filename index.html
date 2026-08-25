@@ -167,6 +167,11 @@ input::placeholder{color:var(--lilac-dim)}
 .dlstag{font-family:'Manrope',sans-serif;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--royal-deep);background:var(--bronze-lit);padding:3px 8px;border-radius:2px}
 
 /* ---------------- results ---------------- */
+/* max-height is set from JS by measuring the first LOG_VISIBLE rows, because
+   rows differ in height depending on whether they carry a scorecard line. */
+.logwrap{overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.logwrap::-webkit-scrollbar{width:9px}
+.logwrap::-webkit-scrollbar-thumb{border-width:2px}
 .log{list-style:none;margin:0;padding:0}
 .log li{padding:14px 0;border-top:1px solid var(--hair-soft)}
 .log .line{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 12px}
@@ -324,7 +329,7 @@ footer img{width:26px;height:auto;opacity:.7}
       <span class="aside" id="logAside"></span>
     </div>
     <div class="hairline"></div>
-    <ul class="log" id="log"></ul>
+    <div class="logwrap" id="logWrap"><ul class="log" id="log"></ul></div>
   </section>
 
   <section>
@@ -427,6 +432,9 @@ const MIN_ECON_BALLS = 30;
 
 // Standard match length — the default allotment on both sides of a DLS sum.
 const MATCH_OVERS = 20;
+
+// How many results stay in view before the log starts scrolling.
+const LOG_VISIBLE = 5;
 
 /* ── Duckworth–Lewis resource model ────────────────────────────
    Duckworth and Lewis never released the real Z0(w) and b(w): they
@@ -683,7 +691,7 @@ function dlsVerdict(first, chase){
 // the margin is simply left blank rather than guessed at.
 function marginOf(mt){
   if(mt.sow && mt.sol) return "Super Over";
-  if(mt.dls) return "DLS · par " + mt.dls.par;
+  if(mt.dls) return "D/L · par " + mt.dls.par;
   if(!mt.bf) return "";
   if(!mt.sw || !mt.sl || mt.sw.r === undefined || mt.sl.r === undefined) return "";
   if(mt.bf === "l"){                                   // winner batted second
@@ -1047,7 +1055,7 @@ function scoreCard(m){
   var bits = [];
   var main = innings(m.sw), lost = innings(m.sl);
   if(main && lost) bits.push('<span class="sc">' + main + ' <span class="dash">&mdash;</span> ' + lost + '</span>');
-  if(m.dls) bits.push('<span class="dlstag">DLS &middot; par ' + m.dls.par + '</span>');
+  if(m.dls) bits.push('<span class="dlstag">D/L &middot; par ' + m.dls.par + '</span>');
   if(m.sow && m.sol){
     var sow = innings(m.sow), sol = innings(m.sol);
     bits.push('<span class="sotag">Super Over</span>');
@@ -1056,11 +1064,27 @@ function scoreCard(m){
   return bits.length ? '<div class="card">' + bits.join("") + '</div>' : "";
 }
 
+// Rows vary in height (a scorecard line, a Super Over, a wrapped name), so the
+// window is measured off the real first LOG_VISIBLE rows rather than guessed at.
+function sizeLogWindow(){
+  var wrap = $("logWrap"), ul = $("log");
+  if(!wrap || !ul) return;
+  var items = ul.children;
+  if(items.length <= LOG_VISIBLE){ wrap.style.maxHeight = ""; return; }
+  var h = 0;
+  for(var i = 0; i < LOG_VISIBLE; i++) h += items[i].getBoundingClientRect().height;
+  wrap.style.maxHeight = Math.round(h) + "px";
+}
+
 function renderLog(){
-  $("logAside").textContent = S.matches.filter(inWindow).length + " counting toward the cycle";
+  var counting = S.matches.filter(inWindow).length;
+  var hidden = Math.max(0, S.matches.length - LOG_VISIBLE);
+  $("logAside").textContent = counting + " counting toward the cycle" +
+    (hidden ? " · scroll for " + hidden + " older" : "");
   var list = S.matches.slice().reverse();
   if(!list.length){
     $("log").innerHTML = '<li class="blank">Nothing played yet. The first result goes in above.</li>';
+    sizeLogWindow();
     return;
   }
   $("log").innerHTML = list.map(function(m){
@@ -1087,7 +1111,13 @@ function renderLog(){
   Array.prototype.forEach.call($("log").querySelectorAll(".go"), function(b){
     b.onclick = function(){ startEdit(b.dataset.id); };
   });
+  sizeLogWindow();
 }
+
+// Rows reflow when the viewport changes, and again once the webfonts land,
+// so the window is re-measured on both.
+window.addEventListener("resize", sizeLogWindow);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(sizeLogWindow);
 
 /* ───────── entry form ───────── */
 function inningsBlock(tag, label, withOvers){
@@ -1215,9 +1245,9 @@ function renderEntry(){
 
   $("dlsToggle").onclick = function(){ S.dlsOpen = !S.dlsOpen; refresh(); };
   $("dlsApply").onclick  = function(){ commitDls(); };
-  $("winA").onclick = function(){ commit("A"); };
-  $("winB").onclick = function(){ commit("B"); };
-  $("save").onclick = function(){ commit(null); };
+  $("winA").onclick = function(){ commit("A", dlsPayloadIfOpen()); };
+  $("winB").onclick = function(){ commit("B", dlsPayloadIfOpen()); };
+  $("save").onclick = function(){ commit(null, dlsPayloadIfOpen()); };
   $("lock").onclick = function(){ S.unlocked = false; S.editing = null; render(); };
   if($("cancel")) $("cancel").onclick = function(){ S.editing = null; render(); };
 
@@ -1371,9 +1401,11 @@ function refresh(){
 
   var v = verdictFromScores();
   $("reading").innerHTML = S.dlsOpen
-    ? "Settling this one on DLS. The buttons below still save it as a normal result if you'd rather."
+    ? "Settling this one on D/L. Use the panel above, or name the winner below to log the game's own call — either way it's tagged D/L."
     : v.msg;
-  var auto = !!v.side;
+  // With D/L in play the raw run count can point the wrong way, so never let
+  // the auto-verdict pick a side for you — name the winner explicitly.
+  var auto = !!v.side && !S.dlsOpen;
   $("save").hidden = !auto;
   $("winA").hidden = auto;
   $("winB").hidden = auto;
@@ -1397,13 +1429,26 @@ function startEdit(id){
 }
 
 /* ───────── save ───────── */
+function dlsPayload(v){
+  return { par:v.par, target:v.target, n1:v.n1, n2:v.n2,
+           r1:Math.round(v.r1 * 10) / 10, r2:Math.round(v.r2 * 10) / 10 };
+}
+
+// The panel advises; the game had the last word. With the panel open, the
+// ordinary winner buttons still save — and still carry the D/L tag — so a
+// match the game called differently can be recorded as it actually stood.
+function dlsPayloadIfOpen(){
+  if(!S.dlsOpen) return undefined;
+  var v = dlsRead();
+  return v.err ? undefined : dlsPayload(v);
+}
+
 function commitDls(){
   var v = dlsRead();
   if(v.err){ say(v.err, true); return; }
-  if(v.side === "tie"){ say("Level with par — that's a tie, so it goes to a Super Over.", true); return; }
+  if(v.side === "tie"){ say("Level with par — a tie, so it goes to a Super Over. Pick a winner below to log the game's own call.", true); return; }
   var winTag = (v.side === "chase") ? v.chaseTag : v.firstTag;
-  commit(winTag, { par:v.par, target:v.target, n1:v.n1, n2:v.n2,
-                   r1:Math.round(v.r1 * 10) / 10, r2:Math.round(v.r2 * 10) / 10 });
+  commit(winTag, dlsPayload(v));
 }
 
 function commit(forced, dlsInfo){
