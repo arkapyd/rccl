@@ -1444,7 +1444,7 @@ function renderModal(){
     statCard("Runs scored in a duo", s.runs, s.inns + " innings", s.runs > 0 && s.runs === best.runs) +
     statCard("Highest duo total", s.high === null ? null : s.high + '<em class="sfx">' + s.highTail + '</em>',
              matchLink(s.highNo) || null, s.high !== null && s.high === best.high) +
-    statCard("Lowest completed innings",
+    statCard("Lowest duo total",
              s.lowDone === null ? null : s.lowDone + '<em class="sfx">' + s.lowDoneTail + '</em>',
              s.lowDone === null ? "no innings played out" : (matchLink(s.lowDoneNo) || null), false) +
     statCard("Average total", avg, rate ? rate + " per over" : null, false) +
