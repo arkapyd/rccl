@@ -120,7 +120,7 @@ tr.through{background:linear-gradient(90deg,rgba(255,228,99,.11),transparent 62%
 tr.through .who,tr.through .pcw{color:var(--gold)}
 tr.through .pos{color:var(--bronze-lit)}
 tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
-.plinth-cell{padding-left:20px!important;width:136px}
+.plinth-cell{padding-left:20px!important;width:104px}
 .plinth{display:flex;align-items:flex-end;gap:3px;height:30px}
 .step{width:8px;background:rgba(255,255,255,.11);border-radius:1px 1px 0 0}
 .step.cut{background:linear-gradient(180deg,var(--bronze-lit),var(--bronze))}
@@ -129,9 +129,7 @@ tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
 .step:nth-child(7){height:26px;width:10px}
 .urn{width:15px;height:15px;margin:0 0 12px 5px;fill:rgba(255,255,255,.14);flex:0 0 auto}
 .urn.lit{fill:var(--gold)}
-.tail{font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--lilac-dim);margin-left:8px;white-space:nowrap}
-.tail.over{color:var(--gold)}
-@media (max-width:620px){.plinth{height:24px}.step{width:6px}.step:nth-child(7){width:8px}.tail{display:none}}
+@media (max-width:620px){.plinth{height:24px}.step{width:6px}.step:nth-child(7){width:8px}}
 @media (max-width:470px){.plinth-cell{display:none}}
 
 /* ---------------- entry ---------------- */
@@ -327,6 +325,8 @@ footer img{width:26px;height:auto;opacity:.7}
 .stat.lead{border-color:var(--gold);background:rgba(255,228,99,.07)}
 .stat s{display:block;font-size:8.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim);text-decoration:none;margin-bottom:5px;line-height:1.35}
 .stat b{display:block;font-family:'Teko',sans-serif;font-weight:700;font-size:29px;line-height:1;color:var(--white)}
+.stat b .sfx{font-family:'Teko',sans-serif;font-style:normal;font-weight:600;font-size:.58em;
+  color:var(--lilac-dim);margin-left:4px;letter-spacing:.01em;white-space:nowrap}
 .stat.lead b{color:var(--gold)}
 .stat i{font-style:normal;display:block;font-size:11px;color:var(--lilac);margin-top:3px}
 .stat.ref{border-style:dashed;border-color:var(--hair);background:rgba(255,255,255,.03)}
@@ -674,16 +674,30 @@ function plinth(w){
   for(i = 1; i <= CYCLE.minWins; i++) s += '<span class="step' + (w >= i ? " cut" : "") + '"></span>';
   s += '<svg class="urn' + (w >= CYCLE.minWins ? " lit" : "") +
        '" viewBox="0 0 14 14" aria-hidden="true"><path d="' + URN_PATH + '"/></svg>';
+  // The bars and the lit urn carry this now, so the count only shows on
+  // hover and to screen readers rather than sitting beside every row.
   var left = CYCLE.minWins - w;
-  if(left > 0)      s += '<span class="tail">' + left + ' to go</span>';
-  else if(left < 0) s += '<span class="tail over">+' + (-left) + '</span>';
-  else              s += '<span class="tail over">Through</span>';
-  return '<div class="plinth">' + s + '</div>';
+  var label = left > 0
+    ? left + " win" + (left === 1 ? "" : "s") + " from the gate"
+    : "Through the gate" + (left < 0 ? " by " + (-left) : "");
+  return '<div class="plinth" title="' + esc(label) + '" aria-label="' + esc(label) + '">' + s + '</div>';
+}
+
+// The gold row is the cycle leader, not everyone past the gate: through on
+// wins AND top on PCW among those through. Ties share it, matching the
+// decider the verdict panel calls for. Rows arrive sorted by PCW.
+function cycleLeaders(rows){
+  var through = rows.filter(function(r){ return r.w >= CYCLE.minWins; });
+  if(!through.length) return [];
+  var top = through[0].pcw;
+  return through.filter(function(r){ return Math.abs(r.pcw - top) < 1e-9; });
 }
 
 function renderTable(rows){
+  var lead = {};
+  cycleLeaders(rows).forEach(function(r){ lead[r.name] = true; });
   $("table").innerHTML = rows.map(function(r,i){
-    var cls = r.w >= CYCLE.minWins ? "through" : (r.m === 0 ? "dnp" : "");
+    var cls = lead[r.name] ? "through" : (r.m === 0 ? "dnp" : "");
     return '<tr class="' + cls + '">' +
       '<td class="tl pos">' + (i+1) + '</td>' +
       '<td class="tl who"><button class="namebtn" data-p="' + esc(r.name) + '">' + esc(r.name) + '</button>' +
@@ -726,13 +740,12 @@ function renderVerdict(rows){
     return;
   }
 
-  var top = through[0].pcw;
-  var level = through.filter(function(r){ return Math.abs(r.pcw - top) < 1e-9; });
+  var level = cycleLeaders(rows);
 
   if(level.length > 1){
     $("vKicker").textContent = "Decider required";
     $("vName").textContent = level.map(function(r){ return r.name; }).join(" · ");
-    $("vNote").innerHTML = "Level through the gate on <b>" + top.toFixed(2) +
+    $("vNote").innerHTML = "Level through the gate on <b>" + level[0].pcw.toFixed(2) +
       " PCW</b>. They settle it 2v2 until the tie breaks.";
     return;
   }
@@ -759,6 +772,26 @@ function oversText(balls){
   return Math.floor(balls / 6) + (balls % 6 ? "." + (balls % 6) : "");
 }
 function ovDec(o){ return toBalls(o) / 6; }      // 12.3 overs → 12.5 decimal overs
+
+// "/3 (20)" — the part of a scoreline that trails the runs.
+function scoreTail(sc){
+  if(!sc || sc.r === undefined || sc.r === null) return "";
+  var t = "";
+  if(sc.k !== undefined && sc.k !== null) t += "/" + sc.k;
+  if(sc.o !== undefined && sc.o !== null) t += " (" + sc.o + ")";
+  return t;
+}
+function scoreFull(sc){
+  if(!sc || sc.r === undefined || sc.r === null) return "";
+  return sc.r + scoreTail(sc);
+}
+// An innings is complete once all ten are down or the full allotment is bowled.
+// A chase that ends early because the target was passed is NOT complete — it
+// stopped by choice, so its total says nothing about how a side batted.
+function inningsComplete(sc){
+  if(!sc) return false;
+  return sc.k === 10 || toBalls(sc.o) >= MATCH_OVERS * 6;
+}
 
 /* ───────── DLS ─────────
    Runs still to come with u overs left and w wickets down, on the model's
@@ -814,7 +847,7 @@ function leagueRecords(){
   var R = {
     n: ms.length, runs:0, wkts:0, balls:0, so:0, dls:0,
     firstWins:0, chaseWins:0, ordered:0,
-    high:null, low:null, agg:null, rate:null,
+    high:null, lowDone:null, agg:null, rate:null,
     winRuns:null, winWkts:null, thinRuns:null, thinWkts:null,
     defended:null, chased:null,
     econ:null, srate:null, pairs:{}
@@ -832,27 +865,29 @@ function leagueRecords(){
       var b = toBalls(sc.o);
       R.runs += sc.r; R.balls += b; total += sc.r;
       if(sc.k !== undefined && sc.k !== null) R.wkts += sc.k;
+      var tail = scoreTail(sc), full = scoreFull(sc);
 
-      if(R.high === null || sc.r > R.high.v) R.high = { v:sc.r, who:i.bat, d:day };
-      if(R.low  === null || sc.r < R.low.v)  R.low  = { v:sc.r, who:i.bat, d:day };
+      if(R.high === null || sc.r > R.high.v) R.high = { v:sc.r, tail:tail, who:i.bat, d:day };
+      // gated on a completed innings — see inningsComplete()
+      if(inningsComplete(sc) && (R.lowDone === null || sc.r < R.lowDone.v))
+        R.lowDone = { v:sc.r, tail:tail, who:i.bat, d:day };
 
       // One run rate, read from both ends: the batting side's scoring rate is
       // the fielding side's economy.
       if(b >= MIN_ECON_BALLS){
         var rr = sc.r / (b / 6);
-        var line = sc.r + " off " + oversText(b);
-        if(R.rate === null || rr > R.rate.v) R.rate = { v:rr, who:i.bat,  d:day, sub:line };
-        if(R.econ === null || rr < R.econ.v) R.econ = { v:rr, who:i.bowl, d:day, sub:line };
+        if(R.rate === null || rr > R.rate.v) R.rate = { v:rr, who:i.bat,  d:day, sub:full };
+        if(R.econ === null || rr < R.econ.v) R.econ = { v:rr, who:i.bowl, d:day, sub:full };
       }
       if(sc.k) {
         var sr = b / sc.k;
         if(R.srate === null || sr < R.srate.v)
-          R.srate = { v:sr, who:i.bowl, d:day, sub:sc.k + " in " + oversText(b) + " ov" };
+          R.srate = { v:sr, who:i.bowl, d:day, sub:full };
       }
     });
 
     if(wholeMatch && (R.agg === null || total > R.agg.v))
-      R.agg = { v:total, who:W + " v " + L, d:day };
+      R.agg = { v:total, who:W + " v " + L, d:day, sub:scoreFull(mt.sw) + " v " + scoreFull(mt.sl) };
 
     if(mt.sow && mt.sol) R.so++;
     if(mt.dls) R.dls++;
@@ -866,22 +901,26 @@ function leagueRecords(){
                     mt.sw && mt.sl && mt.sw.r !== undefined && mt.sw.r !== null &&
                     mt.sl.r !== undefined && mt.sl.r !== null;
       if(settled){
+        var fw = scoreFull(mt.sw), fl = scoreFull(mt.sl);
+        var beat = { who:W + " beat " + L, d:day, sub:fw + " v " + fl };
         if(mt.bf === "w"){
           var d = mt.sw.r - mt.sl.r;
           if(R.winRuns === null || d > R.winRuns.v)
-            R.winRuns = { v:d, who:W, d:day, sub:"beat " + L };
+            R.winRuns = { v:d, who:beat.who, d:day, sub:beat.sub };
           if(R.thinRuns === null || d < R.thinRuns.v)
-            R.thinRuns = { v:d, who:W, d:day, sub:"beat " + L };
+            R.thinRuns = { v:d, who:beat.who, d:day, sub:beat.sub };
           if(R.defended === null || mt.sw.r < R.defended.v)
-            R.defended = { v:mt.sw.r, who:W, d:day, sub:"held off " + L };
+            R.defended = { v:mt.sw.r, tail:scoreTail(mt.sw), who:W, d:day,
+                           sub:"held " + L + " to " + fl };
         } else {
           var wk = 10 - (mt.sw.k === undefined || mt.sw.k === null ? 0 : mt.sw.k);
           if(R.winWkts === null || wk > R.winWkts.v)
-            R.winWkts = { v:wk, who:W, d:day, sub:"beat " + L };
+            R.winWkts = { v:wk, who:beat.who, d:day, sub:beat.sub };
           if(R.thinWkts === null || wk < R.thinWkts.v)
-            R.thinWkts = { v:wk, who:W, d:day, sub:"beat " + L };
+            R.thinWkts = { v:wk, who:beat.who, d:day, sub:beat.sub };
           if(R.chased === null || mt.sl.r > R.chased.v)
-            R.chased = { v:mt.sl.r, who:W, d:day, sub:"hauled down v " + L };
+            R.chased = { v:mt.sl.r, tail:scoreTail(mt.sl), who:W, d:day,
+                         sub:"hauled down v " + L + ", reached " + fw };
         }
       }
     }
@@ -955,7 +994,10 @@ function recLine(e){
 }
 function recCard(label, e, dp){
   if(!e) return statCard(label, null, "nothing on record", false);
-  return statCard(label, dp === undefined ? e.v : e.v.toFixed(dp), recLine(e), false);
+  var v = (dp === undefined ? e.v : e.v.toFixed(dp));
+  // the scoreline rides alongside the headline figure, not instead of it
+  if(e.tail) v += '<em class="sfx">' + e.tail + '</em>';
+  return statCard(label, v, recLine(e), false);
 }
 
 function highsBlock(key, d){
@@ -973,7 +1015,7 @@ function highsBlock(key, d){
   }
   if(key === "bat"){
     return recCard("Highest total", R.high) +
-      recCard("Lowest total", R.low) +
+      recCard("Lowest completed innings", R.lowDone) +
       recCard("Fastest innings", R.rate, 2) +
       recCard("Highest chased", R.chased);
   }
@@ -1102,7 +1144,7 @@ function marginOf(mt){
 function statsFor(name){
   var s = {
     name:name, real:realName(name), m:0, w:0, l:0, pcw:0,
-    runs:0, inns:0, ballsFaced:0, high:null, low:null, wktsLost:0,
+    runs:0, inns:0, ballsFaced:0, high:null, highTail:"", lowDone:null, lowDoneTail:"", wktsLost:0,
     conceded:0, ballsBowled:0, wkts:0, bestEcon:null, bestEconRuns:null, bestEconBalls:0,
     lowDefended:null, highChased:null,
     wonFirst:0, wonSecond:0, batFirst:{p:0,w:0,l:0}, chasing:{p:0,w:0,l:0},
@@ -1157,8 +1199,11 @@ function statsFor(name){
       s.runs += mine.r; s.inns++;
       s.ballsFaced += toBalls(mine.o);
       if(mine.k !== undefined && mine.k !== null) s.wktsLost += mine.k;
-      if(s.high === null || mine.r > s.high) s.high = mine.r;
-      if(s.low  === null || mine.r < s.low)  s.low  = mine.r;
+      if(s.high === null || mine.r > s.high){ s.high = mine.r; s.highTail = scoreTail(mine); }
+      // same completed-innings rule the league record book uses
+      if(inningsComplete(mine) && (s.lowDone === null || mine.r < s.lowDone)){
+        s.lowDone = mine.r; s.lowDoneTail = scoreTail(mine);
+      }
     }
     if(theirs && theirs.r !== undefined && theirs.r !== null){
       s.conceded += theirs.r;
@@ -1338,8 +1383,11 @@ function renderModal(){
 
   html += sectionTitle("With the bat", "duo") + '<div class="stats">' +
     statCard("Runs scored in a duo", s.runs, s.inns + " innings", s.runs > 0 && s.runs === best.runs) +
-    statCard("Highest duo total", s.high, null, s.high !== null && s.high === best.high) +
-    statCard("Lowest duo total", s.low, null, false) +
+    statCard("Highest duo total", s.high === null ? null : s.high + '<em class="sfx">' + s.highTail + '</em>',
+             null, s.high !== null && s.high === best.high) +
+    statCard("Lowest completed innings",
+             s.lowDone === null ? null : s.lowDone + '<em class="sfx">' + s.lowDoneTail + '</em>',
+             s.lowDone === null ? "no innings played out" : null, false) +
     statCard("Average total", avg, rate ? rate + " per over" : null, false) +
   '</div>';
 
