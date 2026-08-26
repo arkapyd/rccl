@@ -418,7 +418,7 @@ footer img{width:26px;height:auto;opacity:.7}
       <div class="tally">
         <div><b id="tPlayers">0</b><span>Players currently playing</span></div>
         <div><b id="tMatches">0</b><span>Matches played in this cycle</span></div>
-        <div><b id="tGate">7</b><span>Wins to qualify</span></div>
+        <div><b id="tGate">7</b><span>Wins to be considered for the cycle</span></div>
       </div>
       <div class="wire" id="wire"><span class="pip"></span><span id="wireText">Connecting</span></div>
     </div>
@@ -483,13 +483,12 @@ footer img{width:26px;height:auto;opacity:.7}
   <section>
     <div class="head">
       <h2>Road to RCCL</h2>
-      <span class="aside">Seven clauses</span>
+      <span class="aside">Six clauses</span>
     </div>
     <div class="hairline"></div>
     <div class="panel">
     <ol class="laws">
       <li>Every match is <b>two a side over twenty overs</b>. No schedule and no set number of games &mdash; the cycle simply runs for its window.</li>
-      <li>A result gives both winners a <b>W</b> and both losers an <b>L</b>. Runs, wickets and overs may be recorded for the record, but <b>no scorecard figure ever ranks anybody</b>.</li>
       <li><b>PCW</b> is wins as a percentage of matches played. It is the only ranking number, borrowed from the WTC &mdash; minus the points, since a match here cannot end level.</li>
       <li>A tied match goes to a <b>two-over Super Over</b>. Whoever takes it takes the W, exactly as if they had won in regulation.</li>
       <li>The gate stands at <b>seven wins</b>. Below it you appear on the table but are not in contention.</li>
@@ -810,7 +809,7 @@ function renderVerdict(rows){
   $("vName").textContent = c.name;
   $("vNote").innerHTML = "<b>" + c.w + "–" + c.l + "</b> from " + c.m + " matches at <b>" +
     c.pcw.toFixed(2) + " PCW</b>." +
-    (closed ? " The urn is theirs." : " Through the gate, but the window is still open — one bad evening moves this.");
+    (closed ? " " : " ");
 }
 
 /* ───────── overs arithmetic ─────────
@@ -1150,9 +1149,6 @@ function highsBlock(key, d){
              d.streak ? d.streak.who : "no pair has strung two together", false) +
     statCard("Most played pairing", m ? m.n : null,
              m ? m.names + " &middot; " + m.w + "&ndash;" + m.l : "nothing on record", false) +
-    statCard("Unbeaten pairings", d.unbeaten.length || null,
-             d.unbeaten.length ? d.unbeaten.map(function(p){ return p.names + " (" + p.w + ")"; }).join(", ")
-                               : "every pair with two games has lost one", false);
 }
 
 // The face of each card: one headline figure so a click is worth making.
@@ -1725,7 +1721,7 @@ function sizeLogWindow(){
 function renderLog(){
   var counting = S.matches.filter(inWindow).length;
   var hidden = Math.max(0, S.matches.length - LOG_VISIBLE);
-  $("logAside").textContent = counting + " counting toward the cycle" +
+  $("logAside").textContent = counting + " matches this cycle" +
     (hidden ? " · scroll for " + hidden + " older" : "");
   var list = S.matches.slice().reverse();
   if(!list.length){
