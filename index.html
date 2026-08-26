@@ -241,6 +241,33 @@ input::placeholder{color:#7E868F}
   .hcard{grid-column:span 1!important;grid-row:span 1!important}
 }
 
+/* ---------------- cascading ranking strip ---------------- */
+.fanlab{font-size:8.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--lilac-dim);margin:-10px 0 9px}
+/* fixed height: the strip is one row of cards regardless of how many rank */
+.fan{position:relative;height:86px;margin-bottom:22px}
+.fanc{position:absolute;top:0;bottom:0;width:var(--fw);
+  display:flex;align-items:center;gap:11px;padding:10px 12px;
+  border:1px solid rgba(201,162,39,.30);border-radius:2px;overflow:hidden;cursor:default;
+  background:linear-gradient(158deg,var(--steel-hi) 0%,var(--steel) 46%,var(--steel-deep) 100%);
+  box-shadow:-7px 0 16px rgba(0,0,0,.5);
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.fanc:hover,.fanc:focus-visible{z-index:30;transform:translateY(-3px);border-color:var(--gold);
+  box-shadow:-7px 0 22px rgba(0,0,0,.62),0 0 0 1px rgba(255,228,99,.22);outline:none}
+.fspine{flex:0 0 auto;width:40px;display:flex;flex-direction:column;gap:2px}
+.fr{font-family:'Teko',sans-serif;font-size:12px;font-weight:700;line-height:1;color:var(--frame-lit)}
+.fm{font-family:'Teko',sans-serif;font-size:23px;font-weight:700;line-height:1;color:var(--steel-ink)}
+.fanc:hover .fm,.fanc:focus-visible .fm{color:var(--gold)}
+.fb{min-width:0;display:flex;flex-direction:column;gap:3px}
+.fn{font-size:12px;font-weight:700;color:var(--steel-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fd{font-size:10.5px;color:#98A0A9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* too narrow to cascade legibly — fall back to a plain stacked list */
+@media (max-width:640px){
+  .fan{height:auto;display:flex;flex-direction:column;gap:6px}
+  .fanc{position:static;width:auto;left:auto!important;box-shadow:none;transform:none}
+  .fanc:hover,.fanc:focus-visible{transform:none}
+}
+
 /* ---------------- results ---------------- */
 /* max-height is set from JS by measuring the first LOG_VISIBLE rows, because
    rows differ in height depending on whether they carry a scorecard line. */
@@ -552,6 +579,14 @@ const MATCH_OVERS = 20;
 
 // How many results stay in view before the log starts scrolling.
 const LOG_VISIBLE = 5;
+
+/* The cascading ranking strip. Cards overlap, so the visible sliver of each is
+   the strip's width divided by the count — past ten the spine holding the rank
+   and the figure stops fitting, so the strip is capped and says so.
+   FAN_MIN_INNS is the sample a pairing needs to be ranked at all; raise it to
+   2 or 3 to stop one-innings pairings topping the batting order. */
+const FAN_MAX = 10;
+const FAN_MIN_INNS = 1;
 
 /* ── Duckworth–Lewis resource model ────────────────────────────
    Duckworth and Lewis never released the real Z0(w) and b(w): they
@@ -866,19 +901,44 @@ function leagueRecords(){
     econ:null, srate:null, pairs:{}
   };
 
+  // pairing records are opened before the innings loop so each innings can be
+  // credited to the pair that batted it and charged to the pair that bowled it
+  function pair(key, side){
+    if(!R.pairs[key]) R.pairs[key] = {
+      names: side.map(realName).join(" & "), w:0, l:0, run:0, best:0, lastDay:"",
+      batRuns:0, batBalls:0, batInns:0, bowlRuns:0, bowlBalls:0, bowlWkts:0, bowlInns:0
+    };
+    return R.pairs[key];
+  }
+
   ms.forEach(function(mt){
     var W = (mt.w || []).map(realName).join(" & ");
     var L = (mt.l || []).map(realName).join(" & ");
     var day = fmt(mt.d);
     var total = 0, wholeMatch = true;
+    var wKey = (mt.w || []).length > 1 ? (mt.w || []).slice().sort().join("|") : "";
+    var lKey = (mt.l || []).length > 1 ? (mt.l || []).slice().sort().join("|") : "";
+    if(wKey) pair(wKey, mt.w);
+    if(lKey) pair(lKey, mt.l);
 
-    [{ sc:mt.sw, bat:W, bowl:L }, { sc:mt.sl, bat:L, bowl:W }].forEach(function(i){
+    [{ sc:mt.sw, bat:W, bowl:L, batKey:wKey, bowlKey:lKey },
+     { sc:mt.sl, bat:L, bowl:W, batKey:lKey, bowlKey:wKey }].forEach(function(i){
       var sc = i.sc;
       if(!sc || sc.r === undefined || sc.r === null){ wholeMatch = false; return; }
       var b = toBalls(sc.o);
       R.runs += sc.r; R.balls += b; total += sc.r;
       if(sc.k !== undefined && sc.k !== null) R.wkts += sc.k;
       var tail = scoreTail(sc), full = scoreFull(sc);
+
+      if(i.batKey && R.pairs[i.batKey]){
+        var bp = R.pairs[i.batKey];
+        bp.batRuns += sc.r; bp.batBalls += b; bp.batInns++;
+      }
+      if(i.bowlKey && R.pairs[i.bowlKey]){
+        var wp = R.pairs[i.bowlKey];
+        wp.bowlRuns += sc.r; wp.bowlBalls += b; wp.bowlInns++;
+        if(sc.k !== undefined && sc.k !== null) wp.bowlWkts += sc.k;
+      }
 
       if(R.high === null || sc.r > R.high.v) R.high = { v:sc.r, tail:tail, who:i.bat, d:day, no:mt.no };
       // gated on a completed innings — see inningsComplete()
@@ -941,9 +1001,7 @@ function leagueRecords(){
     [[mt.w, true], [mt.l, false]].forEach(function(e){
       var side = e[0] || [];
       if(side.length < 2) return;
-      var key = side.slice().sort().join("|");
-      if(!R.pairs[key]) R.pairs[key] = { names: side.map(realName).join(" & "), w:0, l:0, run:0, best:0, lastDay:"" };
-      var p = R.pairs[key];
+      var p = pair(side.slice().sort().join("|"), side);
       if(e[1]){
         p.w++; p.run++;
         if(p.run > p.best){ p.best = p.run; p.bestDay = day; }
@@ -1106,6 +1164,61 @@ function highsFace(key, d){
                 : { v: null, s: "no pair has two games yet" };
 }
 
+/* A cascading strip of every pairing, ranked. The cards are absolutely
+   positioned so hovering raises one to the front without moving the others —
+   that keeps the strip exactly one row tall whatever the ranking does, and
+   stops a wide fan from overflowing the modal. Only the left spine (rank and
+   figure) shows until a card comes forward. */
+function highsFan(key, d){
+  var W = 34;                 // collapsed card width, as a % of the strip
+  var list, label, val, detail;
+
+  if(key === "bat"){
+    list = d.pairs.filter(function(p){ return p.batInns >= FAN_MIN_INNS; })
+      .map(function(p){ return { p:p, v:p.batRuns / p.batInns }; })
+      .sort(function(a,b){ return b.v - a.v; });
+    label = "Season batting average by pairing &middot; highest first";
+    val = function(x){ return Math.round(x.v); };
+    detail = function(x){
+      return x.p.batRuns + " in " + x.p.batInns + " inns" +
+        (x.p.batBalls ? " &middot; " + (x.p.batRuns / (x.p.batBalls / 6)).toFixed(2) + " an over" : "");
+    };
+  } else if(key === "ball"){
+    list = d.pairs.filter(function(p){ return p.bowlBalls > 0 && p.bowlInns >= FAN_MIN_INNS; })
+      .map(function(p){ return { p:p, v:p.bowlRuns / (p.bowlBalls / 6) }; })
+      .sort(function(a,b){ return a.v - b.v; });
+    label = "Season economy by pairing &middot; tightest first";
+    val = function(x){ return x.v.toFixed(2); };
+    detail = function(x){
+      return x.p.bowlRuns + " off " + oversText(x.p.bowlBalls) + " ov &middot; " +
+        x.p.bowlWkts + " wkt" + (x.p.bowlWkts === 1 ? "" : "s");
+    };
+  } else return "";
+
+  if(!list.length) return "";
+  var total = list.length;
+  if(total > FAN_MAX){
+    list = list.slice(0, FAN_MAX);
+    label += " &middot; top " + FAN_MAX + " of " + total;
+  }
+  var n = list.length;
+  // spread to fill the strip, but never so far apart that they stop cascading
+  var step = n > 1 ? Math.min(26, (100 - W) / (n - 1)) : 0;
+
+  return '<div class="fanlab">' + label + '</div>' +
+    '<div class="fan" style="--fw:' + W + '%">' +
+      list.map(function(x, i){
+        return '<div class="fanc" tabindex="0" style="left:' + (i * step).toFixed(3) + '%" ' +
+          'title="' + esc(x.p.names) + '">' +
+          '<span class="fspine"><b class="fr">' + (i + 1) + '</b>' +
+          '<b class="fm">' + val(x) + '</b></span>' +
+          '<span class="fb"><span class="fn">' + esc(x.p.names) + '</span>' +
+          '<span class="fd">' + detail(x) + '</span></span>' +
+        '</div>';
+      }).join("") +
+    '</div>';
+}
+
 function renderHighs(){
   var box = $("highs"); if(!box) return;
   var d = highsData();
@@ -1154,6 +1267,7 @@ function renderHighsModal(key){
   html += '<p class="mnote">Every figure here is a <b>duo figure</b> — it belongs to the pair that ' +
     'was on the field, not to either player alone. This league records nothing individually, by design.</p>';
   html += '<div class="stats">' + highsBlock(key, d) + '</div>';
+  html += highsFan(key, d);
 
   html += '<div class="hnav">' + HIGHS.map(function(h){
     return '<button class="chip' + (h.key === key ? " on" : "") + '" type="button" data-h="' +
