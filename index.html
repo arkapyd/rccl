@@ -66,10 +66,29 @@ body{margin:0;background:repeating-linear-gradient(180deg,rgba(255,255,255,.026)
 .wire.live{color:var(--lilac)}
 .wire.live .pip{background:var(--gold);box-shadow:0 0 0 3px rgba(255,228,99,.18)}
 @media (max-width:760px){.crest-grid{grid-template-columns:1fr;gap:26px}.plate{max-width:290px;margin:0 auto}}
-.verdict{position:relative;overflow:hidden;border:1px solid var(--hair);background:var(--royal-panel);padding:clamp(22px,4.5vw,40px);}
+/* ── one steel surface, shared by every panel, card and window ──
+   The page background stays royal; everything sitting on it is slate in a
+   gold frame. --lilac is redefined locally so the lavender text tones that
+   suit purple resolve to neutral greys on steel, without touching the
+   palette anywhere it's still used. */
+.steel,.panel,.verdict,.mbox,.hcard{
+  --lilac:#D4D8DE; --lilac-dim:#98A0A9;
+  color:var(--steel-ink);
+  border:1px solid var(--frame);
+  background:
+    repeating-linear-gradient(112deg,rgba(255,255,255,.018) 0 1px,rgba(0,0,0,0) 1px 4px),
+    repeating-linear-gradient(68deg,rgba(0,0,0,.15) 0 1px,rgba(0,0,0,0) 1px 5px),
+    linear-gradient(158deg,var(--steel-hi) 0%,var(--steel) 42%,var(--steel-deep) 100%);
+  box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 8px 24px rgba(0,0,0,.42);
+}
+.verdict{position:relative;overflow:hidden;border-radius:2px;padding:clamp(22px,4.5vw,40px);}
 .verdict::before{content:"";position:absolute;right:-6%;top:50%;translate:0 -50%;width:min(360px,55%);aspect-ratio:4/5;opacity:.07;pointer-events:none;background:var(--wm) center/contain no-repeat;}
-.verdict.crowned{border-color:var(--bronze);background:linear-gradient(112deg,rgba(255,228,99,.13),transparent 58%),var(--royal-panel);}
-.verdict.crowned::before{opacity:.14}
+/* an inset glow rather than another background layer, so the crowned wash
+   never tints the text sitting on top of it */
+.verdict.crowned{border-color:var(--gold);
+  box-shadow:inset 0 0 90px rgba(255,228,99,.10),0 1px 0 rgba(255,255,255,.09) inset,
+             0 10px 30px rgba(0,0,0,.5),0 0 0 1px rgba(255,228,99,.16);}
+.verdict.crowned::before{opacity:.13}
 .v-kicker{position:relative;font-size:10.5px;font-weight:800;letter-spacing:.28em;text-transform:uppercase;color:var(--bronze-lit)}
 .v-name{position:relative;font-family:'Teko',sans-serif;font-weight:700;font-size:clamp(40px,9vw,84px);line-height:.94;margin:8px 0 12px;letter-spacing:.005em;text-transform:uppercase;}
 .v-name.chase{font-size:clamp(26px,5vw,48px)}
@@ -116,12 +135,12 @@ tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
 @media (max-width:470px){.plinth-cell{display:none}}
 
 /* ---------------- entry ---------------- */
-.panel{border:1px solid var(--hair);background:var(--royal-panel);padding:clamp(18px,3.6vw,28px)}
-.panel.editing{border-color:var(--gold);box-shadow:inset 0 0 0 1px rgba(255,228,99,.2)}
+.panel{border-radius:2px;padding:clamp(18px,3.6vw,28px)}
+.panel.editing{border-color:var(--gold);box-shadow:inset 0 0 0 1px rgba(255,228,99,.22),0 8px 24px rgba(0,0,0,.42)}
 .lock{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
 .lock p{margin:0;flex:1 1 240px;font-size:14px;color:var(--lilac)}
-input,select{font-family:inherit;font-size:14.5px;color:var(--white);background:var(--royal-deep);border:1px solid var(--hair);padding:11px 12px;border-radius:2px;min-width:0;}
-input::placeholder{color:var(--lilac-dim)}
+input,select{font-family:inherit;font-size:14.5px;color:var(--steel-ink);background:var(--steel-black);border:1px solid rgba(201,162,39,.30);padding:11px 12px;border-radius:2px;min-width:0;}
+input::placeholder{color:#7E868F}
 .n::-webkit-outer-spin-button,.n::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .n{-moz-appearance:textfield;text-align:center;font-family:'Teko',sans-serif;font-size:20px;font-weight:600;padding:6px 8px}
 .editbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:-4px 0 16px;padding:10px 14px;border:1px dashed var(--gold);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
@@ -130,10 +149,10 @@ input::placeholder{color:var(--lilac-dim)}
 .pair select{flex:1 1 0}
 .versus{font-family:'Teko',sans-serif;font-weight:700;font-size:18px;letter-spacing:.06em;text-transform:uppercase;color:var(--bronze-lit)}
 .sheet{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-bottom:14px}
-.innings{border:1px solid var(--hair-soft);border-radius:2px;padding:12px 14px;min-width:0}
+.innings{border:1px solid rgba(201,162,39,.20);background:rgba(0,0,0,.22);border-radius:2px;padding:12px 14px;min-width:0}
 .innings h4{margin:0 0 10px;display:flex;align-items:center;gap:8px}
 .innings h4 .nm{font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--bronze-lit);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.innbadge{flex:0 0 auto;margin-left:auto;font-size:8px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:3px 7px;border-radius:2px;border:1px solid var(--hair-soft);color:var(--lilac-dim)}
+.innbadge{flex:0 0 auto;margin-left:auto;font-size:8px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:3px 7px;border-radius:2px;border:1px solid rgba(201,162,39,.22);color:var(--lilac-dim)}
 .innbadge[hidden]{display:none}
 .innbadge.first{background:var(--gold);border-color:var(--gold);color:var(--royal-deep)}
 .innbadge.chase{border-color:var(--bronze-lit);color:var(--bronze-lit)}
@@ -144,17 +163,17 @@ input::placeholder{color:var(--lilac-dim)}
 .field{display:flex;flex-direction:column;gap:5px;min-width:0}
 .field input{width:100%}
 .field span{font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim);text-align:center}
-.sobox{border:1px solid var(--gold);border-radius:2px;padding:14px;margin-bottom:14px;background:rgba(255,228,99,.06)}
+.sobox{border:1px solid var(--gold);border-radius:2px;padding:14px;margin-bottom:14px;background:linear-gradient(rgba(255,228,99,.07),rgba(255,228,99,.03)),rgba(0,0,0,.3)}
 .sobox h3{margin:0 0 12px;font-family:'Teko',sans-serif;font-weight:700;font-size:19px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
 .sobox .sheet{margin-bottom:0}
 .reading{font-size:13.5px;color:var(--lilac);margin-bottom:14px;min-height:1.4em}
 .reading b{color:var(--gold);font-weight:700}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.btn{font-family:'Manrope',sans-serif;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:12px 20px;border-radius:2px;cursor:pointer;border:1px solid var(--hair);background:transparent;color:var(--white);transition:.16s ease;}
+.btn{font-family:'Manrope',sans-serif;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:12px 20px;border-radius:2px;cursor:pointer;border:1px solid rgba(201,162,39,.30);background:rgba(0,0,0,.25);color:var(--steel-ink);transition:.16s ease;}
 .btn:hover{border-color:var(--gold);color:var(--gold)}
 .btn.fill{background:linear-gradient(180deg,var(--gold),#E8C63F);border-color:var(--gold);color:var(--royal-deep)}
 .btn.fill:hover{background:var(--white);border-color:var(--white);color:var(--royal-deep)}
-.btn.quiet{color:var(--lilac-dim);border-color:var(--hair-soft);padding:10px 14px}
+.btn.quiet{color:var(--lilac-dim);border-color:rgba(201,162,39,.20);padding:10px 14px}
 .btn[hidden]{display:none}
 .when{display:flex;align-items:center;gap:9px;font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim)}
 .flash{min-height:1.5em;margin-top:12px;font-size:13.5px;color:var(--gold)}
@@ -162,13 +181,13 @@ input::placeholder{color:var(--lilac-dim)}
 
 /* ---------------- DLS ---------------- */
 .dlsrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
-.dlsbox{border:1px solid var(--bronze-lit);border-radius:2px;padding:14px;margin-bottom:14px;background:rgba(240,200,120,.06)}
+.dlsbox{border:1px solid var(--bronze-lit);border-radius:2px;padding:14px;margin-bottom:14px;background:linear-gradient(rgba(240,200,120,.07),rgba(240,200,120,.03)),rgba(0,0,0,.3)}
 .dlsbox[hidden]{display:none}
 .dlsbox h3{margin:0 0 6px;font-family:'Teko',sans-serif;font-weight:700;font-size:19px;letter-spacing:.08em;text-transform:uppercase;color:var(--bronze-lit)}
 .dlsbox .why{font-size:12px;color:var(--lilac-dim);margin:0 0 12px;line-height:1.5;max-width:64ch}
 .dlsbox .why b{color:var(--lilac);font-weight:700}
 .dlsgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:12px}
-.dlsout{font-size:13.5px;color:var(--lilac);line-height:1.6;padding:11px 13px;border:1px solid var(--hair-soft);border-radius:2px;margin-bottom:12px;min-height:1.4em}
+.dlsout{font-size:13.5px;color:var(--lilac);line-height:1.6;padding:11px 13px;border:1px solid rgba(201,162,39,.20);background:rgba(0,0,0,.26);border-radius:2px;margin-bottom:12px;min-height:1.4em}
 .dlsout b{color:var(--gold);font-weight:700}
 .dlsout .par{font-family:'Teko',sans-serif;font-size:26px;font-weight:700;color:var(--gold);line-height:1;display:block;margin-bottom:3px}
 .dlsout .res{display:block;font-size:11px;color:var(--lilac-dim);letter-spacing:.06em;margin-top:5px}
@@ -185,16 +204,8 @@ input::placeholder{color:var(--lilac-dim)}
 .hcard[data-h="pairs"]{grid-column:span 2}
 
 .hcard{
-  /* neutral greys inside the steel, so nothing reads lavender */
-  --lilac:#D4D8DE; --lilac-dim:#98A0A9;
   font-family:'Manrope',sans-serif;text-align:left;display:flex;flex-direction:column;gap:4px;
-  border:1px solid var(--frame);border-radius:2px;padding:15px 16px 14px;cursor:pointer;
-  color:var(--steel-ink);
-  background:
-    repeating-linear-gradient(112deg,rgba(255,255,255,.020) 0 1px,rgba(0,0,0,0) 1px 4px),
-    repeating-linear-gradient(68deg,rgba(0,0,0,.16) 0 1px,rgba(0,0,0,0) 1px 5px),
-    linear-gradient(158deg,var(--steel-hi) 0%,var(--steel) 42%,var(--steel-deep) 100%);
-  box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 8px 24px rgba(0,0,0,.45);
+  border-radius:2px;padding:15px 16px 14px;cursor:pointer;
   transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;
 }
 .hcard:hover,.hcard:focus-visible{
@@ -236,6 +247,8 @@ input::placeholder{color:var(--lilac-dim)}
 /* max-height is set from JS by measuring the first LOG_VISIBLE rows, because
    rows differ in height depending on whether they carry a scorecard line. */
 .logwrap{overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.panel .log li:first-child,.panel .laws li:first-child{border-top:0;padding-top:0}
+.panel thead th{padding-top:0}
 .logwrap::-webkit-scrollbar{width:9px}
 .logwrap::-webkit-scrollbar-thumb{border-width:2px}
 .log{list-style:none;margin:0;padding:0}
@@ -268,9 +281,9 @@ footer{margin-top:var(--stack);padding-top:18px;border-top:1px solid var(--hair)
 footer img{width:26px;height:auto;opacity:.7}
 
 /* ---------------- batted-first chips ---------------- */
-.bfrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;padding:12px 14px;border:1px solid var(--hair-soft);border-radius:2px}
+.bfrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;padding:12px 14px;border:1px solid rgba(201,162,39,.20);background:rgba(0,0,0,.22);border-radius:2px}
 .bflabel{font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--bronze-lit);margin-right:4px}
-.chip{font-family:'Manrope',sans-serif;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:8px 13px;border-radius:2px;cursor:pointer;border:1px solid var(--hair-soft);background:transparent;color:var(--lilac-dim);transition:.15s}
+.chip{font-family:'Manrope',sans-serif;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:8px 13px;border-radius:2px;cursor:pointer;border:1px solid rgba(201,162,39,.28);background:rgba(0,0,0,.25);color:var(--lilac-dim);transition:.15s}
 .chip:hover{border-color:var(--gold);color:var(--gold)}
 .chip.on{background:var(--gold);border-color:var(--gold);color:var(--royal-deep)}
 .chip.bronze:hover{border-color:var(--bronze-lit);color:var(--bronze-lit)}
@@ -281,15 +294,9 @@ footer img{width:26px;height:auto;opacity:.7}
 .modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:clamp(10px,3vw,40px)}
 .scrim{position:absolute;inset:0;background:rgba(6,8,10,.84)}
 .mbox{
-  /* neutral greys inside the steel, so nothing reads lavender */
-  --lilac:#D4D8DE; --lilac-dim:#98A0A9;
   position:relative;width:min(780px,100%);max-height:90vh;overflow-y:auto;
-  background:
-    repeating-linear-gradient(112deg,rgba(255,255,255,.016) 0 1px,rgba(0,0,0,0) 1px 4px),
-    linear-gradient(168deg,var(--steel-hi) 0%,var(--steel) 28%,var(--steel-deep) 76%,var(--steel-black) 100%);
-  border:1px solid var(--frame);border-radius:3px;padding:clamp(20px,4vw,34px);
+  border-radius:3px;padding:clamp(20px,4vw,34px);
   box-shadow:0 1px 0 rgba(255,255,255,.07) inset,0 30px 90px rgba(0,0,0,.75);
-  color:var(--steel-ink);
 }
 .mbox .stat{background:rgba(255,255,255,.026);border-color:rgba(201,162,39,.22)}
 .mbox .stat b{color:var(--steel-ink)}
@@ -386,6 +393,7 @@ footer img{width:26px;height:auto;opacity:.7}
       <span class="aside">Ranked by PCW &middot; Ties by wins and form</span>
     </div>
     <div class="hairline"></div>
+    <div class="panel">
     <table>
       <thead>
         <tr>
@@ -396,6 +404,7 @@ footer img{width:26px;height:auto;opacity:.7}
       </thead>
       <tbody id="table"></tbody>
     </table>
+    </div>
   </section>
 
   <section id="highsSection">
@@ -422,7 +431,7 @@ footer img{width:26px;height:auto;opacity:.7}
       <span class="aside" id="logAside"></span>
     </div>
     <div class="hairline"></div>
-    <div class="logwrap" id="logWrap"><ul class="log" id="log"></ul></div>
+    <div class="panel"><div class="logwrap" id="logWrap"><ul class="log" id="log"></ul></div></div>
   </section>
 
   <section>
@@ -431,6 +440,7 @@ footer img{width:26px;height:auto;opacity:.7}
       <span class="aside">Seven clauses</span>
     </div>
     <div class="hairline"></div>
+    <div class="panel">
     <ol class="laws">
       <li>Every match is <b>two a side over twenty overs</b>. No schedule and no set number of games &mdash; the cycle simply runs for its window.</li>
       <li>A result gives both winners a <b>W</b> and both losers an <b>L</b>. Runs, wickets and overs may be recorded for the record, but <b>no scorecard figure ever ranks anybody</b>.</li>
@@ -440,6 +450,7 @@ footer img{width:26px;height:auto;opacity:.7}
       <li>At the close, the highest PCW among those through the gate takes the cycle. Level on PCW, they settle it 2v2 until it breaks.</li>
       <li>If the game falls over mid-chase, the result stands on the <b>D/L par score</b> at the moment it died. The chase must <b>pass par outright</b> &mdash; short of it, however narrowly, is a loss.</li>
     </ol>
+    </div>
   </section>
 
   <footer>
