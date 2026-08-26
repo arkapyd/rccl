@@ -259,9 +259,12 @@ input::placeholder{color:#7E868F}
    the animation is suppressed by prefers-reduced-motion */
 .log li.flash-row{background:rgba(255,228,99,.10);animation:flashRow 2.2s ease}
 @keyframes flashRow{0%{background:rgba(255,228,99,.24)}100%{background:rgba(255,228,99,.10)}}
-.golink{font:inherit;font-size:inherit;color:var(--gold);background:none;border:0;padding:0;
-  cursor:pointer;text-decoration:underline;text-underline-offset:2px;text-decoration-color:rgba(255,228,99,.45)}
-.golink:hover{color:var(--white);text-decoration-color:var(--white)}
+/* neutral in the flow, gold on hover — the link marks clickability, not
+   importance, so it must not compete with the figure above it */
+.golink{font:inherit;font-size:inherit;color:var(--lilac-dim);background:none;border:0;padding:0;
+  cursor:pointer;text-decoration:underline;text-underline-offset:2px;
+  text-decoration-color:rgba(255,255,255,.20);transition:color .14s ease,text-decoration-color .14s ease}
+.golink:hover,.golink:focus-visible{color:var(--gold);text-decoration-color:rgba(255,228,99,.65)}
 .mlist .d .golink{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
 .log .won{font-weight:700;color:var(--gold)}
 .log .verb{font-family:'Teko',sans-serif;font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--lilac-dim)}
@@ -920,8 +923,7 @@ function leagueRecords(){
           if(R.thinRuns === null || d < R.thinRuns.v)
             R.thinRuns = { v:d, who:beat.who, d:day, no:mt.no, sub:beat.sub };
           if(R.defended === null || mt.sw.r < R.defended.v)
-            R.defended = { v:mt.sw.r, tail:scoreTail(mt.sw), who:W, d:day, no:mt.no,
-                           sub:"held " + L + " to " + fl };
+            R.defended = { v:mt.sw.r, tail:scoreTail(mt.sw), who:W, d:day, no:mt.no };
         } else {
           var wk = 10 - (mt.sw.k === undefined || mt.sw.k === null ? 0 : mt.sw.k);
           if(R.winWkts === null || wk > R.winWkts.v)
@@ -929,8 +931,7 @@ function leagueRecords(){
           if(R.thinWkts === null || wk < R.thinWkts.v)
             R.thinWkts = { v:wk, who:beat.who, d:day, no:mt.no, sub:beat.sub };
           if(R.chased === null || mt.sl.r > R.chased.v)
-            R.chased = { v:mt.sl.r, tail:scoreTail(mt.sl), who:W, d:day, no:mt.no,
-                         sub:"hauled down v " + L + ", reached " + fw };
+            R.chased = { v:mt.sl.r, tail:scoreTail(mt.sl), who:W, d:day, no:mt.no };
         }
       }
     }
@@ -1190,7 +1191,9 @@ function marginOf(mt){
 function statsFor(name){
   var s = {
     name:name, real:realName(name), m:0, w:0, l:0, pcw:0,
-    runs:0, inns:0, ballsFaced:0, high:null, highTail:"", lowDone:null, lowDoneTail:"", wktsLost:0,
+    runs:0, inns:0, ballsFaced:0, wktsLost:0,
+    high:null, highTail:"", highNo:0, lowDone:null, lowDoneTail:"", lowDoneNo:0,
+    bestEconNo:0, bestEconSc:"",
     conceded:0, ballsBowled:0, wkts:0, bestEcon:null, bestEconRuns:null, bestEconBalls:0,
     lowDefended:null, highChased:null,
     wonFirst:0, wonSecond:0, batFirst:{p:0,w:0,l:0}, chasing:{p:0,w:0,l:0},
@@ -1245,10 +1248,12 @@ function statsFor(name){
       s.runs += mine.r; s.inns++;
       s.ballsFaced += toBalls(mine.o);
       if(mine.k !== undefined && mine.k !== null) s.wktsLost += mine.k;
-      if(s.high === null || mine.r > s.high){ s.high = mine.r; s.highTail = scoreTail(mine); }
+      if(s.high === null || mine.r > s.high){
+        s.high = mine.r; s.highTail = scoreTail(mine); s.highNo = mt.no;
+      }
       // same completed-innings rule the league record book uses
       if(inningsComplete(mine) && (s.lowDone === null || mine.r < s.lowDone)){
-        s.lowDone = mine.r; s.lowDoneTail = scoreTail(mine);
+        s.lowDone = mine.r; s.lowDoneTail = scoreTail(mine); s.lowDoneNo = mt.no;
       }
     }
     if(theirs && theirs.r !== undefined && theirs.r !== null){
@@ -1262,6 +1267,7 @@ function statsFor(name){
         var ec = theirs.r / (bb / 6);
         if(s.bestEcon === null || ec < s.bestEcon){
           s.bestEcon = ec; s.bestEconRuns = theirs.r; s.bestEconBalls = bb;
+          s.bestEconNo = mt.no; s.bestEconSc = scoreFull(theirs);
         }
       }
     }
@@ -1280,15 +1286,13 @@ function statsFor(name){
       s.wonFirst++;
       if(mine && mine.r !== undefined && mine.r !== null &&
          (s.lowDefended === null || mine.r < s.lowDefended.v))
-        s.lowDefended = { v:mine.r, tail:scoreTail(mine), no:mt.no,
-                          sub:"held them to " + scoreFull(theirs) };
+        s.lowDefended = { v:mine.r, tail:scoreTail(mine), no:mt.no };
     }
     if(won && first === false){
       s.wonSecond++;
       if(theirs && theirs.r !== undefined && theirs.r !== null &&
          (s.highChased === null || theirs.r > s.highChased.v))
-        s.highChased = { v:theirs.r, tail:scoreTail(theirs), no:mt.no,
-                         sub:"reached " + scoreFull(mine) };
+        s.highChased = { v:theirs.r, tail:scoreTail(theirs), no:mt.no };
     }
 
     // Margins. Defend a total and the margin is runs; haul one down and it
@@ -1439,10 +1443,10 @@ function renderModal(){
   html += sectionTitle("With the bat", "duo") + '<div class="stats">' +
     statCard("Runs scored in a duo", s.runs, s.inns + " innings", s.runs > 0 && s.runs === best.runs) +
     statCard("Highest duo total", s.high === null ? null : s.high + '<em class="sfx">' + s.highTail + '</em>',
-             null, s.high !== null && s.high === best.high) +
+             matchLink(s.highNo) || null, s.high !== null && s.high === best.high) +
     statCard("Lowest completed innings",
              s.lowDone === null ? null : s.lowDone + '<em class="sfx">' + s.lowDoneTail + '</em>',
-             s.lowDone === null ? "no innings played out" : null, false) +
+             s.lowDone === null ? "no innings played out" : (matchLink(s.lowDoneNo) || null), false) +
     statCard("Average total", avg, rate ? rate + " per over" : null, false) +
   '</div>';
 
@@ -1451,7 +1455,7 @@ function renderModal(){
     statCard("Best duo economy", s.bestEcon === null ? null : s.bestEcon.toFixed(2),
              s.bestEcon === null
                ? "no innings past " + (MIN_ECON_BALLS / 6) + " overs"
-               : s.bestEconRuns + " off " + oversText(s.bestEconBalls),
+               : [matchLink(s.bestEconNo), s.bestEconSc].filter(function(x){ return !!x; }).join(" &middot; "),
              s.bestEcon !== null && best.econ !== null && Math.abs(s.bestEcon - best.econ) < 1e-9) +
     statCard("Duo strike rate", s.strikeRate === null ? null : s.strikeRate.toFixed(1),
              s.strikeRate === null ? "no wickets yet" : "balls per wicket",
