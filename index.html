@@ -246,25 +246,31 @@ input::placeholder{color:#7E868F}
   color:var(--lilac-dim);margin:-10px 0 9px}
 /* fixed height: the strip is one row of cards regardless of how many rank */
 .fan{position:relative;height:86px;margin-bottom:22px}
-.fanc{position:absolute;top:0;bottom:0;width:var(--fw);
+/* --z descends with rank so the leader paints on top and stays open. It is a
+   custom property, not an inline z-index, or the inline value would outrank
+   the :hover rule and no other card could ever come forward. */
+.fanc{position:absolute;top:0;bottom:0;width:var(--fw);z-index:var(--z,1);
   display:flex;align-items:center;gap:11px;padding:10px 12px;
   border:1px solid rgba(201,162,39,.30);border-radius:2px;overflow:hidden;cursor:default;
   background:linear-gradient(158deg,var(--steel-hi) 0%,var(--steel) 46%,var(--steel-deep) 100%);
-  box-shadow:-7px 0 16px rgba(0,0,0,.5);
+  box-shadow:7px 0 16px rgba(0,0,0,.5);
   transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
 .fanc:hover,.fanc:focus-visible{z-index:30;transform:translateY(-3px);border-color:var(--gold);
-  box-shadow:-7px 0 22px rgba(0,0,0,.62),0 0 0 1px rgba(255,228,99,.22);outline:none}
-.fspine{flex:0 0 auto;width:40px;display:flex;flex-direction:column;gap:2px}
+  box-shadow:7px 0 22px rgba(0,0,0,.62),0 0 0 1px rgba(255,228,99,.22);outline:none}
+/* the spine is the right-hand edge — the only strip of a covered card that
+   its neighbour doesn't overlap */
+.fspine{flex:0 0 auto;width:40px;margin-left:auto;display:flex;flex-direction:column;gap:2px;text-align:right}
 .fr{font-family:'Teko',sans-serif;font-size:12px;font-weight:700;line-height:1;color:var(--frame-lit)}
 .fm{font-family:'Teko',sans-serif;font-size:23px;font-weight:700;line-height:1;color:var(--steel-ink)}
 .fanc:hover .fm,.fanc:focus-visible .fm{color:var(--gold)}
-.fb{min-width:0;display:flex;flex-direction:column;gap:3px}
+.fanc:first-child .fm{color:var(--gold)}
+.fb{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
 .fn{font-size:12px;font-weight:700;color:var(--steel-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fd{font-size:10.5px;color:#98A0A9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* too narrow to cascade legibly — fall back to a plain stacked list */
 @media (max-width:640px){
   .fan{height:auto;display:flex;flex-direction:column;gap:6px}
-  .fanc{position:static;width:auto;left:auto!important;box-shadow:none;transform:none}
+  .fanc{position:static;width:auto;left:auto!important;z-index:auto!important;box-shadow:none;transform:none}
   .fanc:hover,.fanc:focus-visible{transform:none}
 }
 
@@ -1170,28 +1176,32 @@ function highsFace(key, d){
    stops a wide fan from overflowing the modal. Only the left spine (rank and
    figure) shows until a card comes forward. */
 function highsFan(key, d){
-  var W = 34;                 // collapsed card width, as a % of the strip
+  var W = 34;                 // expanded card width, as a % of the strip
   var list, label, val, detail;
+  // statsFor already sums the duo totals of every innings a player appeared
+  // in, so dividing by that player's own innings and overs gives the personal
+  // figure without the league ever recording anything individually.
+  var stats = PLAYERS.map(statsFor);
 
   if(key === "bat"){
-    list = d.pairs.filter(function(p){ return p.batInns >= FAN_MIN_INNS; })
-      .map(function(p){ return { p:p, v:p.batRuns / p.batInns }; })
+    list = stats.filter(function(x){ return x.inns >= FAN_MIN_INNS; })
+      .map(function(x){ return { s:x, v:x.runs / x.inns }; })
       .sort(function(a,b){ return b.v - a.v; });
-    label = "Season batting average by pairing &middot; highest first";
+    label = "Season batting average by player &middot; highest first";
     val = function(x){ return Math.round(x.v); };
     detail = function(x){
-      return x.p.batRuns + " in " + x.p.batInns + " inns" +
-        (x.p.batBalls ? " &middot; " + (x.p.batRuns / (x.p.batBalls / 6)).toFixed(2) + " an over" : "");
+      return x.s.runs + " in " + x.s.inns + " inns" +
+        (x.s.ballsFaced ? " &middot; " + (x.s.runs / (x.s.ballsFaced / 6)).toFixed(2) + " an over" : "");
     };
   } else if(key === "ball"){
-    list = d.pairs.filter(function(p){ return p.bowlBalls > 0 && p.bowlInns >= FAN_MIN_INNS; })
-      .map(function(p){ return { p:p, v:p.bowlRuns / (p.bowlBalls / 6) }; })
+    list = stats.filter(function(x){ return x.ballsBowled > 0 && x.econOverall !== null; })
+      .map(function(x){ return { s:x, v:x.econOverall }; })
       .sort(function(a,b){ return a.v - b.v; });
-    label = "Season economy by pairing &middot; tightest first";
+    label = "Season economy by player &middot; tightest first";
     val = function(x){ return x.v.toFixed(2); };
     detail = function(x){
-      return x.p.bowlRuns + " off " + oversText(x.p.bowlBalls) + " ov &middot; " +
-        x.p.bowlWkts + " wkt" + (x.p.bowlWkts === 1 ? "" : "s");
+      return x.s.conceded + " off " + oversText(x.s.ballsBowled) + " ov &middot; " +
+        x.s.wkts + " wkt" + (x.s.wkts === 1 ? "" : "s");
     };
   } else return "";
 
@@ -1208,12 +1218,14 @@ function highsFan(key, d){
   return '<div class="fanlab">' + label + '</div>' +
     '<div class="fan" style="--fw:' + W + '%">' +
       list.map(function(x, i){
-        return '<div class="fanc" tabindex="0" style="left:' + (i * step).toFixed(3) + '%" ' +
-          'title="' + esc(x.p.names) + '">' +
+        // z descends with rank, so the leader sits on top and stays open; each
+        // card behind it shows the right-hand spine that isn't overlapped.
+        return '<div class="fanc" tabindex="0" title="' + esc(x.s.real) + '" ' +
+          'style="left:' + (i * step).toFixed(3) + '%;--z:' + (n - i) + '">' +
+          '<span class="fb"><span class="fn">' + esc(x.s.real) + '</span>' +
+          '<span class="fd">' + detail(x) + '</span></span>' +
           '<span class="fspine"><b class="fr">' + (i + 1) + '</b>' +
           '<b class="fm">' + val(x) + '</b></span>' +
-          '<span class="fb"><span class="fn">' + esc(x.p.names) + '</span>' +
-          '<span class="fd">' + detail(x) + '</span></span>' +
         '</div>';
       }).join("") +
     '</div>';
@@ -1264,10 +1276,14 @@ function renderHighsModal(key){
     return;
   }
 
-  html += '<p class="mnote">Every figure here is a <b>duo figure</b> — it belongs to the pair that ' +
-    'was on the field, not to either player alone. This league records nothing individually, by design.</p>';
+  var fan = highsFan(key, d);
+  html += '<p class="mnote">Every figure in the cards below is a <b>duo figure</b> — it belongs to ' +
+    'the pair that was on the field, not to either player alone.' +
+    (fan ? ' The ranking strip is the one exception: it takes those same duo totals and divides ' +
+           'them by <em>that player\u2019s own</em> innings and overs.'
+         : ' This league records nothing individually, by design.') + '</p>';
   html += '<div class="stats">' + highsBlock(key, d) + '</div>';
-  html += highsFan(key, d);
+  html += fan;
 
   html += '<div class="hnav">' + HIGHS.map(function(h){
     return '<button class="chip' + (h.key === key ? " on" : "") + '" type="button" data-h="' +
