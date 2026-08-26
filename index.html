@@ -252,7 +252,17 @@ input::placeholder{color:#7E868F}
 .log{list-style:none;margin:0;padding:0}
 .log li{padding:14px 0;border-top:1px solid var(--hair-soft)}
 .log .line{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 12px}
+.log .mno{flex:0 0 auto;font-family:'Teko',sans-serif;font-size:16px;font-weight:700;
+  letter-spacing:.04em;color:var(--frame-lit);min-width:30px}
 .log .day{flex:0 0 66px;font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--lilac-dim)}
+/* a jumped-to row stays tinted for the whole flash, so it still reads when
+   the animation is suppressed by prefers-reduced-motion */
+.log li.flash-row{background:rgba(255,228,99,.10);animation:flashRow 2.2s ease}
+@keyframes flashRow{0%{background:rgba(255,228,99,.24)}100%{background:rgba(255,228,99,.10)}}
+.golink{font:inherit;font-size:inherit;color:var(--gold);background:none;border:0;padding:0;
+  cursor:pointer;text-decoration:underline;text-underline-offset:2px;text-decoration-color:rgba(255,228,99,.45)}
+.golink:hover{color:var(--white);text-decoration-color:var(--white)}
+.mlist .d .golink{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
 .log .won{font-weight:700;color:var(--gold)}
 .log .verb{font-family:'Teko',sans-serif;font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--lilac-dim)}
 .log .lost{color:var(--lilac)}
@@ -260,7 +270,7 @@ input::placeholder{color:#7E868F}
 .log .tool{background:none;border:1px solid transparent;color:var(--lilac-dim);font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:4px 9px;cursor:pointer;border-radius:2px}
 .log .tool:hover{color:var(--gold);border-color:var(--hair)}
 .log .tool.kill{font-size:16px;letter-spacing:0;padding:1px 8px 3px}
-.card{margin:7px 0 0 78px;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-family:'Teko',sans-serif;font-size:18px;font-weight:500;letter-spacing:.02em;color:var(--lilac)}
+.card{margin:7px 0 0 108px;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-family:'Teko',sans-serif;font-size:18px;font-weight:500;letter-spacing:.02em;color:var(--lilac)}
 .card .sc{white-space:nowrap}
 .card .sc b{color:var(--white);font-weight:700}
 .card .dash{color:var(--lilac-dim)}
@@ -341,7 +351,7 @@ footer img{width:26px;height:auto;opacity:.7}
 .mtab .wl{font-family:'Teko',sans-serif;font-size:18px;font-weight:600;color:var(--white)}
 .mlist{list-style:none;margin:0;padding:0}
 .mlist li{padding:11px 0;border-top:1px solid var(--hair-soft);display:flex;flex-wrap:wrap;gap:4px 11px;align-items:baseline;font-size:13.5px}
-.mlist .d{flex:0 0 58px;font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--lilac-dim)}
+.mlist .d{flex:0 0 74px;font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--lilac-dim)}
 .mlist .res{font-family:'Teko',sans-serif;font-size:16px;font-weight:700;letter-spacing:.08em;flex:0 0 42px}
 .mlist .res.w{color:var(--gold)}
 .mlist .res.l{color:var(--lilac-dim)}
@@ -867,27 +877,27 @@ function leagueRecords(){
       if(sc.k !== undefined && sc.k !== null) R.wkts += sc.k;
       var tail = scoreTail(sc), full = scoreFull(sc);
 
-      if(R.high === null || sc.r > R.high.v) R.high = { v:sc.r, tail:tail, who:i.bat, d:day };
+      if(R.high === null || sc.r > R.high.v) R.high = { v:sc.r, tail:tail, who:i.bat, d:day, no:mt.no };
       // gated on a completed innings — see inningsComplete()
       if(inningsComplete(sc) && (R.lowDone === null || sc.r < R.lowDone.v))
-        R.lowDone = { v:sc.r, tail:tail, who:i.bat, d:day };
+        R.lowDone = { v:sc.r, tail:tail, who:i.bat, d:day, no:mt.no };
 
       // One run rate, read from both ends: the batting side's scoring rate is
       // the fielding side's economy.
       if(b >= MIN_ECON_BALLS){
         var rr = sc.r / (b / 6);
-        if(R.rate === null || rr > R.rate.v) R.rate = { v:rr, who:i.bat,  d:day, sub:full };
-        if(R.econ === null || rr < R.econ.v) R.econ = { v:rr, who:i.bowl, d:day, sub:full };
+        if(R.rate === null || rr > R.rate.v) R.rate = { v:rr, who:i.bat,  d:day, sub:full, no:mt.no };
+        if(R.econ === null || rr < R.econ.v) R.econ = { v:rr, who:i.bowl, d:day, sub:full, no:mt.no };
       }
       if(sc.k) {
         var sr = b / sc.k;
         if(R.srate === null || sr < R.srate.v)
-          R.srate = { v:sr, who:i.bowl, d:day, sub:full };
+          R.srate = { v:sr, who:i.bowl, d:day, sub:full, no:mt.no };
       }
     });
 
     if(wholeMatch && (R.agg === null || total > R.agg.v))
-      R.agg = { v:total, who:W + " v " + L, d:day, sub:scoreFull(mt.sw) + " v " + scoreFull(mt.sl) };
+      R.agg = { v:total, who:W + " v " + L, d:day, no:mt.no, sub:scoreFull(mt.sw) + " v " + scoreFull(mt.sl) };
 
     if(mt.sow && mt.sol) R.so++;
     if(mt.dls) R.dls++;
@@ -902,24 +912,24 @@ function leagueRecords(){
                     mt.sl.r !== undefined && mt.sl.r !== null;
       if(settled){
         var fw = scoreFull(mt.sw), fl = scoreFull(mt.sl);
-        var beat = { who:W + " beat " + L, d:day, sub:fw + " v " + fl };
+        var beat = { who:W + " beat " + L, d:day, no:mt.no, sub:fw + " v " + fl };
         if(mt.bf === "w"){
           var d = mt.sw.r - mt.sl.r;
           if(R.winRuns === null || d > R.winRuns.v)
-            R.winRuns = { v:d, who:beat.who, d:day, sub:beat.sub };
+            R.winRuns = { v:d, who:beat.who, d:day, no:mt.no, sub:beat.sub };
           if(R.thinRuns === null || d < R.thinRuns.v)
-            R.thinRuns = { v:d, who:beat.who, d:day, sub:beat.sub };
+            R.thinRuns = { v:d, who:beat.who, d:day, no:mt.no, sub:beat.sub };
           if(R.defended === null || mt.sw.r < R.defended.v)
-            R.defended = { v:mt.sw.r, tail:scoreTail(mt.sw), who:W, d:day,
+            R.defended = { v:mt.sw.r, tail:scoreTail(mt.sw), who:W, d:day, no:mt.no,
                            sub:"held " + L + " to " + fl };
         } else {
           var wk = 10 - (mt.sw.k === undefined || mt.sw.k === null ? 0 : mt.sw.k);
           if(R.winWkts === null || wk > R.winWkts.v)
-            R.winWkts = { v:wk, who:beat.who, d:day, sub:beat.sub };
+            R.winWkts = { v:wk, who:beat.who, d:day, no:mt.no, sub:beat.sub };
           if(R.thinWkts === null || wk < R.thinWkts.v)
-            R.thinWkts = { v:wk, who:beat.who, d:day, sub:beat.sub };
+            R.thinWkts = { v:wk, who:beat.who, d:day, no:mt.no, sub:beat.sub };
           if(R.chased === null || mt.sl.r > R.chased.v)
-            R.chased = { v:mt.sl.r, tail:scoreTail(mt.sl), who:W, d:day,
+            R.chased = { v:mt.sl.r, tail:scoreTail(mt.sl), who:W, d:day, no:mt.no,
                          sub:"hauled down v " + L + ", reached " + fw };
         }
       }
@@ -958,6 +968,40 @@ function topOf(list, val, better){
   return mark === null ? null : { v:mark, who:names.join(", ") };
 }
 
+// Send the reader from a record straight to the match that set it: close the
+// modal, scroll the log's own window to the row, then bring the section into
+// view and flash the row so it is obvious which one was meant.
+function gotoMatch(no){
+  closeModal();
+  var li = document.getElementById("match-" + no);
+  if(!li) return;
+  var wrap = $("logWrap");
+  if(wrap) wrap.scrollTop += li.getBoundingClientRect().top - wrap.getBoundingClientRect().top;
+  var sec = li.closest("section");
+  if(sec) sec.scrollIntoView({ behavior:"smooth", block:"start" });
+  li.classList.add("flash-row");
+  setTimeout(function(){ li.classList.remove("flash-row"); }, 2200);
+}
+// "Match #7 · 189/3 (20) v 91/10 (17.4)" — the link replaces the descriptive
+// tag that used to sit under these figures.
+function citeLine(e, extra){
+  if(!e) return extra || null;
+  return [matchLink(e.no), e.sub, extra].filter(function(x){ return !!x; }).join(" &middot; ");
+}
+function citeVal(e, pfx){
+  if(!e) return null;
+  return (pfx || "") + e.v + (e.tail ? '<em class="sfx">' + e.tail + '</em>' : "");
+}
+function matchLink(no){
+  return no ? '<button class="golink" type="button" data-go="' + no + '">Match #' + no + '</button>' : "";
+}
+function bindGoLinks(root){
+  if(!root) return;
+  Array.prototype.forEach.call(root.querySelectorAll(".golink"), function(b){
+    b.onclick = function(){ gotoMatch(Number(b.dataset.go)); };
+  });
+}
+
 /* ───────── RCCL Highs ─────────
    Five cards on the page, each opening the same modal the player dossiers
    use. Everything below is a duo figure: it belongs to the pair that was on
@@ -990,7 +1034,8 @@ function highsData(){
 
 // who · figures · date, skipping whatever isn't there
 function recLine(e){
-  return [e.who, e.sub, e.d].filter(function(x){ return !!x; }).join(" &middot; ");
+  return [e.no ? matchLink(e.no) : "", e.who, e.sub, e.no ? "" : e.d]
+    .filter(function(x){ return !!x; }).join(" &middot; ");
 }
 function recCard(label, e, dp){
   if(!e) return statCard(label, null, "nothing on record", false);
@@ -1115,6 +1160,7 @@ function renderHighsModal(key){
   }).join("") + '</div>';
 
   $("modalBody").innerHTML = html;
+  bindGoLinks($("modalBody"));
   Array.prototype.forEach.call($("modalBody").querySelectorAll(".hnav .chip"), function(b){
     b.onclick = function(){ openHighs(b.dataset.h); };
   });
@@ -1169,7 +1215,7 @@ function statsFor(name){
     var counts = inWindow(mt);
 
     s.list.push({
-      d:mt.d, won:won, counts:counts,
+      d:mt.d, no:mt.no, won:won, counts:counts,
       partner:side.filter(function(p){ return p !== name; })[0] || "",
       foes:other.slice(), mine:mine, theirs:theirs,
       margin:marginOf(mt), so:!!(mt.sow && mt.sol), dls:!!mt.dls
@@ -1233,12 +1279,16 @@ function statsFor(name){
     if(won && first === true){
       s.wonFirst++;
       if(mine && mine.r !== undefined && mine.r !== null &&
-         (s.lowDefended === null || mine.r < s.lowDefended)) s.lowDefended = mine.r;
+         (s.lowDefended === null || mine.r < s.lowDefended.v))
+        s.lowDefended = { v:mine.r, tail:scoreTail(mine), no:mt.no,
+                          sub:"held them to " + scoreFull(theirs) };
     }
     if(won && first === false){
       s.wonSecond++;
       if(theirs && theirs.r !== undefined && theirs.r !== null &&
-         (s.highChased === null || theirs.r > s.highChased)) s.highChased = theirs.r;
+         (s.highChased === null || theirs.r > s.highChased.v))
+        s.highChased = { v:theirs.r, tail:scoreTail(theirs), no:mt.no,
+                         sub:"reached " + scoreFull(mine) };
     }
 
     // Margins. Defend a total and the margin is runs; haul one down and it
@@ -1248,21 +1298,26 @@ function statsFor(name){
     // second never finished at all.
     var noMargin = !!(mt.sow && mt.sol) || !!mt.dls;
     if(!noMargin && first !== null){
+      var card = scoreFull(mine) + " v " + scoreFull(theirs);
       if(first === true && won && haveBoth){
         var dw = mine.r - theirs.r;
-        if(s.winByRuns === null || dw > s.winByRuns) s.winByRuns = dw;
+        if(s.winByRuns === null || dw > s.winByRuns.v)
+          s.winByRuns = { v:dw, no:mt.no, sub:card };
       }
       if(first === false && !won && haveBoth){
         var dl = theirs.r - mine.r;
-        if(s.lossByRuns === null || dl > s.lossByRuns) s.lossByRuns = dl;
+        if(s.lossByRuns === null || dl > s.lossByRuns.v)
+          s.lossByRuns = { v:dl, no:mt.no, sub:card };
       }
       if(first === false && won && mine && mine.k !== undefined && mine.k !== null){
         var wkw = 10 - mine.k;
-        if(s.winByWkts === null || wkw > s.winByWkts) s.winByWkts = wkw;
+        if(s.winByWkts === null || wkw > s.winByWkts.v)
+          s.winByWkts = { v:wkw, no:mt.no, sub:card };
       }
       if(first === true && !won && theirs && theirs.k !== undefined && theirs.k !== null){
         var wkl = 10 - theirs.k;
-        if(s.lossByWkts === null || wkl > s.lossByWkts) s.lossByWkts = wkl;
+        if(s.lossByWkts === null || wkl > s.lossByWkts.v)
+          s.lossByWkts = { v:wkl, no:mt.no, sub:card };
       }
     }
   });
@@ -1298,8 +1353,8 @@ function leagueBests(){
   PLAYERS.forEach(function(p){
     var s = statsFor(p);
     if(s.high !== null && (best.high === null || s.high > best.high)) best.high = s.high;
-    if(s.lowDefended !== null && (best.lowDefended === null || s.lowDefended < best.lowDefended)) best.lowDefended = s.lowDefended;
-    if(s.highChased !== null && (best.highChased === null || s.highChased > best.highChased)) best.highChased = s.highChased;
+    if(s.lowDefended !== null && (best.lowDefended === null || s.lowDefended.v < best.lowDefended)) best.lowDefended = s.lowDefended.v;
+    if(s.highChased !== null && (best.highChased === null || s.highChased.v > best.highChased)) best.highChased = s.highChased.v;
     if(s.runs > 0 && (best.runs === null || s.runs > best.runs)) best.runs = s.runs;
     if(s.wkts > 0 && (best.wkts === null || s.wkts > best.wkts)) best.wkts = s.wkts;
     if(s.bestEcon !== null && (best.econ === null || s.bestEcon < best.econ)) best.econ = s.bestEcon;
@@ -1417,8 +1472,8 @@ function renderModal(){
 
   html += sectionTitle("Batting first", "duo") + '<div class="stats">' +
     statCard("Record", bf.p ? bf.w + "&ndash;" + bf.l : null, bfPct, false) +
-    statCard("Lowest defended", s.lowDefended, "successfully",
-             s.lowDefended !== null && s.lowDefended === best.lowDefended) +
+    statCard("Lowest defended", citeVal(s.lowDefended), citeLine(s.lowDefended),
+             s.lowDefended !== null && s.lowDefended.v === best.lowDefended) +
     statCard("Average set", avgSet, s.innsFirst + " innings" + gap(avgSet, lg.first), false) +
     statCard("League bats first", lg.first,
              lg.firstN ? "across " + lg.firstN + " first innings" : "none recorded", false, "ref") +
@@ -1426,8 +1481,8 @@ function renderModal(){
 
   html += sectionTitle("Chasing", "duo") + '<div class="stats">' +
     statCard("Record", ch.p ? ch.w + "&ndash;" + ch.l : null, chPct, false) +
-    statCard("Highest chased", s.highChased, "target hauled down",
-             s.highChased !== null && s.highChased === best.highChased) +
+    statCard("Highest chased", citeVal(s.highChased), citeLine(s.highChased),
+             s.highChased !== null && s.highChased.v === best.highChased) +
     statCard("Average scored", avgChase, s.innsChase + " innings" + gap(avgChase, lg.second), false) +
     statCard("League chasing", lg.second,
              lg.secondN ? "across " + lg.secondN + " second innings" : "none recorded", false, "ref") +
@@ -1436,10 +1491,10 @@ function renderModal(){
      ' have no innings order recorded, so they sit outside these two sections. Edit them to fill it in.</p>' : '') +
 
   sectionTitle("Margins", "duo") + '<div class="stats">' +
-    statCard("Biggest win by runs", s.winByRuns === null ? null : "+" + s.winByRuns, "total defended", false) +
-    statCard("Biggest win by wickets", s.winByWkts, "in hand, chasing", false) +
-    statCard("Heaviest loss by runs", s.lossByRuns === null ? null : "&minus;" + s.lossByRuns, "chase fell short", false) +
-    statCard("Heaviest loss by wickets", s.lossByWkts, "spare, total hauled down", false) +
+    statCard("Biggest win by runs", citeVal(s.winByRuns, "+"), citeLine(s.winByRuns), false) +
+    statCard("Biggest win by wickets", citeVal(s.winByWkts), citeLine(s.winByWkts), false) +
+    statCard("Heaviest loss by runs", citeVal(s.lossByRuns, "&minus;"), citeLine(s.lossByRuns), false) +
+    statCard("Heaviest loss by wickets", citeVal(s.lossByWkts), citeLine(s.lossByWkts), false) +
     statCard("Super overs", s.soPlayed ? s.soWon + "/" + s.soPlayed : null, "won of played", false) +
     statCard("DLS results", s.dlsPlayed ? s.dlsWon + "/" + s.dlsPlayed : null, "won of settled", false) +
     statCard("Through the gate", s.w >= CYCLE.minWins ? "YES" : (CYCLE.minWins - s.w),
@@ -1460,12 +1515,10 @@ function renderModal(){
       var sc = "";
       if(e.mine && e.mine.r !== undefined && e.mine.r !== null &&
          e.theirs && e.theirs.r !== undefined && e.theirs.r !== null){
-        sc = e.mine.r + (e.mine.k === undefined || e.mine.k === null ? "" : "/" + e.mine.k) +
-             ' &ndash; ' +
-             e.theirs.r + (e.theirs.k === undefined || e.theirs.k === null ? "" : "/" + e.theirs.k);
+        sc = scoreFull(e.mine) + ' &ndash; ' + scoreFull(e.theirs);
       }
       return '<li class="' + (e.counts ? "" : "void") + '">' +
-        '<span class="d">' + (fmt(e.d) || "—") + '</span>' +
+        '<span class="d">' + matchLink(e.no) + '</span>' +
         '<span class="res ' + (e.won ? "w" : "l") + '">' + (e.won ? "WON" : "LOST") + '</span>' +
         '<span class="vs">with <b>' + esc(realName(e.partner)) + '</b> v ' +
           esc(e.foes.map(realName).join(" & ")) + '</span>' +
@@ -1475,6 +1528,7 @@ function renderModal(){
     }).join("") + '</ul>';
 
   $("modalBody").innerHTML = html;
+  bindGoLinks($("modalBody"));
 }
 
 function openPlayer(name){
@@ -1546,8 +1600,9 @@ function renderLog(){
     return;
   }
   $("log").innerHTML = list.map(function(m){
-    return '<li class="' + (inWindow(m) ? "" : "void") + '">' +
+    return '<li id="match-' + m.no + '" class="' + (inWindow(m) ? "" : "void") + '">' +
       '<div class="line">' +
+        '<span class="mno">#' + m.no + '</span>' +
         '<span class="day">' + (fmt(m.d) || "—") + '</span>' +
         '<span class="won">' + esc((m.w || []).map(realName).join(" & ")) + '</span>' +
         '<span class="verb">beat</span>' +
@@ -2003,6 +2058,9 @@ function removeMatch(id){
 /* ───────── render ───────── */
 function render(){
   if(S.editing && !findMatch(S.editing)) S.editing = null;   // deleted under us
+  // S.matches is held in date order, so the index is the match number. Set it
+  // once here and every derivation downstream can cite it.
+  S.matches.forEach(function(m, i){ m.no = i + 1; });
   var rows = buildTable();
   renderCrest(); renderWire(); renderTable(rows); renderVerdict(rows);
   renderHighs(); renderEntry(); renderLog();
