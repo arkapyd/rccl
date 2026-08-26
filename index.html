@@ -1721,8 +1721,7 @@ function sizeLogWindow(){
 function renderLog(){
   var counting = S.matches.filter(inWindow).length;
   var hidden = Math.max(0, S.matches.length - LOG_VISIBLE);
-  $("logAside").textContent = counting + " matches this cycle" +
-    (hidden ? " · scroll for " + hidden + " older" : "");
+  $("logAside").textContent = counting + " matches this cycle";
   var list = S.matches.slice().reverse();
   if(!list.length){
     $("log").innerHTML = '<li class="blank">Nothing played yet. The first result goes in above.</li>';
@@ -1787,7 +1786,7 @@ function renderEntry(){
     $("entryAside").textContent = "Locked";
     box.innerHTML =
       '<div class="lock">' +
-        '<p>Results go in by the keeper of the cycle. Everyone else just reads the table.</p>' +
+        '<p>Results logged here. Matches end in wins or losses, either through a clear result, terminating super overs, or D/L system.</p>' +
         '<input type="password" id="pw" placeholder="Admin password" autocomplete="off" aria-label="Admin password">' +
         '<button class="btn fill" id="unlock">Unlock</button>' +
       '</div><div class="flash" id="flash"></div>';
