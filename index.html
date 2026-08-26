@@ -215,6 +215,15 @@ input::placeholder{color:#7E868F}
 .hcard .hv{font-family:'Teko',sans-serif;font-weight:700;font-size:31px;line-height:1.04;
   color:var(--steel-ink);word-break:break-word}
 .hcard:hover .hv{color:var(--gold)}
+/* the figure alone can't say whether it's one innings or a whole cycle */
+.hcard .hq{align-self:flex-start;margin:3px 0 1px;font-size:8px;font-weight:800;letter-spacing:.14em;
+  text-transform:uppercase;color:#98A0A9;border:1px solid rgba(201,162,39,.30);
+  border-radius:2px;padding:2px 6px;white-space:nowrap}
+.hcard:hover .hq{color:var(--frame-lit);border-color:rgba(255,228,99,.45)}
+/* same treatment the stat cards give a scoreline: figure bright, rest quiet */
+.hcard .hv .sfx{font-family:'Teko',sans-serif;font-style:normal;font-weight:600;font-size:.56em;
+  color:#98A0A9;margin-left:4px;letter-spacing:.01em;white-space:nowrap}
+.hcard:hover .hv .sfx{color:#98A0A9}
 .hcard .hs{font-size:11px;color:#98A0A9;line-height:1.45}
 .hcard .hgo{margin-top:auto;padding-top:11px;font-size:9px;font-weight:800;letter-spacing:.16em;
   text-transform:uppercase;color:#7E868F}
@@ -1151,19 +1160,39 @@ function highsBlock(key, d){
              m ? m.names + " &middot; " + m.w + "&ndash;" + m.l : "nothing on record", false);
 }
 
-// The face of each card: one headline figure so a click is worth making.
+// The face of each card: one headline figure so a click is worth making, and
+// a scope tag — a one-innings duo record reads nothing like a season total,
+// and the bare number can't tell you which it is.
 function highsFace(key, d){
   var R = d.R;
-  if(key === "cycle") return { v: R.n, s: R.n === 1 ? "match on record" : "matches on record" };
-  if(key === "bat")   return R.high ? { v: R.high.v, s: "Highest total &middot; " + esc(R.high.who) }
-                                    : { v: null, s: "no totals recorded" };
-  if(key === "ball")  return R.econ ? { v: R.econ.v.toFixed(2), s: "Best economy &middot; " + esc(R.econ.who) }
-                                    : { v: null, s: "no spell long enough yet" };
-  if(key === "margins") return R.winRuns ? { v: R.winRuns.v, s: "Biggest win, runs &middot; " + esc(R.winRuns.who) }
-                        : (R.winWkts ? { v: R.winWkts.v, s: "Biggest win, wickets &middot; " + esc(R.winWkts.who) }
-                                     : { v: null, s: "no margins recorded" });
-  return d.best ? { v: d.best.w + "&ndash;" + d.best.l, s: "Best pairing &middot; " + esc(d.best.names) }
-                : { v: null, s: "no pair has two games yet" };
+  var sfx = function(t){ return t ? '<em class="sfx">' + t + '</em>' : ""; };
+  var ONE_INN = "One innings &middot; a duo";
+
+  if(key === "cycle") return { v: R.n, q: "Cycle to date",
+    s: R.n === 1 ? "match on record" : "matches on record" };
+
+  if(key === "bat") return R.high
+    ? { v: R.high.v + sfx(R.high.tail), q: ONE_INN,
+        s: "Highest total &middot; " + esc(R.high.who) }
+    : { v: null, q: ONE_INN, s: "no totals recorded" };
+
+  if(key === "ball") return R.econ
+    ? { v: R.econ.v.toFixed(2), q: ONE_INN,
+        s: "Best economy &middot; " + esc(R.econ.who) + (R.econ.sub ? " &middot; " + R.econ.sub : "") }
+    : { v: null, q: ONE_INN, s: "no spell long enough yet" };
+
+  if(key === "margins"){
+    var m = R.winRuns || R.winWkts;
+    return m
+      ? { v: m.v, q: "One match &middot; a duo",
+          s: (R.winRuns ? "Biggest win, runs" : "Biggest win, wickets") + " &middot; " + esc(m.who) }
+      : { v: null, q: "One match &middot; a duo", s: "no margins recorded" };
+  }
+
+  return d.best
+    ? { v: d.best.w + "&ndash;" + d.best.l, q: "Cycle to date &middot; a duo",
+        s: "Best pairing &middot; " + esc(d.best.names) }
+    : { v: null, q: "Cycle to date &middot; a duo", s: "no pair has two games yet" };
 }
 
 /* A cascading strip of every player, ranked. The cards are absolutely
@@ -1244,6 +1273,7 @@ function renderHighs(){
     return '<button class="hcard" type="button" data-h="' + esc(h.key) + '">' +
       '<span class="ht">' + esc(h.name) + '</span>' +
       '<span class="hv">' + (f.v === null || f.v === undefined ? "&mdash;" : f.v) + '</span>' +
+      (f.q ? '<span class="hq">' + f.q + '</span>' : '') +
       '<span class="hs">' + f.s + '</span>' +
       '<span class="hgo">Open &rsaquo;</span>' +
     '</button>';
