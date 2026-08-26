@@ -412,11 +412,11 @@ footer img{width:26px;height:auto;opacity:.7}
 </head>
 
 <body>
-<h1 class="sr">Real Cricket Champions' League</h1>
+<h1 class="sr">Real Cricket s' League</h1>
 
 <header class="crest">
   <div class="shell crest-grid">
-    <div class="plate"><img id="logo" src="RCCL.png" alt="Real Cricket Champions' League 2026"></div>
+    <div class="plate"><img id="logo" src="RCCL.png" alt="Real Cricket s' League 2026"></div>
     <div>
       <div class="season">
         <span id="cycleName">Cycle I</span><span class="dot"></span>
@@ -464,7 +464,7 @@ footer img{width:26px;height:auto;opacity:.7}
 
   <section id="highsSection">
     <div class="head">
-      <h2>RCCL Highs</h2>
+      <h2>RCCL Highs and Lows</h2>
       <span class="aside" id="highsAside">The record book</span>
     </div>
     <div class="hairline"></div>
@@ -509,7 +509,7 @@ footer img{width:26px;height:auto;opacity:.7}
 
   <footer>
     <img src="RCCL.png" alt="" onerror="this.remove()">
-    <span>Real Cricket Champions' League</span>
+    <span>Real Cricket s' League</span>
     <span id="footWindow"></span>
   </footer>
 </main>
@@ -786,7 +786,7 @@ function renderVerdict(rows){
     var chase = rows.slice().sort(function(a,b){ return b.w - a.w || b.pcw - a.pcw; })[0];
     $("vKicker").textContent = closed ? "Cycle closed · uncrowned" : "Cycle open · nobody through the gate";
     if(closed){
-      $("vName").textContent = "No champion";
+      $("vName").textContent = "No ";
       $("vNote").innerHTML = "The window shut with nobody on <b>" + CYCLE.minWins +
         " wins</b>, so the cycle goes uncrowned. Carry the gate over, or lower it next time.";
     } else if(!chase || chase.w === 0){
@@ -814,7 +814,7 @@ function renderVerdict(rows){
 
   var c = level[0];
   box.classList.add("crowned");
-  $("vKicker").textContent = closed ? "Champion of " + CYCLE.name : "Champion as it stands";
+  $("vKicker").textContent = closed ? "Champion of " + CYCLE.name : "Leading the pack";
   $("vName").textContent = c.name;
   $("vNote").innerHTML = "<b>" + c.w + "–" + c.l + "</b> from " + c.m + " matches at <b>" +
     c.pcw.toFixed(2) + " PCW</b>." +
