@@ -1148,7 +1148,7 @@ function highsBlock(key, d){
     statCard("Longest win streak", d.streak ? d.streak.v : null,
              d.streak ? d.streak.who : "no pair has strung two together", false) +
     statCard("Most played pairing", m ? m.n : null,
-             m ? m.names + " &middot; " + m.w + "&ndash;" + m.l : "nothing on record", false) +
+             m ? m.names + " &middot; " + m.w + "&ndash;" + m.l : "nothing on record", false);
 }
 
 // The face of each card: one headline figure so a click is worth making.
@@ -1166,11 +1166,11 @@ function highsFace(key, d){
                 : { v: null, s: "no pair has two games yet" };
 }
 
-/* A cascading strip of every pairing, ranked. The cards are absolutely
-   positioned so hovering raises one to the front without moving the others —
-   that keeps the strip exactly one row tall whatever the ranking does, and
-   stops a wide fan from overflowing the modal. Only the left spine (rank and
-   figure) shows until a card comes forward. */
+/* A cascading strip of every player, ranked. The cards are absolutely
+   positioned so bringing one forward never moves the others — that keeps the
+   strip exactly one row tall whatever the ranking does, and stops a wide fan
+   overflowing the modal. The leader stays open; the rest show only the
+   right-hand spine their neighbour doesn't cover. */
 function highsFan(key, d){
   var W = 34;                 // expanded card width, as a % of the strip
   var list, label, val, detail;
@@ -1720,7 +1720,6 @@ function sizeLogWindow(){
 
 function renderLog(){
   var counting = S.matches.filter(inWindow).length;
-  var hidden = Math.max(0, S.matches.length - LOG_VISIBLE);
   $("logAside").textContent = counting + " matches this cycle";
   var list = S.matches.slice().reverse();
   if(!list.length){
