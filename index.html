@@ -665,8 +665,17 @@ const SEED = [];
 
 // Reverse of ALIASES — used only in the Results log, which shows real
 // names instead of handles. The table and everything else keeps handles.
-const REAL_NAMES = {};
-Object.keys(ALIASES).forEach(function(real){ REAL_NAMES[ALIASES[real]] = real; });
+// explicit mapping for the results log to prevent alias collisions
+const REAL_NAMES = {
+  "zombdapro": "Rishit",
+  "chrispfor2": "Arka",
+  "milneristan": "Neil",
+  "ninjaadarsh": "Adarsh",
+  "partialcost": "Girija",
+  "notvrtx": "Sharanya",
+  "loiteringmedic": "Tuhinangshu",
+  "northwestlease": "Prajyot"
+};
 
 /* ═════════════════════ end of editable block ══════════════════ */
 
