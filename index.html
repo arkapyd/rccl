@@ -438,11 +438,11 @@ footer img{width:26px;height:auto;opacity:.7}
 </head>
 
 <body>
-<h1 class="sr">Real Cricket Champions' League</h1>
+<h1 class="sr">Real Cricket s' League</h1>
 
 <header class="crest">
   <div class="shell crest-grid">
-    <div class="plate"><img id="logo" src="RCCL.png" alt="Real Cricket Champions' League 2026"></div>
+    <div class="plate"><img id="logo" src="RCCL.png" alt="Real Cricket s' League 2026"></div>
     <div>
       <div class="season">
         <span id="cycleName">Cycle I</span><span class="dot"></span>
@@ -535,7 +535,7 @@ footer img{width:26px;height:auto;opacity:.7}
 
   <footer>
     <img src="RCCL.png" alt="" onerror="this.remove()">
-    <span>Real Cricket Champions' League</span>
+    <span>Real Cricket s' League</span>
     <span id="footWindow"></span>
   </footer>
 </main>
@@ -656,13 +656,14 @@ const DLS_F = [1.000, 0.900, 0.787, 0.663, 0.531, 0.400, 0.276, 0.168, 0.084, 0.
    Set this false for the official reading, where 125 would tie. */
 const DLS_STRICT_PAR = true;
 
-const PLAYERS = ["zombdapro","chrispfor2", "notvrtx", "loiteringmedic","partialcost","ninjaadarsh","northwestlease","milneristan"];
+const PLAYERS = ["zombdapro","chrispfor2","loiteringmedic","partialcost","ninjaadarsh","northwestlease","milneristan"];
 
 // Old names already sitting in the database, mapped to current handles.
 // Anything listed here is translated on read, so legacy results still count.
 const ALIASES = {
-  "Rishit":"zombdapro",       "Arka":"chrispfor2", "chrisp4two":"chrispfor2",
-  "Neil":"milneristan",       "Adarsh":"ninjaadarsh", "Sharanya": "notvrtx", 
+  "Rishit":"zombdapro",       "Arka":"chrispfor2",
+  "chrisp4two":"chrispfor2",
+  "Neil":"milneristan",       "Adarsh":"ninjaadarsh",
   "Girija":"partialcost",     "Tuhinangshu":"loiteringmedic",
   "Prajyot":"northwestlease"
 };
@@ -672,17 +673,8 @@ const SEED = [];
 
 // Reverse of ALIASES — used only in the Results log, which shows real
 // names instead of handles. The table and everything else keeps handles.
-// explicit mapping for the results log to prevent alias collisions
-const REAL_NAMES = {
-  "zombdapro": "Rishit",
-  "chrispfor2": "Arka",
-  "milneristan": "Neil",
-  "ninjaadarsh": "Adarsh",
-  "partialcost": "Girija",
-  "loiteringmedic": "Tuhinangshu",
-  "notvrtx": "Sharanya",
-  "northwestlease": "Prajyot"
-};
+const REAL_NAMES = {};
+Object.keys(ALIASES).forEach(function(real){ REAL_NAMES[ALIASES[real]] = real; });
 
 /* ═════════════════════ end of editable block ══════════════════ */
 
@@ -1145,11 +1137,17 @@ function recLine(e){
   return [e.no ? matchLink(e.no) : "", e.who, e.sub, e.no ? "" : e.d]
     .filter(function(x){ return !!x; }).join(" &middot; ");
 }
-function recCard(label, e, dp){
+// A unit label ("per over", "runs per innings") in the same small dim font a
+// scoreline suffix uses, so a rate reads as <figure> (unit) at a glance.
+function withUnit(v, unit){
+  return v === null || v === undefined ? v : v + '<em class="sfx">(' + unit + ')</em>';
+}
+function recCard(label, e, dp, unit){
   if(!e) return statCard(label, null, "nothing on record", false);
   var v = (dp === undefined ? e.v : e.v.toFixed(dp));
   // the scoreline rides alongside the headline figure, not instead of it
   if(e.tail) v += '<em class="sfx">' + e.tail + '</em>';
+  if(unit) v = withUnit(v, unit);
   return statCard(label, v, recLine(e), false);
 }
 
@@ -1173,10 +1171,11 @@ function highsBlock(key, d){
       recCard("Highest chased", R.chased);
   }
   if(key === "ball"){
-    return recCard("Best economy", R.econ, 2) +
-      recCard("Best strike rate", R.srate, 1) +
+    return recCard("Best economy", R.econ, 2, "per over") +
+      recCard("Best strike rate", R.srate, 1, "balls per wicket") +
       recCard("Lowest defended", R.defended) +
-      statCard("Season economy", d.rr ? d.rr.toFixed(2) : null, "every ball bowled in the cycle", false, "ref");
+      statCard("Season economy", d.rr ? withUnit(d.rr.toFixed(2), "per over") : null,
+               "every ball bowled in the cycle", false, "ref");
   }
   if(key === "margins"){
     return recCard("Biggest win by runs", R.winRuns) +
@@ -1638,20 +1637,20 @@ function renderModal(){
     statCard("Lowest duo total",
              s.lowDone === null ? null : s.lowDone + '<em class="sfx">' + s.lowDoneTail + '</em>',
              s.lowDone === null ? "no innings played out" : (matchLink(s.lowDoneNo) || null), false) +
-    statCard("Average total", avg, rate ? rate + " per over" : null, false) +
+    statCard("Average total", withUnit(avg, "runs per innings"), null, false) +
   '</div>';
 
   html += sectionTitle("With the ball", "duo") + '<div class="stats">' +
     statCard("Wickets taken in a duo", s.wkts, oversText(s.ballsBowled) + " overs bowled", s.wkts > 0 && s.wkts === best.wkts) +
-    statCard("Best duo economy", s.bestEcon === null ? null : s.bestEcon.toFixed(2),
+    statCard("Best duo economy", s.bestEcon === null ? null : withUnit(s.bestEcon.toFixed(2), "per over"),
              s.bestEcon === null
                ? "no innings past " + (MIN_ECON_BALLS / 6) + " overs"
                : [matchLink(s.bestEconNo), s.bestEconSc].filter(function(x){ return !!x; }).join(" &middot; "),
              s.bestEcon !== null && best.econ !== null && Math.abs(s.bestEcon - best.econ) < 1e-9) +
-    statCard("Duo strike rate", s.strikeRate === null ? null : s.strikeRate.toFixed(1),
-             s.strikeRate === null ? "no wickets yet" : "balls per wicket",
+    statCard("Duo strike rate", s.strikeRate === null ? null : withUnit(s.strikeRate.toFixed(1), "balls per wicket"),
+             s.strikeRate === null ? "no wickets yet" : null,
              s.strikeRate !== null && best.sr !== null && Math.abs(s.strikeRate - best.sr) < 1e-9) +
-    statCard("Duo economy", econ,
+    statCard("Duo economy", econ === null ? null : withUnit(econ, "per over"),
              s.ballsBowled ? s.conceded + " conceded in " + oversText(s.ballsBowled) + " ov" : "nothing bowled yet",
              s.econOverall !== null && best.econOverall !== null && Math.abs(s.econOverall - best.econOverall) < 1e-9) +
   '</div>';
@@ -1669,7 +1668,7 @@ function renderModal(){
     statCard("Record", bf.p ? bf.w + "&ndash;" + bf.l : null, bfPct, false) +
     statCard("Lowest defended", citeVal(s.lowDefended), citeLine(s.lowDefended),
              s.lowDefended !== null && s.lowDefended.v === best.lowDefended) +
-    statCard("Average set", avgSet, s.innsFirst + " innings" + gap(avgSet, lg.first), false) +
+    statCard("Average set", withUnit(avgSet, "runs per innings"), s.innsFirst + " innings" + gap(avgSet, lg.first), false) +
     statCard("League bats first", lg.first,
              lg.firstN ? "across " + lg.firstN + " first innings" : "none recorded", false, "ref") +
   '</div>';
@@ -1678,7 +1677,7 @@ function renderModal(){
     statCard("Record", ch.p ? ch.w + "&ndash;" + ch.l : null, chPct, false) +
     statCard("Highest chased", citeVal(s.highChased), citeLine(s.highChased),
              s.highChased !== null && s.highChased.v === best.highChased) +
-    statCard("Average scored", avgChase, s.innsChase + " innings" + gap(avgChase, lg.second), false) +
+    statCard("Average scored", withUnit(avgChase, "runs per innings"), s.innsChase + " innings" + gap(avgChase, lg.second), false) +
     statCard("League chasing", lg.second,
              lg.secondN ? "across " + lg.secondN + " second innings" : "none recorded", false, "ref") +
   '</div>' +
@@ -1686,9 +1685,9 @@ function renderModal(){
      ' have no innings order recorded, so they sit outside these two sections. Edit them to fill it in.</p>' : '') +
 
   sectionTitle("Margins", "duo") + '<div class="stats">' +
-    statCard("Biggest win by runs", citeVal(s.winByRuns, "+"), citeLine(s.winByRuns), false) +
+    statCard("Biggest win by runs", citeVal(s.winByRuns), citeLine(s.winByRuns), false) +
     statCard("Biggest win by wickets", citeVal(s.winByWkts), citeLine(s.winByWkts), false) +
-    statCard("Heaviest loss by runs", citeVal(s.lossByRuns, "&minus;"), citeLine(s.lossByRuns), false) +
+    statCard("Heaviest loss by runs", citeVal(s.lossByRuns), citeLine(s.lossByRuns), false) +
     statCard("Heaviest loss by wickets", citeVal(s.lossByWkts), citeLine(s.lossByWkts), false) +
     statCard("Super overs", s.soPlayed ? s.soWon + "/" + s.soPlayed : null, "won of played", false) +
     statCard("DLS results", s.dlsPlayed ? s.dlsWon + "/" + s.dlsPlayed : null, "won of settled", false) +
