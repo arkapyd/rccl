@@ -127,9 +127,6 @@ tr:hover .namebtn::after{content:"›";margin-left:7px;color:var(--gold);font-fa
 .who .stray{display:block;font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#FF9DA6;margin-top:2px}
 .num{width:46px;color:var(--lilac);font-weight:500}
 .pcw{width:88px;font-family:'Teko',sans-serif;font-size:clamp(22px,3.2vw,28px);font-weight:700}
-tr.through{background:linear-gradient(90deg,rgba(255,228,99,.11),transparent 62%)}
-tr.through .who,tr.through .pcw{color:var(--gold)}
-tr.through .pos{color:var(--bronze-lit)}
 tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
 .plinth-cell{padding-left:20px!important;width:104px}
 .plinth{display:flex;align-items:flex-end;gap:3px;height:30px}
@@ -374,7 +371,8 @@ footer img{width:26px;height:auto;opacity:.7}
 .mbox .stat.lead{background:rgba(255,228,99,.09);border-color:var(--gold)}
 .mbox .stat.lead b{color:var(--gold)}
 .mbox .stat.ref{background:rgba(0,0,0,.28);border-color:rgba(255,255,255,.11)}
-.mbox .mhead,.mbox .mtitle,.mbox .mtab td,.mbox .mtab th,.mbox .mlist li,.mbox .mnone{
+.mbox .mhead,.mbox .mtitle,.mbox .mtab td,.mbox .mtab th,.mbox .mlist li,.mbox .mnone,
+.mbox .tlist li{
   border-color:rgba(201,162,39,.20)}
 .mbox .mtab .wl,.mbox .mlist .vs b{color:var(--steel-ink)}
 .mx{position:absolute;top:10px;right:12px;background:none;border:0;color:var(--lilac-dim);font-size:26px;line-height:1;padding:4px 10px;cursor:pointer}
@@ -406,6 +404,36 @@ footer img{width:26px;height:auto;opacity:.7}
 .stat.ref b{color:var(--lilac)}
 .stat u{display:inline-block;margin-top:auto;padding-top:9px;text-decoration:none;font-size:8px;font-weight:800;letter-spacing:.12em;color:var(--gold)}
 .stat u::before{content:"\2605";margin-right:4px}
+/* a record card that opens the list it is the head of */
+.stat.go{cursor:pointer;transition:transform .15s ease,border-color .15s ease}
+.stat.go:hover,.stat.go:focus-visible{border-color:var(--gold);transform:translateY(-2px);outline:none}
+.stat.go:hover b,.stat.go:focus-visible b{color:var(--gold)}
+.stat .more{font-style:normal;display:block;margin-top:auto;padding-top:9px;font-size:8px;
+  font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-dim)}
+.stat.go:hover .more,.stat.go:focus-visible .more{color:var(--gold)}
+
+/* ---------------- top-five list ----------------
+   Rank and figure span both rows on the left, so the name and its citation
+   stack against a single tall figure rather than beside two half-height ones. */
+.tlist{list-style:none;margin:0 0 22px;padding:0}
+.tlist li{display:grid;grid-template-columns:24px minmax(76px,auto) minmax(0,1fr);
+  column-gap:14px;row-gap:2px;padding:13px 0;border-top:1px solid var(--hair-soft)}
+.tlist li:first-child{border-top:0;padding-top:0}
+.tlist .tr{grid-column:1;grid-row:1/3;align-self:center;font-family:'Teko',sans-serif;
+  font-size:15px;font-weight:700;line-height:1;color:var(--frame-lit)}
+.tlist .tv{grid-column:2;grid-row:1/3;align-self:center;font-family:'Teko',sans-serif;
+  font-size:26px;font-weight:700;line-height:1;color:var(--steel-ink);white-space:nowrap}
+.tlist .tv .sfx{font-family:'Teko',sans-serif;font-style:normal;font-weight:600;font-size:.56em;
+  color:var(--lilac-dim);margin-left:4px;letter-spacing:.01em;white-space:nowrap}
+.tlist li:first-child .tr,.tlist li:first-child .tv{color:var(--gold)}
+.tlist .tw{grid-column:3;grid-row:1;align-self:end;font-size:13.5px;font-weight:700;color:var(--white)}
+.tlist .tc{grid-column:3;grid-row:2;align-self:start;font-size:11px;color:var(--lilac-dim)}
+@media (max-width:520px){
+  .tlist li{display:block}
+  .tlist .tr{display:inline-block;margin-right:9px}
+  .tlist .tv{display:inline-block}
+  .tlist .tw{display:block;margin-top:4px}
+}
 .mtab{width:100%;border-collapse:collapse;margin-bottom:22px}
 .mtab td,.mtab th{padding:8px 0;font-size:13.5px;border-top:1px solid var(--hair-soft);text-align:right}
 .mtab th{font-size:8.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim);padding-top:0;border-top:0}
@@ -612,6 +640,9 @@ const MATCH_OVERS = 20;
 // How many results stay in view before the log starts scrolling.
 const LOG_VISIBLE = 5;
 
+// How many entries a record card lists when you open it.
+const TOP_N = 5;
+
 /* The cascading ranking strip. Cards overlap, so the visible sliver of each is
    the strip's width divided by the count — past ten the spine holding the rank
    and the figure stops fitting, so the strip is capped and says so.
@@ -687,7 +718,7 @@ var URN_PATH = 'M1.6 1.4H12.4V3.1H11.3C11.1 6.1 9.5 8.1 7.9 8.5V10.2H9V11.2H11.3
 var S = {
   matches: SEED.map(function(m,i){ return { id:"seed"+i, d:m.d, w:m.w, l:m.l }; }),
   live:false, unlocked:false, editing:null, fb:null, entryKey:null, openPlayer:null,
-  formBF:null, dlsOpen:false, openHighs:null
+  formBF:null, dlsOpen:false, openHighs:null, openTop:null
 };
 
 document.documentElement.style.setProperty('--wm', 'url("' + LOGO + '")');
@@ -784,10 +815,10 @@ function cycleLeaders(rows){
 }
 
 function renderTable(rows){
-  var lead = {};
-  cycleLeaders(rows).forEach(function(r){ lead[r.name] = true; });
+  // No row is picked out here any more — the verdict panel above the table is
+  // where the cycle leader is named, and saying it twice only competed with it.
   $("table").innerHTML = rows.map(function(r,i){
-    var cls = lead[r.name] ? "through" : (r.m === 0 ? "dnp" : "");
+    var cls = (r.m === 0 ? "dnp" : "");
     return '<tr class="' + cls + '">' +
       '<td class="tl pos">' + (i+1) + '</td>' +
       '<td class="tl who"><button class="namebtn" data-p="' + esc(r.name) + '">' + esc(r.name) + '</button>' +
@@ -940,7 +971,11 @@ function leagueRecords(){
     high:null, lowDone:null, agg:null, rate:null,
     winRuns:null, winWkts:null, thinRuns:null, thinWkts:null,
     defended:null, chased:null,
-    econ:null, srate:null, pairs:{}
+    econ:null, srate:null, pairs:{},
+    // Every candidate for each record, kept so the card can open the list it
+    // heads. The records themselves are picked off these at the end.
+    all:{ high:[], lowDone:[], rate:[], econ:[], srate:[], agg:[],
+          runMargins:[], wktMargins:[], defended:[], chased:[] }
   };
 
   // pairing records are opened before the innings loop so each innings can be
@@ -982,27 +1017,24 @@ function leagueRecords(){
         if(sc.k !== undefined && sc.k !== null) wp.bowlWkts += sc.k;
       }
 
-      if(R.high === null || sc.r > R.high.v) R.high = { v:sc.r, tail:tail, who:i.bat, d:day, no:mt.no };
+      var ent = { v:sc.r, tail:tail, who:i.bat, d:day, no:mt.no };
+      R.all.high.push(ent);
       // gated on a completed innings — see inningsComplete()
-      if(inningsComplete(sc) && (R.lowDone === null || sc.r < R.lowDone.v))
-        R.lowDone = { v:sc.r, tail:tail, who:i.bat, d:day, no:mt.no };
+      if(inningsComplete(sc)) R.all.lowDone.push(ent);
 
       // One run rate, read from both ends: the batting side's scoring rate is
       // the fielding side's economy.
       if(b >= MIN_ECON_BALLS){
         var rr = sc.r / (b / 6);
-        if(R.rate === null || rr > R.rate.v) R.rate = { v:rr, who:i.bat,  d:day, sub:full, no:mt.no };
-        if(R.econ === null || rr < R.econ.v) R.econ = { v:rr, who:i.bowl, d:day, sub:full, no:mt.no };
+        R.all.rate.push({ v:rr, who:i.bat,  d:day, sub:full, no:mt.no });
+        R.all.econ.push({ v:rr, who:i.bowl, d:day, sub:full, no:mt.no });
       }
-      if(sc.k) {
-        var sr = b / sc.k;
-        if(R.srate === null || sr < R.srate.v)
-          R.srate = { v:sr, who:i.bowl, d:day, sub:full, no:mt.no };
-      }
+      if(sc.k) R.all.srate.push({ v:b / sc.k, who:i.bowl, d:day, sub:full, no:mt.no });
     });
 
-    if(wholeMatch && (R.agg === null || total > R.agg.v))
-      R.agg = { v:total, who:W + " v " + L, d:day, no:mt.no, sub:scoreFull(mt.sw) + " v " + scoreFull(mt.sl) };
+    if(wholeMatch)
+      R.all.agg.push({ v:total, who:W + " v " + L, d:day, no:mt.no,
+                       sub:scoreFull(mt.sw) + " v " + scoreFull(mt.sl) });
 
     if(mt.sow && mt.sol) R.so++;
     if(mt.dls) R.dls++;
@@ -1019,21 +1051,12 @@ function leagueRecords(){
         var fw = scoreFull(mt.sw), fl = scoreFull(mt.sl);
         var beat = { who:W + " beat " + L, d:day, no:mt.no, sub:fw + " v " + fl };
         if(mt.bf === "w"){
-          var d = mt.sw.r - mt.sl.r;
-          if(R.winRuns === null || d > R.winRuns.v)
-            R.winRuns = { v:d, who:beat.who, d:day, no:mt.no, sub:beat.sub };
-          if(R.thinRuns === null || d < R.thinRuns.v)
-            R.thinRuns = { v:d, who:beat.who, d:day, no:mt.no, sub:beat.sub };
-          if(R.defended === null || mt.sw.r < R.defended.v)
-            R.defended = { v:mt.sw.r, tail:scoreTail(mt.sw), who:W, d:day, no:mt.no };
+          R.all.runMargins.push({ v:mt.sw.r - mt.sl.r, who:beat.who, d:day, no:mt.no, sub:beat.sub });
+          R.all.defended.push({ v:mt.sw.r, tail:scoreTail(mt.sw), who:W, d:day, no:mt.no });
         } else {
           var wk = 10 - (mt.sw.k === undefined || mt.sw.k === null ? 0 : mt.sw.k);
-          if(R.winWkts === null || wk > R.winWkts.v)
-            R.winWkts = { v:wk, who:beat.who, d:day, no:mt.no, sub:beat.sub };
-          if(R.thinWkts === null || wk < R.thinWkts.v)
-            R.thinWkts = { v:wk, who:beat.who, d:day, no:mt.no, sub:beat.sub };
-          if(R.chased === null || mt.sl.r > R.chased.v)
-            R.chased = { v:mt.sl.r, tail:scoreTail(mt.sl), who:W, d:day, no:mt.no };
+          R.all.wktMargins.push({ v:wk, who:beat.who, d:day, no:mt.no, sub:beat.sub });
+          R.all.chased.push({ v:mt.sl.r, tail:scoreTail(mt.sl), who:W, d:day, no:mt.no });
         }
       }
     }
@@ -1053,6 +1076,28 @@ function leagueRecords(){
       p.lastDay = day;
     });
   });
+
+  // Each record is the head of its list rather than a separately tracked
+  // figure, so a card and the list behind it can never disagree. Ties go to
+  // whichever came first, which is how the running comparison used to settle
+  // them too.
+  function pickBest(arr, dir){
+    var out = null;
+    arr.forEach(function(e){ if(out === null || (dir > 0 ? e.v > out.v : e.v < out.v)) out = e; });
+    return out;
+  }
+  R.high     = pickBest(R.all.high, 1);
+  R.lowDone  = pickBest(R.all.lowDone, -1);
+  R.rate     = pickBest(R.all.rate, 1);
+  R.econ     = pickBest(R.all.econ, -1);
+  R.srate    = pickBest(R.all.srate, -1);
+  R.agg      = pickBest(R.all.agg, 1);
+  R.winRuns  = pickBest(R.all.runMargins, 1);
+  R.thinRuns = pickBest(R.all.runMargins, -1);
+  R.winWkts  = pickBest(R.all.wktMargins, 1);
+  R.thinWkts = pickBest(R.all.wktMargins, -1);
+  R.defended = pickBest(R.all.defended, -1);
+  R.chased   = pickBest(R.all.chased, 1);
 
   return R;
 }
@@ -1143,13 +1188,13 @@ function recLine(e){
 function withUnit(v, unit){
   return v === null || v === undefined ? v : v + '<em class="sfx">' + unit + '</em>';
 }
-function recCard(label, e, dp, unit){
+function recCard(label, e, dp, unit, top){
   if(!e) return statCard(label, null, "nothing on record", false);
   var v = (dp === undefined ? e.v : e.v.toFixed(dp));
   // the scoreline rides alongside the headline figure, not instead of it
   if(e.tail) v += '<em class="sfx">' + e.tail + '</em>';
   if(unit) v = withUnit(v, unit);
-  return statCard(label, v, recLine(e), false);
+  return statCard(label, v, recLine(e), false, null, top);
 }
 
 function highsBlock(key, d){
@@ -1163,36 +1208,40 @@ function highsBlock(key, d){
                          : "no innings order recorded", false) +
       statCard("Average 1st innings", lg.first, lg.firstN ? "over " + lg.firstN + " innings" : "none recorded", false, "ref") +
       statCard("Average chase", lg.second, lg.secondN ? "over " + lg.secondN + " innings" : "none recorded", false, "ref") +
-      recCard("Biggest match", R.agg);
+      recCard("Biggest match", R.agg, undefined, null, "agg");
   }
   if(key === "bat"){
-    return recCard("Highest total", R.high) +
-      recCard("Lowest completed innings", R.lowDone) +
-      recCard("Fastest innings", R.rate, 2) +
-      recCard("Highest chased", R.chased);
+    return recCard("Highest total", R.high, undefined, null, "high") +
+      recCard("Lowest completed innings", R.lowDone, undefined, null, "lowDone") +
+      recCard("Fastest innings", R.rate, 2, null, "rate") +
+      recCard("Highest chased", R.chased, undefined, null, "chased");
   }
   if(key === "ball"){
-    return recCard("Best economy", R.econ, 2, "per over") +
-      recCard("Best strike rate", R.srate, 1, "balls per wicket") +
-      recCard("Lowest defended", R.defended) +
+    return recCard("Best economy", R.econ, 2, "per over", "econ") +
+      recCard("Best strike rate", R.srate, 1, "balls per wicket", "srate") +
+      recCard("Lowest defended", R.defended, undefined, null, "defended") +
       statCard("Season economy", d.rr ? withUnit(d.rr.toFixed(2), "per over") : null,
                "every ball bowled in the cycle", false, "ref");
   }
   if(key === "margins"){
-    return recCard("Biggest win by runs", R.winRuns) +
-      recCard("Biggest win by wickets", R.winWkts) +
-      recCard("Narrowest win by runs", R.thinRuns) +
-      recCard("Narrowest win by wickets", R.thinWkts);
+    return recCard("Biggest win by runs", R.winRuns, undefined, null, "winRuns") +
+      recCard("Biggest win by wickets", R.winWkts, undefined, null, "winWkts") +
+      recCard("Narrowest win by runs", R.thinRuns, undefined, null, "thinRuns") +
+      recCard("Narrowest win by wickets", R.thinWkts, undefined, null, "thinWkts");
   }
   // pairs
   var b = d.best, m = d.most;
   return statCard("Best pairing", b ? b.pcw.toFixed(0) : null,
-           b ? b.names + " &middot; " + b.w + "&ndash;" + b.l : "needs a pair with two games", false) +
-    statCard("Most wins", d.wins ? d.wins.v : null, d.wins ? d.wins.who : "nothing on record", false) +
+           b ? b.names + " &middot; " + b.w + "&ndash;" + b.l : "needs a pair with two games", false,
+           null, b ? "pairPcw" : null) +
+    statCard("Most wins", d.wins ? d.wins.v : null, d.wins ? d.wins.who : "nothing on record", false,
+             null, d.wins ? "pairWins" : null) +
     statCard("Longest win streak", d.streak ? d.streak.v : null,
-             d.streak ? d.streak.who : "no pair has strung two together", false) +
+             d.streak ? d.streak.who : "no pair has strung two together", false,
+             null, d.streak ? "pairStreak" : null) +
     statCard("Most played pairing", m ? m.n : null,
-             m ? m.names + " &middot; " + m.w + "&ndash;" + m.l : "nothing on record", false);
+             m ? m.names + " &middot; " + m.w + "&ndash;" + m.l : "nothing on record", false,
+             null, m ? "pairPlayed" : null);
 }
 
 // The face of each card: one headline figure so a click is worth making, and
@@ -1224,6 +1273,127 @@ function highsFace(key, d){
   return d.best
     ? { v: d.best.w + "&ndash;" + d.best.l, s: "Best pairing &middot; " + esc(d.best.names) }
     : { v: null, s: "no pair has two games yet" };
+}
+
+/* ───────── the list behind each record ─────────
+   A record card is only ever the head of a list. Clicking one swaps the modal
+   for that list, so "best economy" stops being a single number and becomes the
+   five tightest spells on record. Nothing new is computed: the lists are the
+   same arrays the records were picked off, sorted the same way. */
+function pairRow(p, v){
+  return { v:v, who:p.names, sub:p.w + "&ndash;" + p.l + " from " + p.n + " together" };
+}
+
+var TOPS = {
+  agg:      { name:"Biggest match",            sec:"cycle",   dir: 1, unit:"runs" },
+  high:     { name:"Highest total",            sec:"bat",     dir: 1 },
+  lowDone:  { name:"Lowest completed innings", sec:"bat",     dir:-1 },
+  rate:     { name:"Fastest innings",          sec:"bat",     dir: 1, dp:2, unit:"per over" },
+  chased:   { name:"Highest chased",           sec:"bat",     dir: 1 },
+  econ:     { name:"Best economy",             sec:"ball",    dir:-1, dp:2, unit:"per over" },
+  srate:    { name:"Best strike rate",         sec:"ball",    dir:-1, dp:1, unit:"balls per wicket" },
+  defended: { name:"Lowest defended",          sec:"ball",    dir:-1 },
+  winRuns:  { name:"Biggest win by runs",      sec:"margins", dir: 1, unit:"runs",    from:"runMargins" },
+  winWkts:  { name:"Biggest win by wickets",   sec:"margins", dir: 1, unit:"wickets", from:"wktMargins" },
+  thinRuns: { name:"Narrowest win by runs",    sec:"margins", dir:-1, unit:"runs",    from:"runMargins" },
+  thinWkts: { name:"Narrowest win by wickets", sec:"margins", dir:-1, unit:"wickets", from:"wktMargins" },
+  pairPcw:  { name:"Best pairing", sec:"pairs", dir:1, dp:2, unit:"PCW",
+              rows:function(d){ return d.ranked.map(function(p){ return pairRow(p, p.pcw); }); } },
+  pairWins: { name:"Most wins", sec:"pairs", dir:1, unit:"wins",
+              rows:function(d){ return d.pairs.filter(function(p){ return p.w > 0; })
+                                              .map(function(p){ return pairRow(p, p.w); }); } },
+  pairStreak:{ name:"Longest win streak", sec:"pairs", dir:1, unit:"in a row",
+              rows:function(d){ return d.pairs.filter(function(p){ return p.best > 0; })
+                                              .map(function(p){ return pairRow(p, p.best); }); } },
+  pairPlayed:{ name:"Most played pairing", sec:"pairs", dir:1, unit:"matches",
+              rows:function(d){ return d.pairs.filter(function(p){ return p.n > 0; })
+                                              .map(function(p){ return pairRow(p, p.n); }); } }
+};
+
+function topEntries(key, d){
+  var t = TOPS[key];
+  if(!t) return [];
+  var arr = t.rows ? t.rows(d) : ((d.R.all && d.R.all[t.from || key]) || []);
+  // The sort is stable, so equal figures stay in the order they were played —
+  // the same way the running comparison settled a tie.
+  return arr.slice()
+    .sort(function(a,b){ return t.dir > 0 ? b.v - a.v : a.v - b.v; })
+    .slice(0, TOP_N);
+}
+function topVal(e, t){
+  var v = (t.dp === undefined ? String(e.v) : e.v.toFixed(t.dp));
+  if(e.tail) v += '<em class="sfx">' + e.tail + '</em>';
+  if(t.unit) v += '<em class="sfx">' + t.unit + '</em>';
+  return v;
+}
+// recLine without the name, which the list gives its own line.
+function topCite(e){
+  return [e.no ? matchLink(e.no) : "", e.sub, e.no ? "" : e.d]
+    .filter(function(x){ return !!x; }).join(" &middot; ");
+}
+
+// One binder for everything that moves between modal views: the section chips,
+// the sibling list chips, and the record cards themselves.
+function bindTopLinks(root){
+  if(!root) return;
+  Array.prototype.forEach.call(root.querySelectorAll("[data-h]"), function(b){
+    b.onclick = function(){ openHighs(b.dataset.h); };
+  });
+  Array.prototype.forEach.call(root.querySelectorAll("[data-top]"), function(el){
+    var go = function(ev){
+      // a click that landed on the card's match link belongs to the link
+      if(ev && ev.target && ev.target.closest && ev.target.closest(".golink")) return;
+      openTop(el.dataset.top);
+    };
+    el.onclick = go;
+    if(el.tagName !== "BUTTON") el.onkeydown = function(ev){
+      if(ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); go(ev); }
+    };
+  });
+}
+
+function renderTopModal(key){
+  var t = TOPS[key];
+  if(!t){ closeModal(); return; }
+  var d = highsData(), list = topEntries(key, d);
+  var sec = HIGHS.filter(function(h){ return h.key === t.sec; })[0];
+  var secName = sec ? sec.name : "RCCL Highs";
+  $("modal").hidden = false;
+
+  var html = '<div class="mhead">' +
+    '<div><h3 class="mhandle" id="mHandle">' + esc(t.name) + '</h3>' +
+    '<p class="mreal">' + esc(secName) + ' &middot; top ' + TOP_N + '</p></div>' +
+    '<div class="mrec"><b>' + list.length + '</b><span>' +
+      (list.length === 1 ? "entry ranked" : "entries ranked") + '</span></div>' +
+  '</div>';
+
+  html += '<p class="mnote">' + (t.sec === "pairs"
+    ? 'Ranked across every pairing that has taken the field this cycle.'
+    : 'Every figure here is a <b>duo figure</b> &mdash; it belongs to the pair that was on the ' +
+      'field, not to either player alone. Follow a match link to the result it came from.') + '</p>';
+
+  html += list.length
+    ? '<ol class="tlist">' + list.map(function(e, i){
+        var cite = topCite(e);
+        return '<li><span class="tr">' + (i + 1) + '</span>' +
+          '<span class="tv">' + topVal(e, t) + '</span>' +
+          '<span class="tw">' + esc(e.who) + '</span>' +
+          (cite ? '<span class="tc">' + cite + '</span>' : '') +
+        '</li>';
+      }).join("") + '</ol>'
+    : '<div class="mnone">Nothing on record for this one yet.</div>';
+
+  // back to the section, then straight across to its other lists
+  html += '<div class="hnav">' +
+    '<button class="chip" type="button" data-h="' + esc(t.sec) + '">&lsaquo; ' + esc(secName) + '</button>' +
+    Object.keys(TOPS).filter(function(k){ return TOPS[k].sec === t.sec; }).map(function(k){
+      return '<button class="chip' + (k === key ? " on" : "") + '" type="button" data-top="' +
+        esc(k) + '">' + esc(TOPS[k].name) + '</button>';
+    }).join("") + '</div>';
+
+  $("modalBody").innerHTML = html;
+  bindGoLinks($("modalBody"));
+  bindTopLinks($("modalBody"));
 }
 
 /* A cascading strip of every player, ranked. The cards are absolutely
@@ -1348,9 +1518,7 @@ function renderHighsModal(key){
 
   $("modalBody").innerHTML = html;
   bindGoLinks($("modalBody"));
-  Array.prototype.forEach.call($("modalBody").querySelectorAll(".hnav .chip"), function(b){
-    b.onclick = function(){ openHighs(b.dataset.h); };
-  });
+  bindTopLinks($("modalBody"));
 }
 
 /* ───────── per-player record book ─────────
@@ -1555,12 +1723,17 @@ function leagueBests(){
 }
 
 /* ───────── the dossier modal ───────── */
-function statCard(label, value, sub, isBest, cls){
+// A card with a `top` key opens the list it heads. It stays a div rather than
+// a button because the sub-line already carries a match link, and a button
+// inside a button is neither valid nor clickable.
+function statCard(label, value, sub, isBest, cls, top){
   if(value === null || value === undefined || value === "") value = "&mdash;";
-  return '<div class="stat' + (isBest ? ' lead' : '') + (cls ? ' ' + cls : '') + '">' +
+  return '<div class="stat' + (isBest ? ' lead' : '') + (cls ? ' ' + cls : '') +
+    (top ? ' go" data-top="' + esc(top) + '" role="button" tabindex="0' : '') + '">' +
     '<s>' + label + '</s><b>' + value + '</b>' +
     (sub ? '<i>' + sub + '</i>' : '') +
-    (isBest ? '<u>League best</u>' : '') + '</div>';
+    (isBest ? '<u>League best</u>' : '') +
+    (top ? '<em class="more">Top ' + TOP_N + ' &rsaquo;</em>' : '') + '</div>';
 }
 
 // Every scorecard figure in this league is a team total, so it belongs to
@@ -1596,6 +1769,7 @@ function wlTable(map, heading){
 }
 
 function renderModal(){
+  if(S.openTop){ renderTopModal(S.openTop); return; }
   if(S.openHighs){ renderHighsModal(S.openHighs); return; }
   if(!S.openPlayer){ $("modal").hidden = true; return; }
   var s = statsFor(S.openPlayer), best = leagueBests();
@@ -1724,24 +1898,34 @@ function renderModal(){
 function openPlayer(name){
   S.openPlayer = name;
   S.openHighs = null;
+  S.openTop = null;
   renderModal();
   $("modalX").focus();
 }
 function openHighs(key){
   S.openHighs = key;
   S.openPlayer = null;
+  S.openTop = null;
+  renderModal();
+  $("modalX").focus();
+}
+function openTop(key){
+  S.openTop = key;
+  S.openPlayer = null;
+  S.openHighs = null;
   renderModal();
   $("modalX").focus();
 }
 function closeModal(){
   S.openPlayer = null;
   S.openHighs = null;
+  S.openTop = null;
   $("modal").hidden = true;
 }
 $("modalX").onclick = closeModal;
 $("scrim").onclick  = closeModal;
 document.addEventListener("keydown", function(e){
-  if(e.key === "Escape" && (S.openPlayer || S.openHighs)) closeModal();
+  if(e.key === "Escape" && (S.openPlayer || S.openHighs || S.openTop)) closeModal();
 });
 
 /* ───────── results log ───────── */
@@ -2252,7 +2436,7 @@ function render(){
   var rows = buildTable();
   renderCrest(); renderWire(); renderTable(rows); renderVerdict(rows);
   renderHighs(); renderEntry(); renderLog();
-  if(S.openPlayer || S.openHighs) renderModal();
+  if(S.openPlayer || S.openHighs || S.openTop) renderModal();
 }
 
 /* ───────── firebase ───────── */
