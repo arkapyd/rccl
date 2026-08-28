@@ -1139,9 +1139,9 @@ function recLine(e){
     .filter(function(x){ return !!x; }).join(" &middot; ");
 }
 // A unit label ("per over", "runs per innings") in the same small dim font a
-// scoreline suffix uses, so a rate reads as <figure> (unit) at a glance.
+// scoreline suffix uses, so a rate reads as <figure> unit at a glance.
 function withUnit(v, unit){
-  return v === null || v === undefined ? v : v + '<em class="sfx">(' + unit + ')</em>';
+  return v === null || v === undefined ? v : v + '<em class="sfx">' + unit + '</em>';
 }
 function recCard(label, e, dp, unit){
   if(!e) return statCard(label, null, "nothing on record", false);
