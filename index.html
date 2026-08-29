@@ -971,10 +971,10 @@ function leagueRecords(){
     high:null, lowDone:null, agg:null, rate:null,
     winRuns:null, winWkts:null, thinRuns:null, thinWkts:null,
     defended:null, chased:null,
-    econ:null, mostWkts:null, pairs:{},
+    econ:null, srate:null, pairs:{},
     // Every candidate for each record, kept so the card can open the list it
     // heads. The records themselves are picked off these at the end.
-    all:{ high:[], lowDone:[], rate:[], econ:[], mostWkts:[], agg:[],
+    all:{ high:[], lowDone:[], rate:[], econ:[], srate:[], agg:[],
           runMargins:[], wktMargins:[], defended:[], chased:[] }
   };
 
@@ -1029,10 +1029,7 @@ function leagueRecords(){
         R.all.rate.push({ v:rr, who:i.bat,  d:day, sub:full, no:mt.no });
         R.all.econ.push({ v:rr, who:i.bowl, d:day, sub:full, no:mt.no });
       }
-      if(sc.k) R.all.mostWkts.push({
-        v: sc.k, econ: b > 0 ? sc.r / (b / 6) : Infinity,
-        who: i.bowl, d: day, sub: full, no: mt.no
-      });
+      if(sc.k) R.all.srate.push({ v:b / sc.k, who:i.bowl, d:day, sub:full, no:mt.no });
     });
 
     if(wholeMatch)
@@ -1084,22 +1081,16 @@ function leagueRecords(){
   // figure, so a card and the list behind it can never disagree. Ties go to
   // whichever came first, which is how the running comparison used to settle
   // them too.
-  function pickBest(arr, dir, tie){
-    // `tie` (optional): secondary compare — returns negative if `e` beats `out`
+  function pickBest(arr, dir){
     var out = null;
-    arr.forEach(function(e){
-      if(out === null){ out = e; return; }
-      var better = dir > 0 ? e.v > out.v : e.v < out.v;
-      var level  = e.v === out.v;
-      if(better || (level && tie && tie(e, out) < 0)) out = e;
-    });
+    arr.forEach(function(e){ if(out === null || (dir > 0 ? e.v > out.v : e.v < out.v)) out = e; });
     return out;
   }
   R.high     = pickBest(R.all.high, 1);
   R.lowDone  = pickBest(R.all.lowDone, -1);
   R.rate     = pickBest(R.all.rate, 1);
   R.econ     = pickBest(R.all.econ, -1);
-  R.mostWkts = pickBest(R.all.mostWkts, 1, function(a,b){ return a.econ - b.econ; });
+  R.srate    = pickBest(R.all.srate, -1);
   R.agg      = pickBest(R.all.agg, 1);
   R.winRuns  = pickBest(R.all.runMargins, 1);
   R.thinRuns = pickBest(R.all.runMargins, -1);
@@ -1227,7 +1218,7 @@ function highsBlock(key, d){
   }
   if(key === "ball"){
     return recCard("Best economy", R.econ, 2, "per over", "econ") +
-      recCard("Most wickets", R.mostWkts, undefined, "wickets", "mostWkts") +
+      recCard("Best strike rate", R.srate, 1, "balls per wicket", "srate") +
       recCard("Lowest defended", R.defended, undefined, null, "defended") +
       statCard("Season economy", d.rr ? withUnit(d.rr.toFixed(2), "per over") : null,
                "every ball bowled in the cycle", false, "ref");
@@ -1300,9 +1291,7 @@ var TOPS = {
   rate:     { name:"Fastest innings",          sec:"bat",     dir: 1, dp:2, unit:"per over" },
   chased:   { name:"Highest chased",           sec:"bat",     dir: 1 },
   econ:     { name:"Best economy",             sec:"ball",    dir:-1, dp:2, unit:"per over" },
-  mostWkts: { name:"Most wickets",              sec:"ball",    dir: 1, unit:"wickets",
-              tie: function(a,b){ return a.econ - b.econ; },
-              tieNote: 'Ties break on <em>economy</em>, tightest first.' },
+  srate:    { name:"Best strike rate",         sec:"ball",    dir:-1, dp:1, unit:"balls per wicket" },
   defended: { name:"Lowest defended",          sec:"ball",    dir:-1 },
   winRuns:  { name:"Biggest win by runs",      sec:"margins", dir: 1, unit:"runs",    from:"runMargins" },
   winWkts:  { name:"Biggest win by wickets",   sec:"margins", dir: 1, unit:"wickets", from:"wktMargins" },
@@ -1328,10 +1317,7 @@ function topEntries(key, d){
   // The sort is stable, so equal figures stay in the order they were played —
   // the same way the running comparison settled a tie.
   return arr.slice()
-    .sort(function(a,b){
-      var d = t.dir > 0 ? b.v - a.v : a.v - b.v;
-      return d !== 0 ? d : (t.tie ? t.tie(a, b) : 0);
-    })
+    .sort(function(a,b){ return t.dir > 0 ? b.v - a.v : a.v - b.v; })
     .slice(0, TOP_N);
 }
 function topVal(e, t){
@@ -1384,8 +1370,7 @@ function renderTopModal(key){
   html += '<p class="mnote">' + (t.sec === "pairs"
     ? 'Ranked across every pairing that has taken the field this cycle.'
     : 'Every figure here is a <b>duo figure</b> &mdash; it belongs to the pair that was on the ' +
-      'field, not to either player alone. Follow a match link to the result it came from.') +
-    (t.tieNote ? ' ' + t.tieNote : '') + '</p>';
+      'field, not to either player alone. Follow a match link to the result it came from.') + '</p>';
 
   html += list.length
     ? '<ol class="tlist">' + list.map(function(e, i){
@@ -1435,14 +1420,21 @@ function highsFan(key, d){
         (x.s.ballsFaced ? " &middot; " + (x.s.runs / (x.s.ballsFaced / 6)).toFixed(2) + " an over" : "");
     };
   } else if(key === "ball"){
-    list = stats.filter(function(x){ return x.ballsBowled > 0 && x.econOverall !== null; })
-      .map(function(x){ return { s:x, v:x.econOverall }; })
-      .sort(function(a,b){ return a.v - b.v; });
-    label = "Season economy by player &middot; tightest first";
-    val = function(x){ return x.v.toFixed(2); };
+    // Ranked on total wickets across the cycle. Two bowlers on the same haul
+    // are separated by their season economy, tightest first — same tie-break
+    // the record cards use where it applies.
+    list = stats.filter(function(x){ return x.wkts > 0; })
+      .map(function(x){ return { s:x, v:x.wkts }; })
+      .sort(function(a,b){
+        return b.v - a.v ||
+               (a.s.econOverall === null ? Infinity : a.s.econOverall) -
+               (b.s.econOverall === null ? Infinity : b.s.econOverall);
+      });
+    label = "Season wickets by player &middot; most first, ties on economy";
+    val = function(x){ return x.v; };
     detail = function(x){
-      return x.s.conceded + " off " + oversText(x.s.ballsBowled) + " ov &middot; " +
-        x.s.wkts + " wkt" + (x.s.wkts === 1 ? "" : "s");
+      return x.s.conceded + " in " + oversText(x.s.ballsBowled) + " ov" +
+        (x.s.econOverall !== null ? " &middot; " + x.s.econOverall.toFixed(2) + " econ" : "");
     };
   } else return "";
 
