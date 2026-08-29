@@ -413,8 +413,9 @@ footer img{width:26px;height:auto;opacity:.7}
 .stat.go:hover .more,.stat.go:focus-visible .more{color:var(--gold)}
 
 /* ---------------- top-five list ----------------
-   Rank and figure span both rows on the left, so the name and its citation
-   stack against a single tall figure rather than beside two half-height ones. */
+   Rank and figure span both rows on the left. Row 1 puts the pair name on the
+   left and pushes the opposition and scoreline to the far right of the row;
+   row 2 carries the plain "Match #X" label beneath. */
 .tlist{list-style:none;margin:0 0 22px;padding:0}
 .tlist li{display:grid;grid-template-columns:24px minmax(76px,auto) minmax(0,1fr);
   column-gap:14px;row-gap:2px;padding:13px 0;border-top:1px solid var(--hair-soft)}
@@ -426,13 +427,22 @@ footer img{width:26px;height:auto;opacity:.7}
 .tlist .tv .sfx{font-family:'Teko',sans-serif;font-style:normal;font-weight:600;font-size:.56em;
   color:var(--lilac-dim);margin-left:4px;letter-spacing:.01em;white-space:nowrap}
 .tlist li:first-child .tr,.tlist li:first-child .tv{color:var(--gold)}
-.tlist .tw{grid-column:3;grid-row:1;align-self:end;font-size:13.5px;font-weight:700;color:var(--white)}
-.tlist .tc{grid-column:3;grid-row:2;align-self:start;font-size:11px;color:var(--lilac-dim)}
+/* row 1 is a flex box: pair name left, opposition + scoreline right */
+.tlist .tw{grid-column:3;grid-row:1;align-self:end;
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 14px}
+.tlist .tw .nm{font-size:13.5px;font-weight:700;color:var(--white)}
+.tlist .tw .rt{margin-left:auto;font-size:12px;font-weight:500;color:var(--lilac-dim);
+  text-align:right}
+.tlist .tw .rt b{color:var(--white);font-weight:700}
+.tlist .tc{grid-column:3;grid-row:2;align-self:start;font-size:10.5px;
+  font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--lilac-dim)}
 @media (max-width:520px){
   .tlist li{display:block}
-  .tlist .tr{display:inline-block;margin-right:9px}
+  .tlist .tr{display:inline-block;margin-right:9px;color:var(--frame-lit)}
   .tlist .tv{display:inline-block}
   .tlist .tw{display:block;margin-top:4px}
+  .tlist .tw .rt{display:block;margin-left:0;margin-top:2px;text-align:left}
+  .tlist .tc{display:block;margin-top:2px}
 }
 .mtab{width:100%;border-collapse:collapse;margin-bottom:22px}
 .mtab td,.mtab th{padding:8px 0;font-size:13.5px;border-top:1px solid var(--hair-soft);text-align:right}
@@ -1017,7 +1027,7 @@ function leagueRecords(){
         if(sc.k !== undefined && sc.k !== null) wp.bowlWkts += sc.k;
       }
 
-      var ent = { v:sc.r, tail:tail, who:i.bat, d:day, no:mt.no };
+      var ent = { v:sc.r, tail:tail, who:i.bat, foe:i.bowl, d:day, no:mt.no };
       R.all.high.push(ent);
       // gated on a completed innings — see inningsComplete()
       if(inningsComplete(sc)) R.all.lowDone.push(ent);
@@ -1026,10 +1036,10 @@ function leagueRecords(){
       // the fielding side's economy.
       if(b >= MIN_ECON_BALLS){
         var rr = sc.r / (b / 6);
-        R.all.rate.push({ v:rr, who:i.bat,  d:day, sub:full, no:mt.no });
-        R.all.econ.push({ v:rr, who:i.bowl, d:day, sub:full, no:mt.no });
+        R.all.rate.push({ v:rr, who:i.bat,  foe:i.bowl, d:day, sub:full, no:mt.no });
+        R.all.econ.push({ v:rr, who:i.bowl, foe:i.bat,  d:day, sub:full, no:mt.no });
       }
-      if(sc.k) R.all.srate.push({ v:b / sc.k, who:i.bowl, d:day, sub:full, no:mt.no });
+      if(sc.k) R.all.srate.push({ v:b / sc.k, who:i.bowl, foe:i.bat, d:day, sub:full, no:mt.no });
     });
 
     if(wholeMatch)
@@ -1052,11 +1062,11 @@ function leagueRecords(){
         var beat = { who:W + " beat " + L, d:day, no:mt.no, sub:fw + " v " + fl };
         if(mt.bf === "w"){
           R.all.runMargins.push({ v:mt.sw.r - mt.sl.r, who:beat.who, d:day, no:mt.no, sub:beat.sub });
-          R.all.defended.push({ v:mt.sw.r, tail:scoreTail(mt.sw), who:W, d:day, no:mt.no });
+          R.all.defended.push({ v:mt.sw.r, tail:scoreTail(mt.sw), who:W, foe:L, d:day, no:mt.no });
         } else {
           var wk = 10 - (mt.sw.k === undefined || mt.sw.k === null ? 0 : mt.sw.k);
           R.all.wktMargins.push({ v:wk, who:beat.who, d:day, no:mt.no, sub:beat.sub });
-          R.all.chased.push({ v:mt.sl.r, tail:scoreTail(mt.sl), who:W, d:day, no:mt.no });
+          R.all.chased.push({ v:mt.sl.r, tail:scoreTail(mt.sl), who:W, foe:L, d:day, no:mt.no });
         }
       }
     }
@@ -1326,11 +1336,6 @@ function topVal(e, t){
   if(t.unit) v += '<em class="sfx">' + t.unit + '</em>';
   return v;
 }
-// recLine without the name, which the list gives its own line.
-function topCite(e){
-  return [e.no ? matchLink(e.no) : "", e.sub, e.no ? "" : e.d]
-    .filter(function(x){ return !!x; }).join(" &middot; ");
-}
 
 // One binder for everything that moves between modal views: the section chips,
 // the sibling list chips, and the record cards themselves.
@@ -1370,15 +1375,25 @@ function renderTopModal(key){
   html += '<p class="mnote">' + (t.sec === "pairs"
     ? 'Ranked across every pairing that has taken the field this cycle.'
     : 'Every figure here is a <b>duo figure</b> &mdash; it belongs to the pair that was on the ' +
-      'field, not to either player alone. Follow a match link to the result it came from.') + '</p>';
+      'field, not to either player alone.') + '</p>';
 
   html += list.length
     ? '<ol class="tlist">' + list.map(function(e, i){
-        var cite = topCite(e);
-        return '<li><span class="tr">' + (i + 1) + '</span>' +
+        // Right side of row 1: the opposition (when the record is one pair's
+        // work) and the scoreline (when there is one). Where the record's
+        // `who` already carries both sides — Biggest match, margins — the
+        // sub already reads as "A v B" or "A beat B", so we surface that.
+        var right = e.foe
+          ? 'v <b>' + esc(e.foe) + '</b>' + (e.sub ? ' &middot; ' + e.sub : '')
+          : (e.sub || '');
+        var match = e.no ? 'Match #' + e.no : (e.d || '');
+        return '<li>' +
+          '<span class="tr">' + (i + 1) + '</span>' +
           '<span class="tv">' + topVal(e, t) + '</span>' +
-          '<span class="tw">' + esc(e.who) + '</span>' +
-          (cite ? '<span class="tc">' + cite + '</span>' : '') +
+          '<span class="tw"><b class="nm">' + esc(e.who) + '</b>' +
+            (right ? '<span class="rt">' + right + '</span>' : '') +
+          '</span>' +
+          (match ? '<span class="tc">' + match + '</span>' : '') +
         '</li>';
       }).join("") + '</ol>'
     : '<div class="mnone">Nothing on record for this one yet.</div>';
