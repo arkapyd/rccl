@@ -728,7 +728,11 @@ var URN_PATH = 'M1.6 1.4H12.4V3.1H11.3C11.1 6.1 9.5 8.1 7.9 8.5V10.2H9V11.2H11.3
 var S = {
   matches: SEED.map(function(m,i){ return { id:"seed"+i, d:m.d, w:m.w, l:m.l }; }),
   live:false, unlocked:false, editing:null, fb:null, entryKey:null, openPlayer:null,
-  formBF:null, dlsOpen:false, openHighs:null, openTop:null
+  formBF:null, dlsOpen:false, openHighs:null, openTop:null,
+  // When a top-5 was opened from a dossier card, the player to return to on
+  // "back". null means the reader came in via RCCL Highs and the back chip
+  // should point at that section instead.
+  topFromPlayer:null
 };
 
 document.documentElement.style.setProperty('--wm', 'url("' + LOGO + '")');
@@ -1338,17 +1342,23 @@ function topVal(e, t){
 }
 
 // One binder for everything that moves between modal views: the section chips,
-// the sibling list chips, and the record cards themselves.
-function bindTopLinks(root){
+// the sibling list chips, and the record cards themselves. `fromPlayer` is
+// the origin to record for any top-5 opened from this root — `undefined`
+// preserves whatever the state already holds, so sibling-chip clicks inside
+// the top-5 modal don't lose their trail back to the dossier.
+function bindTopLinks(root, fromPlayer){
   if(!root) return;
   Array.prototype.forEach.call(root.querySelectorAll("[data-h]"), function(b){
     b.onclick = function(){ openHighs(b.dataset.h); };
+  });
+  Array.prototype.forEach.call(root.querySelectorAll("[data-player]"), function(b){
+    b.onclick = function(){ openPlayer(b.dataset.player); };
   });
   Array.prototype.forEach.call(root.querySelectorAll("[data-top]"), function(el){
     var go = function(ev){
       // a click that landed on the card's match link belongs to the link
       if(ev && ev.target && ev.target.closest && ev.target.closest(".golink")) return;
-      openTop(el.dataset.top);
+      openTop(el.dataset.top, fromPlayer);
     };
     el.onclick = go;
     if(el.tagName !== "BUTTON") el.onkeydown = function(ev){
@@ -1398,9 +1408,15 @@ function renderTopModal(key){
       }).join("") + '</ol>'
     : '<div class="mnone">Nothing on record for this one yet.</div>';
 
-  // back to the section, then straight across to its other lists
-  html += '<div class="hnav">' +
-    '<button class="chip" type="button" data-h="' + esc(t.sec) + '">&lsaquo; ' + esc(secName) + '</button>' +
+  // Back chip points at the origin: the dossier for reads that started there,
+  // the RCCL Highs section otherwise. The rest of the row is the sibling
+  // top-5 chips, unchanged.
+  var backChip = S.topFromPlayer
+    ? '<button class="chip" type="button" data-player="' + esc(S.topFromPlayer) +
+        '">&lsaquo; ' + esc(S.topFromPlayer) + '</button>'
+    : '<button class="chip" type="button" data-h="' + esc(t.sec) +
+        '">&lsaquo; ' + esc(secName) + '</button>';
+  html += '<div class="hnav">' + backChip +
     Object.keys(TOPS).filter(function(k){ return TOPS[k].sec === t.sec; }).map(function(k){
       return '<button class="chip' + (k === key ? " on" : "") + '" type="button" data-top="' +
         esc(k) + '">' + esc(TOPS[k].name) + '</button>';
@@ -1540,7 +1556,7 @@ function renderHighsModal(key){
 
   $("modalBody").innerHTML = html;
   bindGoLinks($("modalBody"));
-  bindTopLinks($("modalBody"));
+  bindTopLinks($("modalBody"), null);   // origin: RCCL Highs section
 }
 
 /* ───────── per-player record book ─────────
@@ -1825,10 +1841,10 @@ function renderModal(){
   html += sectionTitle("With the bat", "duo") + '<div class="stats">' +
     statCard("Runs scored in a duo", s.runs, s.inns + " innings", s.runs > 0 && s.runs === best.runs) +
     statCard("Highest duo total", s.high === null ? null : s.high + '<em class="sfx">' + s.highTail + '</em>',
-             matchLink(s.highNo) || null, s.high !== null && s.high === best.high) +
+             matchLink(s.highNo) || null, s.high !== null && s.high === best.high, null, "high") +
     statCard("Lowest duo total",
              s.lowDone === null ? null : s.lowDone + '<em class="sfx">' + s.lowDoneTail + '</em>',
-             s.lowDone === null ? "no innings played out" : (matchLink(s.lowDoneNo) || null), false) +
+             s.lowDone === null ? "no innings played out" : (matchLink(s.lowDoneNo) || null), false, null, "lowDone") +
     statCard("Average total", withUnit(avg, "runs per innings"), null, false) +
   '</div>';
 
@@ -1838,10 +1854,10 @@ function renderModal(){
              s.bestEcon === null
                ? "no innings past " + (MIN_ECON_BALLS / 6) + " overs"
                : [matchLink(s.bestEconNo), s.bestEconSc].filter(function(x){ return !!x; }).join(" &middot; "),
-             s.bestEcon !== null && best.econ !== null && Math.abs(s.bestEcon - best.econ) < 1e-9) +
+             s.bestEcon !== null && best.econ !== null && Math.abs(s.bestEcon - best.econ) < 1e-9, null, "econ") +
     statCard("Duo strike rate", s.strikeRate === null ? null : withUnit(s.strikeRate.toFixed(1), "balls per wicket"),
              s.strikeRate === null ? "no wickets yet" : null,
-             s.strikeRate !== null && best.sr !== null && Math.abs(s.strikeRate - best.sr) < 1e-9) +
+             s.strikeRate !== null && best.sr !== null && Math.abs(s.strikeRate - best.sr) < 1e-9, null, "srate") +
     statCard("Duo economy", econ === null ? null : withUnit(econ, "per over"),
              s.ballsBowled ? s.conceded + " conceded in " + oversText(s.ballsBowled) + " ov" : "nothing bowled yet",
              s.econOverall !== null && best.econOverall !== null && Math.abs(s.econOverall - best.econOverall) < 1e-9) +
@@ -1859,7 +1875,7 @@ function renderModal(){
   html += sectionTitle("Batting first", "duo") + '<div class="stats">' +
     statCard("Record", bf.p ? bf.w + "&ndash;" + bf.l : null, bfPct, false) +
     statCard("Lowest defended", citeVal(s.lowDefended), citeLine(s.lowDefended),
-             s.lowDefended !== null && s.lowDefended.v === best.lowDefended) +
+             s.lowDefended !== null && s.lowDefended.v === best.lowDefended, null, "defended") +
     statCard("Average set", withUnit(avgSet, "runs per innings"), s.innsFirst + " innings" + gap(avgSet, lg.first), false) +
     statCard("League bats first", lg.first,
              lg.firstN ? "across " + lg.firstN + " first innings" : "none recorded", false, "ref") +
@@ -1868,7 +1884,7 @@ function renderModal(){
   html += sectionTitle("Chasing", "duo") + '<div class="stats">' +
     statCard("Record", ch.p ? ch.w + "&ndash;" + ch.l : null, chPct, false) +
     statCard("Highest chased", citeVal(s.highChased), citeLine(s.highChased),
-             s.highChased !== null && s.highChased.v === best.highChased) +
+             s.highChased !== null && s.highChased.v === best.highChased, null, "chased") +
     statCard("Average scored", withUnit(avgChase, "runs per innings"), s.innsChase + " innings" + gap(avgChase, lg.second), false) +
     statCard("League chasing", lg.second,
              lg.secondN ? "across " + lg.secondN + " second innings" : "none recorded", false, "ref") +
@@ -1877,8 +1893,8 @@ function renderModal(){
      ' have no innings order recorded, so they sit outside these two sections. Edit them to fill it in.</p>' : '') +
 
   sectionTitle("Margins", "duo") + '<div class="stats">' +
-    statCard("Biggest win by runs", citeVal(s.winByRuns), citeLine(s.winByRuns), false) +
-    statCard("Biggest win by wickets", citeVal(s.winByWkts), citeLine(s.winByWkts), false) +
+    statCard("Biggest win by runs", citeVal(s.winByRuns), citeLine(s.winByRuns), false, null, "winRuns") +
+    statCard("Biggest win by wickets", citeVal(s.winByWkts), citeLine(s.winByWkts), false, null, "winWkts") +
     statCard("Heaviest loss by runs", citeVal(s.lossByRuns), citeLine(s.lossByRuns), false) +
     statCard("Heaviest loss by wickets", citeVal(s.lossByWkts), citeLine(s.lossByWkts), false) +
     statCard("Super overs", s.soPlayed ? s.soWon + "/" + s.soPlayed : null, "won of played", false) +
@@ -1915,12 +1931,14 @@ function renderModal(){
 
   $("modalBody").innerHTML = html;
   bindGoLinks($("modalBody"));
+  bindTopLinks($("modalBody"), s.name);   // origin: this dossier
 }
 
 function openPlayer(name){
   S.openPlayer = name;
   S.openHighs = null;
   S.openTop = null;
+  S.topFromPlayer = null;   // fresh view; any earlier top-5 origin is gone
   renderModal();
   $("modalX").focus();
 }
@@ -1928,11 +1946,16 @@ function openHighs(key){
   S.openHighs = key;
   S.openPlayer = null;
   S.openTop = null;
+  S.topFromPlayer = null;   // fresh view; any earlier top-5 origin is gone
   renderModal();
   $("modalX").focus();
 }
-function openTop(key){
+function openTop(key, fromPlayer){
   S.openTop = key;
+  // Only overwrite the origin when the caller states one — sibling-chip
+  // navigation inside the modal passes undefined, so the origin the first
+  // click set carries through the whole session on that list.
+  if(fromPlayer !== undefined) S.topFromPlayer = fromPlayer;
   S.openPlayer = null;
   S.openHighs = null;
   renderModal();
@@ -1942,6 +1965,7 @@ function closeModal(){
   S.openPlayer = null;
   S.openHighs = null;
   S.openTop = null;
+  S.topFromPlayer = null;
   $("modal").hidden = true;
 }
 $("modalX").onclick = closeModal;
