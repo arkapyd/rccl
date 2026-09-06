@@ -928,6 +928,20 @@ function inningsComplete(sc){
   return sc.k === 10 || toBalls(sc.o) >= MATCH_OVERS * 6;
 }
 
+// For batting-average purposes, a "completed innings" is one that finished
+// naturally — the batting side either was all out, used its full allotment,
+// or (crucially, unlike the record-book definition above) reached the target
+// while chasing. Runs from an incomplete innings still count in the numerator;
+// only the denominator changes, matching how a "not out" innings is scored in
+// cricket. Callers pass `chasedAndWon=true` when the innings ended because
+// the chase was successful.
+function battingComplete(sc, chasedAndWon){
+  if(!sc) return false;
+  if(sc.k === 10) return true;
+  if(toBalls(sc.o) >= MATCH_OVERS * 6) return true;
+  return !!chasedAndWon;
+}
+
 /* ───────── DLS ─────────
    Runs still to come with u overs left and w wickets down, on the model's
    own scale. Normalised against a full 50-over innings so allotments of
@@ -1224,8 +1238,8 @@ function highsBlock(key, d){
       statCard("Bat first", R.ordered ? R.firstWins + "&ndash;" + R.chaseWins : null,
                R.ordered ? Math.round(R.firstWins / R.ordered * 100) + "% of " + R.ordered + " with order known"
                          : "no innings order recorded", false) +
-      statCard("Average 1st innings", lg.first, lg.firstN ? "over " + lg.firstN + " innings" : "none recorded", false, "ref") +
-      statCard("Average chase", lg.second, lg.secondN ? "over " + lg.secondN + " innings" : "none recorded", false, "ref") +
+      statCard("Average 1st innings", lg.first, lg.firstN ? "over " + lg.firstN + " completed innings" : "none recorded", false, "ref") +
+      statCard("Average chase", lg.second, lg.secondN ? "over " + lg.secondN + " completed innings" : "none recorded", false, "ref") +
       recCard("Biggest match", R.agg, undefined, null, "agg");
   }
   if(key === "bat"){
@@ -1332,16 +1346,16 @@ var TOPS = {
   // (aggregate stat), so the second row of the list card is omitted.
   batFirstAvg: { name:"Batting-first average", sec:"bat", dir:1, unit:"runs per innings",
     rows:function(d){
-      return d.stats.filter(function(s){ return s.innsFirst > 0; }).map(function(s){
-        return { v: Math.round(s.runsFirst / s.innsFirst), who: s.real,
-                 sub: s.innsFirst + " innings batting first" };
+      return d.stats.filter(function(s){ return s.innsFirstDone > 0; }).map(function(s){
+        return { v: Math.round(s.runsFirst / s.innsFirstDone), who: s.real,
+                 sub: s.innsFirstDone + " completed innings batting first" };
       });
     } },
   chaseAvg: { name:"Chasing average", sec:"bat", dir:1, unit:"runs per innings",
     rows:function(d){
-      return d.stats.filter(function(s){ return s.innsChase > 0; }).map(function(s){
-        return { v: Math.round(s.runsChase / s.innsChase), who: s.real,
-                 sub: s.innsChase + " innings chasing" };
+      return d.stats.filter(function(s){ return s.innsChaseDone > 0; }).map(function(s){
+        return { v: Math.round(s.runsChase / s.innsChaseDone), who: s.real,
+                 sub: s.innsChaseDone + " completed innings chasing" };
       });
     } },
 
@@ -1480,13 +1494,17 @@ function highsFan(key, d){
   var stats = d.stats;
 
   if(key === "bat"){
-    list = stats.filter(function(x){ return x.inns >= FAN_MIN_INNS; })
-      .map(function(x){ return { s:x, v:x.runs / x.inns }; })
+    // Denominator is completed innings — the cricket batting-average rule.
+    // Runs from any innings still count in the numerator; only the innings
+    // that reached a natural end (all-out, full overs, or a successful chase)
+    // count as data points below the line.
+    list = stats.filter(function(x){ return x.innsDone >= FAN_MIN_INNS; })
+      .map(function(x){ return { s:x, v:x.runs / x.innsDone }; })
       .sort(function(a,b){ return b.v - a.v; });
     label = "Season batting average by player &middot; highest first";
     val = function(x){ return Math.round(x.v); };
     detail = function(x){
-      return x.s.runs + " in " + x.s.inns + " inns" +
+      return x.s.runs + " in " + x.s.innsDone + " completed inns" +
         (x.s.ballsFaced ? " &middot; " + (x.s.runs / (x.s.ballsFaced / 6)).toFixed(2) + " an over" : "");
     };
   } else if(key === "ball"){
@@ -1622,13 +1640,13 @@ function marginOf(mt){
 function statsFor(name){
   var s = {
     name:name, real:realName(name), m:0, w:0, l:0, pcw:0,
-    runs:0, inns:0, ballsFaced:0, wktsLost:0,
+    runs:0, inns:0, innsDone:0, ballsFaced:0, wktsLost:0,
     high:null, highTail:"", highNo:0, lowDone:null, lowDoneTail:"", lowDoneNo:0,
     bestEconNo:0, bestEconSc:"",
     conceded:0, ballsBowled:0, wkts:0, bestEcon:null, bestEconRuns:null, bestEconBalls:0,
     lowDefended:null, highChased:null,
     wonFirst:0, wonSecond:0, batFirst:{p:0,w:0,l:0}, chasing:{p:0,w:0,l:0},
-    runsFirst:0, innsFirst:0, runsChase:0, innsChase:0,
+    runsFirst:0, innsFirst:0, innsFirstDone:0, runsChase:0, innsChase:0, innsChaseDone:0,
     soPlayed:0, soWon:0, dlsPlayed:0, dlsWon:0,
     winByRuns:null, winByWkts:null, lossByRuns:null, lossByWkts:null,
     streak:0, bestStreak:0, partners:{}, foes:{}, list:[]
@@ -1677,12 +1695,18 @@ function statsFor(name){
 
     if(mine && mine.r !== undefined && mine.r !== null){
       s.runs += mine.r; s.inns++;
+      // A successful chase — my side batted second and won — counts as a
+      // completed innings for batting-average purposes even though the team
+      // walked off with wickets in hand and overs unused.
+      if(battingComplete(mine, first === false && won)) s.innsDone++;
       s.ballsFaced += toBalls(mine.o);
       if(mine.k !== undefined && mine.k !== null) s.wktsLost += mine.k;
       if(s.high === null || mine.r > s.high){
         s.high = mine.r; s.highTail = scoreTail(mine); s.highNo = mt.no;
       }
-      // same completed-innings rule the league record book uses
+      // same completed-innings rule the league record book uses — narrower
+      // than battingComplete() above, on purpose, so a chase-of-3 stopping at
+      // 3/0 doesn't dominate the "Lowest completed innings" record.
       if(inningsComplete(mine) && (s.lowDone === null || mine.r < s.lowDone)){
         s.lowDone = mine.r; s.lowDoneTail = scoreTail(mine); s.lowDoneNo = mt.no;
       }
@@ -1707,11 +1731,19 @@ function statsFor(name){
                    mine.r !== null && theirs.r !== null;
     if(first === true){
       s.batFirst.p++; s.batFirst[won ? "w" : "l"]++;
-      if(mine && mine.r !== undefined && mine.r !== null){ s.runsFirst += mine.r; s.innsFirst++; }
+      if(mine && mine.r !== undefined && mine.r !== null){
+        s.runsFirst += mine.r; s.innsFirst++;
+        // Batting first is never a "chased and won" case
+        if(battingComplete(mine, false)) s.innsFirstDone++;
+      }
     }
     if(first === false){
       s.chasing.p++; s.chasing[won ? "w" : "l"]++;
-      if(mine && mine.r !== undefined && mine.r !== null){ s.runsChase += mine.r; s.innsChase++; }
+      if(mine && mine.r !== undefined && mine.r !== null){
+        s.runsChase += mine.r; s.innsChase++;
+        // Successful chase is exactly this side winning
+        if(battingComplete(mine, won)) s.innsChaseDone++;
+      }
     }
     if(won && first === true){
       s.wonFirst++;
@@ -1767,15 +1799,26 @@ function statsFor(name){
 }
 
 // Average first-innings and second-innings total across the whole cycle.
-// Each match contributes one of each, whoever was batting.
+// Cricket batting-average rule: runs from any innings still count in the
+// numerator, but only completed innings — bowled out, full overs, or (for a
+// chase) a successful chase — count in the denominator.
 function leagueAverages(){
   var f = { r:0, n:0 }, c = { r:0, n:0 };
   S.matches.filter(inWindow).forEach(function(mt){
     if(!mt.bf) return;
     var one = mt.bf === "w" ? mt.sw : mt.sl;      // innings batted first
     var two = mt.bf === "w" ? mt.sl : mt.sw;      // innings batted second
-    if(one && one.r !== undefined && one.r !== null){ f.r += one.r; f.n++; }
-    if(two && two.r !== undefined && two.r !== null){ c.r += two.r; c.n++; }
+    // Successful chase: the winner is the side that batted second. That is
+    // exactly `mt.bf === "l"` — the losers batted first.
+    var chaseWon = mt.bf === "l";
+    if(one && one.r !== undefined && one.r !== null){
+      f.r += one.r;
+      if(battingComplete(one, false)) f.n++;
+    }
+    if(two && two.r !== undefined && two.r !== null){
+      c.r += two.r;
+      if(battingComplete(two, chaseWon)) c.n++;
+    }
   });
   return {
     first:  f.n ? Math.round(f.r / f.n) : null, firstN: f.n,
@@ -1854,7 +1897,7 @@ function renderModal(){
 
   var econ = s.ballsBowled ? (s.conceded / (s.ballsBowled / 6)).toFixed(2) : null;
   var rate = s.ballsFaced  ? (s.runs / (s.ballsFaced / 6)).toFixed(2) : null;
-  var avg  = s.inns ? Math.round(s.runs / s.inns) : null;
+  var avg  = s.innsDone ? Math.round(s.runs / s.innsDone) : null;
 
   var html =
     '<div class="mhead">' +
@@ -1908,25 +1951,25 @@ function renderModal(){
   var unset = s.m - bf.p - ch.p;
 
   var lg = leagueAverages();
-  var avgSet   = s.innsFirst ? Math.round(s.runsFirst / s.innsFirst) : null;
-  var avgChase = s.innsChase ? Math.round(s.runsChase / s.innsChase) : null;
+  var avgSet   = s.innsFirstDone ? Math.round(s.runsFirst / s.innsFirstDone) : null;
+  var avgChase = s.innsChaseDone ? Math.round(s.runsChase / s.innsChaseDone) : null;
 
   html += sectionTitle("Batting first", "duo") + '<div class="stats">' +
     statCard("Record", bf.p ? bf.w + "&ndash;" + bf.l : null, bfPct, false) +
     statCard("Lowest defended", citeVal(s.lowDefended), citeLine(s.lowDefended),
              s.lowDefended !== null && s.lowDefended.v === best.lowDefended, null, "defended") +
-    statCard("Average set", withUnit(avgSet, "runs per innings"), s.innsFirst + " innings" + gap(avgSet, lg.first), false, null, "batFirstAvg") +
+    statCard("Average set", withUnit(avgSet, "runs per innings"), s.innsFirstDone + " completed innings" + gap(avgSet, lg.first), false, null, "batFirstAvg") +
     statCard("League bats first", lg.first,
-             lg.firstN ? "across " + lg.firstN + " first innings" : "none recorded", false, "ref") +
+             lg.firstN ? "across " + lg.firstN + " completed first innings" : "none recorded", false, "ref") +
   '</div>';
 
   html += sectionTitle("Chasing", "duo") + '<div class="stats">' +
     statCard("Record", ch.p ? ch.w + "&ndash;" + ch.l : null, chPct, false) +
     statCard("Highest chased", citeVal(s.highChased), citeLine(s.highChased),
              s.highChased !== null && s.highChased.v === best.highChased, null, "chased") +
-    statCard("Average scored", withUnit(avgChase, "runs per innings"), s.innsChase + " innings" + gap(avgChase, lg.second), false, null, "chaseAvg") +
+    statCard("Average scored", withUnit(avgChase, "runs per innings"), s.innsChaseDone + " completed innings" + gap(avgChase, lg.second), false, null, "chaseAvg") +
     statCard("League chasing", lg.second,
-             lg.secondN ? "across " + lg.secondN + " second innings" : "none recorded", false, "ref") +
+             lg.secondN ? "across " + lg.secondN + " completed second innings" : "none recorded", false, "ref") +
   '</div>' +
   (unset > 0 ? '<p class="mfoot">' + unset + ' match' + (unset === 1 ? '' : 'es') +
      ' have no innings order recorded, so they sit outside these two sections. Edit them to fill it in.</p>' : '') +
