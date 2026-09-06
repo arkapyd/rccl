@@ -1065,11 +1065,11 @@ function leagueRecords(){
         var fw = scoreFull(mt.sw), fl = scoreFull(mt.sl);
         var beat = { who:W + " beat " + L, d:day, no:mt.no, sub:fw + " v " + fl };
         if(mt.bf === "w"){
-          R.all.runMargins.push({ v:mt.sw.r - mt.sl.r, who:beat.who, d:day, no:mt.no, sub:beat.sub });
+          R.all.runMargins.push({ v:mt.sw.r - mt.sl.r, who:beat.who, W:W, L:L, d:day, no:mt.no, sub:beat.sub });
           R.all.defended.push({ v:mt.sw.r, tail:scoreTail(mt.sw), who:W, foe:L, d:day, no:mt.no });
         } else {
           var wk = 10 - (mt.sw.k === undefined || mt.sw.k === null ? 0 : mt.sw.k);
-          R.all.wktMargins.push({ v:wk, who:beat.who, d:day, no:mt.no, sub:beat.sub });
+          R.all.wktMargins.push({ v:wk, who:beat.who, W:W, L:L, d:day, no:mt.no, sub:beat.sub });
           R.all.chased.push({ v:mt.sl.r, tail:scoreTail(mt.sl), who:W, foe:L, d:day, no:mt.no });
         }
       }
@@ -1183,6 +1183,10 @@ function highsData(){
                     .sort(function(a,b){ return b.pcw - a.pcw || b.n - a.n; });
   return {
     R: R, lg: lg, pairs: pairs, ranked: ranked,
+    // Every player's full record book, computed once. statsFor() walks all
+    // matches per call, so this cache is shared by the fan strip and any
+    // TOPS rows() that ranks per player.
+    stats: PLAYERS.map(statsFor),
     rr: R.balls ? (R.runs / (R.balls / 6)) : null,
     best: ranked[0] || null,
     most: pairs.slice().sort(function(a,b){ return b.n - a.n || b.w - a.w; })[0] || null,
@@ -1321,7 +1325,42 @@ var TOPS = {
                                               .map(function(p){ return pairRow(p, p.best); }); } },
   pairPlayed:{ name:"Most played pairing", sec:"pairs", dir:1, unit:"matches",
               rows:function(d){ return d.pairs.filter(function(p){ return p.n > 0; })
-                                              .map(function(p){ return pairRow(p, p.n); }); } }
+                                              .map(function(p){ return pairRow(p, p.n); }); } },
+
+  // Per-player batting averages. `who` is the real name so the row reads
+  // like a player row rather than a duo row; there is no match number
+  // (aggregate stat), so the second row of the list card is omitted.
+  batFirstAvg: { name:"Batting-first average", sec:"bat", dir:1, unit:"runs per innings",
+    rows:function(d){
+      return d.stats.filter(function(s){ return s.innsFirst > 0; }).map(function(s){
+        return { v: Math.round(s.runsFirst / s.innsFirst), who: s.real,
+                 sub: s.innsFirst + " innings batting first" };
+      });
+    } },
+  chaseAvg: { name:"Chasing average", sec:"bat", dir:1, unit:"runs per innings",
+    rows:function(d){
+      return d.stats.filter(function(s){ return s.innsChase > 0; }).map(function(s){
+        return { v: Math.round(s.runsChase / s.innsChase), who: s.real,
+                 sub: s.innsChase + " innings chasing" };
+      });
+    } },
+
+  // Heaviest losses: same margin data as winRuns/winWkts, re-framed with the
+  // losing pair as `who` and the winning pair as `foe`. The margins are the
+  // same events, but this way the modal title, primary label and citation
+  // line all speak in the language of the card that opened them.
+  heavyLossRuns: { name:"Heaviest loss by runs", sec:"margins", dir:1, unit:"runs",
+    rows:function(d){
+      return d.R.all.runMargins.map(function(e){
+        return { v:e.v, who:e.L, foe:e.W, sub:e.sub, no:e.no, d:e.d };
+      });
+    } },
+  heavyLossWkts: { name:"Heaviest loss by wickets", sec:"margins", dir:1, unit:"wickets",
+    rows:function(d){
+      return d.R.all.wktMargins.map(function(e){
+        return { v:e.v, who:e.L, foe:e.W, sub:e.sub, no:e.no, d:e.d };
+      });
+    } }
 };
 
 function topEntries(key, d){
@@ -1438,7 +1477,7 @@ function highsFan(key, d){
   // statsFor already sums the duo totals of every innings a player appeared
   // in, so dividing by that player's own innings and overs gives the personal
   // figure without the league ever recording anything individually.
-  var stats = PLAYERS.map(statsFor);
+  var stats = d.stats;
 
   if(key === "bat"){
     list = stats.filter(function(x){ return x.inns >= FAN_MIN_INNS; })
@@ -1876,7 +1915,7 @@ function renderModal(){
     statCard("Record", bf.p ? bf.w + "&ndash;" + bf.l : null, bfPct, false) +
     statCard("Lowest defended", citeVal(s.lowDefended), citeLine(s.lowDefended),
              s.lowDefended !== null && s.lowDefended.v === best.lowDefended, null, "defended") +
-    statCard("Average set", withUnit(avgSet, "runs per innings"), s.innsFirst + " innings" + gap(avgSet, lg.first), false) +
+    statCard("Average set", withUnit(avgSet, "runs per innings"), s.innsFirst + " innings" + gap(avgSet, lg.first), false, null, "batFirstAvg") +
     statCard("League bats first", lg.first,
              lg.firstN ? "across " + lg.firstN + " first innings" : "none recorded", false, "ref") +
   '</div>';
@@ -1885,7 +1924,7 @@ function renderModal(){
     statCard("Record", ch.p ? ch.w + "&ndash;" + ch.l : null, chPct, false) +
     statCard("Highest chased", citeVal(s.highChased), citeLine(s.highChased),
              s.highChased !== null && s.highChased.v === best.highChased, null, "chased") +
-    statCard("Average scored", withUnit(avgChase, "runs per innings"), s.innsChase + " innings" + gap(avgChase, lg.second), false) +
+    statCard("Average scored", withUnit(avgChase, "runs per innings"), s.innsChase + " innings" + gap(avgChase, lg.second), false, null, "chaseAvg") +
     statCard("League chasing", lg.second,
              lg.secondN ? "across " + lg.secondN + " second innings" : "none recorded", false, "ref") +
   '</div>' +
@@ -1895,8 +1934,8 @@ function renderModal(){
   sectionTitle("Margins", "duo") + '<div class="stats">' +
     statCard("Biggest win by runs", citeVal(s.winByRuns), citeLine(s.winByRuns), false, null, "winRuns") +
     statCard("Biggest win by wickets", citeVal(s.winByWkts), citeLine(s.winByWkts), false, null, "winWkts") +
-    statCard("Heaviest loss by runs", citeVal(s.lossByRuns), citeLine(s.lossByRuns), false) +
-    statCard("Heaviest loss by wickets", citeVal(s.lossByWkts), citeLine(s.lossByWkts), false) +
+    statCard("Heaviest loss by runs", citeVal(s.lossByRuns), citeLine(s.lossByRuns), false, null, "heavyLossRuns") +
+    statCard("Heaviest loss by wickets", citeVal(s.lossByWkts), citeLine(s.lossByWkts), false, null, "heavyLossWkts") +
     statCard("Super overs", s.soPlayed ? s.soWon + "/" + s.soPlayed : null, "won of played", false) +
     statCard("DLS results", s.dlsPlayed ? s.dlsWon + "/" + s.dlsPlayed : null, "won of settled", false) +
     statCard("Through the gate", s.w >= CYCLE.minWins ? "YES" : (CYCLE.minWins - s.w),
