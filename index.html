@@ -1400,21 +1400,23 @@ var TOPS = {
       });
     } },
 
-  // Heaviest losses: same margin data as winRuns/winWkts, re-framed with the
-  // losing pair as `who` and the winning pair as `foe`. The margins are the
-  // same events, but this way the modal title, primary label and citation
-  // line all speak in the language of the card that opened them.
-  heavyLossRuns: { name:"Heaviest loss by runs", sec:"margins", dir:1, unit:"runs",
+  // Most individual 50+ scores in the cycle, per player. Ties break on the
+  // highest single score — someone whose three 50s include a 100 sits above
+  // someone whose three 50s top out at 60.
+  mostFifties: { name:"Most 50+ scores", sec:"bat", dir:1, unit:"fifties",
+    tie:function(a,b){ return (b.highScore || 0) - (a.highScore || 0); },
     rows:function(d){
-      return d.R.all.runMargins.map(function(e){
-        return { v:e.v, who:e.L, foe:e.W, sub:e.sub, no:e.no, d:e.d };
-      });
-    } },
-  heavyLossWkts: { name:"Heaviest loss by wickets", sec:"margins", dir:1, unit:"wickets",
-    rows:function(d){
-      return d.R.all.wktMargins.map(function(e){
-        return { v:e.v, who:e.L, foe:e.W, sub:e.sub, no:e.no, d:e.d };
-      });
+      return d.stats.map(function(s){
+        var fs = (s.fifties || []).filter(function(f){ return f.counts; });
+        if(!fs.length) return null;
+        var high = fs.reduce(function(m, f){ return f.r > m ? f.r : m; }, 0);
+        return {
+          v: fs.length,
+          who: s.real,
+          sub: "highest " + high,
+          highScore: high
+        };
+      }).filter(Boolean);
     } }
 };
 
@@ -1422,10 +1424,14 @@ function topEntries(key, d){
   var t = TOPS[key];
   if(!t) return [];
   var arr = t.rows ? t.rows(d) : ((d.R.all && d.R.all[t.from || key]) || []);
-  // The sort is stable, so equal figures stay in the order they were played —
-  // the same way the running comparison settled a tie.
+  // Primary sort on `v` per the entry's direction; ties fall to the entry's
+  // own `.tie` compare if one is defined, otherwise the sort is stable so
+  // equal figures stay in the order they were played.
   return arr.slice()
-    .sort(function(a,b){ return t.dir > 0 ? b.v - a.v : a.v - b.v; })
+    .sort(function(a,b){
+      var d = t.dir > 0 ? b.v - a.v : a.v - b.v;
+      return d !== 0 ? d : (t.tie ? t.tie(a, b) : 0);
+    })
     .slice(0, TOP_N);
 }
 function topVal(e, t){
@@ -1689,7 +1695,7 @@ function statsFor(name){
     wonFirst:0, wonSecond:0, batFirst:{p:0,w:0,l:0}, chasing:{p:0,w:0,l:0},
     runsFirst:0, innsFirst:0, innsFirstDone:0, runsChase:0, innsChase:0, innsChaseDone:0,
     soPlayed:0, soWon:0, dlsPlayed:0, dlsWon:0,
-    winByRuns:null, winByWkts:null, lossByRuns:null, lossByWkts:null,
+    winByRuns:null, winByWkts:null,
     streak:0, bestStreak:0, partners:{}, foes:{}, list:[],
     // Every 50+ score this player has posted this cycle. Populated below
     // from mt.fifties records that name this player.
@@ -1815,20 +1821,10 @@ function statsFor(name){
         if(s.winByRuns === null || dw > s.winByRuns.v)
           s.winByRuns = { v:dw, no:mt.no, sub:card };
       }
-      if(first === false && !won && haveBoth){
-        var dl = theirs.r - mine.r;
-        if(s.lossByRuns === null || dl > s.lossByRuns.v)
-          s.lossByRuns = { v:dl, no:mt.no, sub:card };
-      }
       if(first === false && won && mine && mine.k !== undefined && mine.k !== null){
         var wkw = 10 - mine.k;
         if(s.winByWkts === null || wkw > s.winByWkts.v)
           s.winByWkts = { v:wkw, no:mt.no, sub:card };
-      }
-      if(first === true && !won && theirs && theirs.k !== undefined && theirs.k !== null){
-        var wkl = 10 - theirs.k;
-        if(s.lossByWkts === null || wkl > s.lossByWkts.v)
-          s.lossByWkts = { v:wkl, no:mt.no, sub:card };
       }
     }
 
@@ -2036,8 +2032,6 @@ function renderModal(){
   sectionTitle("Margins", "duo") + '<div class="stats">' +
     statCard("Biggest win by runs", citeVal(s.winByRuns), citeLine(s.winByRuns), false, null, "winRuns") +
     statCard("Biggest win by wickets", citeVal(s.winByWkts), citeLine(s.winByWkts), false, null, "winWkts") +
-    statCard("Heaviest loss by runs", citeVal(s.lossByRuns), citeLine(s.lossByRuns), false, null, "heavyLossRuns") +
-    statCard("Heaviest loss by wickets", citeVal(s.lossByWkts), citeLine(s.lossByWkts), false, null, "heavyLossWkts") +
     statCard("Super overs", s.soPlayed ? s.soWon + "/" + s.soPlayed : null, "won of played", false) +
     statCard("DLS results", s.dlsPlayed ? s.dlsWon + "/" + s.dlsPlayed : null, "won of settled", false) +
     statCard("Through the gate", s.w >= CYCLE.minWins ? "YES" : (CYCLE.minWins - s.w),
@@ -2052,7 +2046,8 @@ function renderModal(){
              s.streak > 0 ? "unbeaten" : "last one lost", false) +
     statCard("Longest streak", s.bestStreak || null, "consecutive wins", false) +
     statCard("50+ scores", fifties.length || null,
-             fifties.length ? "individual innings past fifty" : "none yet", false) +
+             fifties.length ? "individual innings past fifty" : "none yet", false, null,
+             fifties.length ? "mostFifties" : null) +
     statCard("Highest score", highScore,
              highScore ? "personal best in a duo innings" : "no fifty on record", false) +
   '</div>';
