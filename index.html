@@ -239,6 +239,11 @@ input::placeholder{color:#7E868F}
   background:linear-gradient(158deg,var(--royal) 0%,var(--royal-panel) 46%,var(--royal-deep) 100%)}
 .hnav{display:flex;flex-wrap:wrap;gap:7px;border-top:1px solid rgba(201,162,39,.22);padding-top:16px}
 .hnav .chip{font-size:10px;padding:7px 11px}
+/* modal navigation chips carry no fill in their base state — the hover glow
+   and the gold active fill say enough on their own, and the dark pill used
+   elsewhere reads too heavy against the purple modal surface. Entry-form
+   chips and the DLS toggle keep their fill (they're not in a modal). */
+.hnav .chip:not(.on){background:transparent}
 
 @media (max-width:860px){
   /* the hero must span the full row here, or the wide banner beside it wraps
@@ -452,6 +457,19 @@ footer img{width:26px;height:auto;opacity:.7}
 .mtab .wl{font-family:'Teko',sans-serif;font-size:18px;font-weight:600;color:var(--white)}
 .mlist{list-style:none;margin:0;padding:0}
 .mlist li{padding:11px 0;border-top:1px solid var(--hair-soft);display:flex;flex-wrap:wrap;gap:4px 11px;align-items:baseline;font-size:13.5px}
+/* windowed dossier match list. `max-height` is set from JS by measuring the
+   first N rows, because rows differ in height (a scorecard line, a wrap on a
+   long pair name). Scrollbar is a mini bronze pill on a transparent track so
+   it reads against the purple modal instead of the page's steel one. */
+.mlistwrap{overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;
+  scrollbar-width:thin;scrollbar-color:rgba(240,200,120,.45) transparent}
+.mlistwrap::-webkit-scrollbar{width:6px}
+.mlistwrap::-webkit-scrollbar-track{background:transparent;border:0}
+.mlistwrap::-webkit-scrollbar-thumb{background:rgba(240,200,120,.45);border:0;border-radius:99px}
+.mlistwrap::-webkit-scrollbar-thumb:hover{background:var(--bronze-lit)}
+/* the first row keeps its top border out of view once the list scrolls; the
+   wrap's top edge already frames it */
+.mlistwrap .mlist li:first-child{border-top:0;padding-top:0}
 .mlist .d{flex:0 0 74px;font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--lilac-dim)}
 .mlist .res{font-family:'Teko',sans-serif;font-size:16px;font-weight:700;letter-spacing:.08em;flex:0 0 42px}
 .mlist .res.w{color:var(--gold)}
@@ -728,7 +746,7 @@ var URN_PATH = 'M1.6 1.4H12.4V3.1H11.3C11.1 6.1 9.5 8.1 7.9 8.5V10.2H9V11.2H11.3
 var S = {
   matches: SEED.map(function(m,i){ return { id:"seed"+i, d:m.d, w:m.w, l:m.l }; }),
   live:false, unlocked:false, editing:null, fb:null, entryKey:null, openPlayer:null,
-  formBF:null, dlsOpen:false, openHighs:null, openTop:null,
+  formBF:null, dlsOpen:false, dlsMode:"chase", openHighs:null, openTop:null,
   // When a top-5 was opened from a dossier card, the player to return to on
   // "back". null means the reader came in via RCCL Highs and the back chip
   // should point at that section instead.
@@ -1994,7 +2012,7 @@ function renderModal(){
   html += wlTable(s.partners, "Alongside");
   html += wlTable(s.foes, "Against");
 
-  html += sectionTitle("Every match on record", "duo", "Duo scores") + '<ul class="mlist">' +
+  html += sectionTitle("Every match on record", "duo", "Duo scores") + '<div class="mlistwrap"><ul class="mlist">' +
     s.list.map(function(e){
       var sc = "";
       if(e.mine && e.mine.r !== undefined && e.mine.r !== null &&
@@ -2009,11 +2027,12 @@ function renderModal(){
         (e.margin ? '<span class="by">by ' + e.margin + '</span>' : '') +
         (sc ? '<span class="sc2">' + sc + '</span>' : '') +
       '</li>';
-    }).join("") + '</ul>';
+    }).join("") + '</ul></div>';
 
   $("modalBody").innerHTML = html;
   bindGoLinks($("modalBody"));
   bindTopLinks($("modalBody"), s.name);   // origin: this dossier
+  sizeMatchWindow();                       // window the record to LOG_VISIBLE rows
 }
 
 function openPlayer(name){
@@ -2069,7 +2088,12 @@ function scoreCard(m){
   var bits = [];
   var main = innings(m.sw), lost = innings(m.sl);
   if(main && lost) bits.push('<span class="sc">' + main + ' <span class="dash">&mdash;</span> ' + lost + '</span>');
-  if(m.dls) bits.push('<span class="dlstag">D/L &middot; par ' + m.dls.par + '</span>');
+  if(m.dls){
+    var dlsLabel = m.dls.mode === "first"
+      ? "D/L &middot; 1st inns cut &middot; target " + m.dls.target
+      : "D/L &middot; par " + m.dls.par;
+    bits.push('<span class="dlstag">' + dlsLabel + '</span>');
+  }
   if(m.sow && m.sol){
     var sow = innings(m.sow), sol = innings(m.sol);
     bits.push('<span class="sotag">Super Over</span>');
@@ -2079,15 +2103,24 @@ function scoreCard(m){
 }
 
 // Rows vary in height (a scorecard line, a Super Over, a wrapped name), so the
-// window is measured off the real first LOG_VISIBLE rows rather than guessed at.
-function sizeLogWindow(){
-  var wrap = $("logWrap"), ul = $("log");
+// window is measured off the real first `count` rows rather than guessed at.
+// Shared by the results log and the dossier's Every-match list.
+function sizeScrollWindow(wrap, ul, count){
   if(!wrap || !ul) return;
   var items = ul.children;
-  if(items.length <= LOG_VISIBLE){ wrap.style.maxHeight = ""; return; }
+  if(items.length <= count){ wrap.style.maxHeight = ""; return; }
   var h = 0;
-  for(var i = 0; i < LOG_VISIBLE; i++) h += items[i].getBoundingClientRect().height;
+  for(var i = 0; i < count; i++) h += items[i].getBoundingClientRect().height;
   wrap.style.maxHeight = Math.round(h) + "px";
+}
+
+function sizeLogWindow(){
+  sizeScrollWindow($("logWrap"), $("log"), LOG_VISIBLE);
+}
+
+function sizeMatchWindow(){
+  var body = $("modalBody"); if(!body) return;
+  sizeScrollWindow(body.querySelector(".mlistwrap"), body.querySelector(".mlist"), LOG_VISIBLE);
 }
 
 function renderLog(){
@@ -2129,8 +2162,10 @@ function renderLog(){
 
 // Rows reflow when the viewport changes, and again once the webfonts land,
 // so the window is re-measured on both.
-window.addEventListener("resize", sizeLogWindow);
-if(document.fonts && document.fonts.ready) document.fonts.ready.then(sizeLogWindow);
+window.addEventListener("resize", function(){ sizeLogWindow(); sizeMatchWindow(); });
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(function(){
+  sizeLogWindow(); sizeMatchWindow();
+});
 
 /* ───────── entry form ───────── */
 function inningsBlock(tag, label, withOvers){
@@ -2200,13 +2235,16 @@ function renderEntry(){
       '<div class="sheet">' + inningsBlock("SA","Left pair",false) + inningsBlock("SB","Right pair",false) + '</div>' +
     '</div>' +
     '<div class="dlsrow">' +
-      '<button class="chip bronze" id="dlsToggle" type="button">Game died mid-chase? Settle on DLS</button>' +
+      '<button class="chip bronze" id="dlsToggle" type="button">Game died mid-innings? Settle on DLS</button>' +
     '</div>' +
     '<div class="dlsbox" id="dlsBox" hidden>' +
       '<h3>DLS par score</h3>' +
-      '<p class="why">Fill the sheet above with the score as far as the game got, including the ' +
-        '<b>overs the chase had faced</b> when it died. Par comes off those overs and the wickets down. ' +
-        'Needs the <b>innings order</b> set — DLS can\u2019t tell a defence from a chase without it.</p>' +
+      '<div class="bfrow" style="margin-bottom:12px">' +
+        '<span class="bflabel">Which innings crashed?</span>' +
+        '<button class="chip bronze" id="dlsMc" type="button">Chase</button>' +
+        '<button class="chip bronze" id="dlsMf" type="button">First innings</button>' +
+      '</div>' +
+      '<p class="why" id="dlsWhy"></p>' +
       '<div class="dlsgrid">' +
         '<label class="field"><span>1st inns allotted</span><input class="n" type="number" min="1" max="50" step="0.1" id="dlsN1"></label>' +
         '<label class="field"><span>Chase allotted</span><input class="n" type="number" min="1" max="50" step="0.1" id="dlsN2"></label>' +
@@ -2233,6 +2271,7 @@ function renderEntry(){
     // stored relative to winner/loser, so map it back onto left/right
     S.formBF = editing.bf === "w" ? "A" : editing.bf === "l" ? "B" : null;
     S.dlsOpen = !!editing.dls;
+    S.dlsMode = (editing.dls && editing.dls.mode === "first") ? "first" : "chase";
     if(editing.dls){
       if(editing.dls.n1 !== undefined && editing.dls.n1 !== null) $("dlsN1").value = editing.dls.n1;
       if(editing.dls.n2 !== undefined && editing.dls.n2 !== null) $("dlsN2").value = editing.dls.n2;
@@ -2240,6 +2279,7 @@ function renderEntry(){
   } else {
     S.formBF = null;
     S.dlsOpen = false;
+    S.dlsMode = "chase";
     ["a1","a2","b1","b2"].forEach(function(id,k){ $(id).selectedIndex = Math.min(k, PLAYERS.length - 1); });
     $("played").value = new Date().toISOString().slice(0,10);
   }
@@ -2257,6 +2297,8 @@ function renderEntry(){
   paintBF();
 
   $("dlsToggle").onclick = function(){ S.dlsOpen = !S.dlsOpen; refresh(); };
+  $("dlsMc").onclick = function(){ S.dlsMode = "chase"; refresh(); };
+  $("dlsMf").onclick = function(){ S.dlsMode = "first"; refresh(); };
   $("dlsApply").onclick  = function(){ commitDls(); };
   $("winA").onclick = function(){ commit("A", dlsPayloadIfOpen()); };
   $("winB").onclick = function(){ commit("B", dlsPayloadIfOpen()); };
@@ -2276,6 +2318,7 @@ function clearForm(){
   });
   S.formBF = null;
   S.dlsOpen = false;
+  S.dlsMode = "chase";
   if($("soBox")) $("soBox").hidden = true;
   if($("dlsN1")) $("dlsN1").value = MATCH_OVERS;
   if($("dlsN2")) $("dlsN2").value = MATCH_OVERS;
@@ -2329,19 +2372,41 @@ function verdictFromScores(){
 
 // Reads the sheet through the DLS lens: who set, who chased, and how far
 // the chase actually got. Returns { err } when it can't be run.
+// Two modes: "chase" (game died mid-chase, par calculated from chase state)
+// and "first" (game died mid-first-innings, target is the raw first-innings
+// score, chase gets a full 20 overs to hunt it — no DLS scaling).
 function dlsRead(){
   if(!S.formBF) return { err:"Set who batted first — DLS can't tell a defence from a chase without it." };
   var firstTag = S.formBF, chaseTag = (S.formBF === "A") ? "B" : "A";
   var fr = num($("r" + firstTag).value);
   var cr = num($("r" + chaseTag).value);
+  var n1 = num($("dlsN1").value), n2 = num($("dlsN2").value);
+  if(n1 === null || n1 <= 0) n1 = MATCH_OVERS;
+  if(n2 === null || n2 <= 0) n2 = MATCH_OVERS;
+
+  if(S.dlsMode === "first"){
+    // First-innings crash: raw score is the target. The chase, when it
+    // happens, plays a full innings. Winner comes from the sheet, not DLS.
+    if(fr === null) return { err:"Enter the first innings total at the moment it died." };
+    var side = null;
+    if(cr !== null) side = cr > fr ? "chase" : (cr === fr ? "tie" : "first");
+    return {
+      mode:"first", firstTag:firstTag, chaseTag:chaseTag,
+      firstRuns:fr, chaseRuns:cr, n1:n1, n2:n2,
+      par:fr, target:fr + 1, exact:fr,
+      // Nothing to scale, but keep the fields so downstream code that touches
+      // them (results-log tag, storage) has stable shape.
+      r1:null, r2:null,
+      side:side
+    };
+  }
+
+  // Chase-crashed (default): DLS math.
   var cw = num($("k" + chaseTag).value);
   var co = num($("o" + chaseTag).value);
   if(fr === null) return { err:"Enter the first innings total." };
   if(cr === null) return { err:"Enter the chasing side's runs at the moment it died." };
   if(co === null) return { err:"Enter the overs the chase had faced — that's what sets par." };
-  var n1 = num($("dlsN1").value), n2 = num($("dlsN2").value);
-  if(n1 === null || n1 <= 0) n1 = MATCH_OVERS;
-  if(n2 === null || n2 <= 0) n2 = MATCH_OVERS;
   var faced = ovDec(co);
   if(faced > ovDec(n2)) return { err:"The chase faced more overs than it was allotted — check the numbers." };
   var v = dlsVerdict(
@@ -2349,6 +2414,7 @@ function dlsRead(){
     { runs:cr, allotted: ovDec(n2), faced: faced, wkts: cw === null ? 0 : cw }
   );
   if(!v) return { err:"Those allotments leave the first innings no resource to work with." };
+  v.mode = "chase";
   v.firstTag = firstTag; v.chaseTag = chaseTag;
   v.firstRuns = fr; v.chaseRuns = cr; v.n1 = n1; v.n2 = n2;
   v.wkts = (cw === null ? 0 : cw); v.facedTxt = oversText(toBalls(co));
@@ -2356,11 +2422,24 @@ function dlsRead(){
 }
 
 function refreshDls(){
-  var boxEl = $("dlsBox"), outEl = $("dlsOut"), applyEl = $("dlsApply");
+  var boxEl = $("dlsBox"), outEl = $("dlsOut"), applyEl = $("dlsApply"), whyEl = $("dlsWhy");
   if(!boxEl) return;
   boxEl.hidden = !S.dlsOpen;
   $("dlsToggle").classList.toggle("on", S.dlsOpen);
   if(!S.dlsOpen){ if(applyEl) applyEl.hidden = true; return; }
+
+  // Mode chips
+  $("dlsMc").classList.toggle("on", S.dlsMode === "chase");
+  $("dlsMf").classList.toggle("on", S.dlsMode === "first");
+
+  // The "why" note under the mode picker changes with the mode.
+  whyEl.innerHTML = S.dlsMode === "first"
+    ? 'Fill the first-innings score in the sheet above as far as it got when the innings was cut ' +
+      'short. That raw score becomes the <b>target</b>; the chase then plays out a full ' +
+      MATCH_OVERS + ' overs against it (no scaling, no par math). Needs the <b>innings order</b> set.'
+    : 'Fill the sheet above with the score as far as the game got, including the ' +
+      '<b>overs the chase had faced</b> when it died. Par comes off those overs and the wickets down. ' +
+      'Needs the <b>innings order</b> set — DLS can\u2019t tell a defence from a chase without it.';
 
   var v = dlsRead();
   if(v.err){
@@ -2374,6 +2453,27 @@ function refreshDls(){
       : [$("b1").value, $("b2").value].join(" & ");
   };
   var chaseName = esc(nameOf(v.chaseTag)), firstName = esc(nameOf(v.firstTag));
+
+  if(v.mode === "first"){
+    // No DLS math to explain. Report the target and, if the chase has been
+    // entered in the sheet, who took it.
+    var call;
+    if(v.side === "chase")    call = "<b>" + chaseName + "</b> chased it down.";
+    else if(v.side === "tie") call = "Chase level with target — a <b>tie</b>. Play the Super Over and enter that instead.";
+    else if(v.side === "first") call = "<b>" + firstName + "</b> held on — the chase fell short.";
+    else                     call = "Play the chase, then come back here to save.";
+    outEl.innerHTML =
+      '<span class="par">Target ' + v.target + '</span>' +
+      '<b>' + firstName + '</b> were on <b>' + v.firstRuns + '</b> when the innings was cut short. ' +
+      '<b>' + chaseName + '</b> get a full <b>' + MATCH_OVERS + '</b> overs to reach ' + v.target +
+      '. ' + call +
+      '<span class="res">No DLS scaling in this mode &middot; raw score is the target</span>';
+    applyEl.hidden = (v.side === null || v.side === "tie");
+    applyEl.textContent = (S.editing ? "Update as DLS result" : "Save as DLS result");
+    return;
+  }
+
+  // Chase-crashed (default)
   var line;
   if(v.side === "chase")     line = "<b>" + chaseName + "</b> clear par and take it.";
   else if(v.side === "tie")  line = "Dead level with par — a <b>tie</b>. Play the Super Over and enter that instead.";
@@ -2444,8 +2544,14 @@ function startEdit(id){
 
 /* ───────── save ───────── */
 function dlsPayload(v){
-  return { par:v.par, target:v.target, n1:v.n1, n2:v.n2,
-           r1:Math.round(v.r1 * 10) / 10, r2:Math.round(v.r2 * 10) / 10 };
+  // r1/r2 are meaningless in first-innings-crash mode (no scaling happens),
+  // so store nulls there; keep the rounded resources in chase mode.
+  return {
+    mode: v.mode || "chase",
+    par: v.par, target: v.target, n1: v.n1, n2: v.n2,
+    r1: v.r1 === null ? null : Math.round(v.r1 * 10) / 10,
+    r2: v.r2 === null ? null : Math.round(v.r2 * 10) / 10
+  };
 }
 
 // The panel advises; the game had the last word. With the panel open, the
@@ -2460,7 +2566,16 @@ function dlsPayloadIfOpen(){
 function commitDls(){
   var v = dlsRead();
   if(v.err){ say(v.err, true); return; }
-  if(v.side === "tie"){ say("Level with par — a tie, so it goes to a Super Over. Pick a winner below to log the game's own call.", true); return; }
+  if(v.side === null){
+    say("Fill in the chasing side's runs first — that's what says who won.", true);
+    return;
+  }
+  if(v.side === "tie"){
+    say(v.mode === "first"
+      ? "Chase level with target — a tie, so it goes to a Super Over. Pick a winner below to log the game's own call."
+      : "Level with par — a tie, so it goes to a Super Over. Pick a winner below to log the game's own call.", true);
+    return;
+  }
   var winTag = (v.side === "chase") ? v.chaseTag : v.firstTag;
   commit(winTag, dlsPayload(v));
 }
