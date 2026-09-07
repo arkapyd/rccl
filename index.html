@@ -199,6 +199,25 @@ input::placeholder{color:#7E868F}
 .dlsout .res{display:block;font-size:11px;color:var(--lilac-dim);letter-spacing:.06em;margin-top:5px}
 .dlstag{font-family:'Manrope',sans-serif;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--royal-deep);background:var(--bronze-lit);padding:3px 8px;border-radius:2px}
 
+/* ---------------- 50+ scores entry box ---------------- */
+.fiftybox{border:1px solid rgba(201,162,39,.22);border-radius:2px;padding:14px;margin-bottom:14px;
+  background:rgba(0,0,0,.22)}
+.fiftyhead{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px}
+.fiftybox h3{margin:0;font-family:'Teko',sans-serif;font-weight:700;font-size:19px;letter-spacing:.08em;text-transform:uppercase;color:var(--bronze-lit);flex:1 1 auto}
+.fiftybox .fifty-sub{font-family:'Manrope',sans-serif;font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--lilac-dim);margin-left:6px}
+.fiftybox .why{font-size:12px;color:var(--lilac-dim);margin:0 0 12px;line-height:1.5;max-width:64ch}
+.fifty{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) 32px;gap:8px;
+  align-items:end;margin-top:8px}
+.fifty select.fp{width:100%;font-size:14px;padding:9px 10px}
+.fifty .fx{background:none;border:0;color:var(--lilac-dim);font-size:22px;line-height:1;padding:4px 8px;cursor:pointer;border-radius:2px;align-self:end;margin-bottom:5px}
+.fifty .fx:hover{color:var(--gold)}
+#addFifty{padding:8px 12px;font-size:11px}
+@media (max-width:520px){
+  .fifty{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto}
+  .fifty select.fp{grid-column:1/-1}
+  .fifty .fx{grid-column:2;grid-row:2;justify-self:end}
+}
+
 /* ---------------- RCCL Highs ---------------- */
 /* Four footprints across two rows: a tall hero on the left, two wide banners,
    two compact cards. Auto-placement fills around the row-spanning hero. */
@@ -747,6 +766,10 @@ var S = {
   matches: SEED.map(function(m,i){ return { id:"seed"+i, d:m.d, w:m.w, l:m.l }; }),
   live:false, unlocked:false, editing:null, fb:null, entryKey:null, openPlayer:null,
   formBF:null, dlsOpen:false, dlsMode:"chase", openHighs:null, openTop:null,
+  // Individual 50+ scores staged in the entry form for the current match.
+  // Committed to `rec.fifties` on save. Each entry: { p, r, b } — partner is
+  // auto-derived on save from the pair the player is in.
+  fifties:[],
   // When a top-5 was opened from a dossier card, the player to return to on
   // "back". null means the reader came in via RCCL Highs and the back chip
   // should point at that section instead.
@@ -1667,7 +1690,10 @@ function statsFor(name){
     runsFirst:0, innsFirst:0, innsFirstDone:0, runsChase:0, innsChase:0, innsChaseDone:0,
     soPlayed:0, soWon:0, dlsPlayed:0, dlsWon:0,
     winByRuns:null, winByWkts:null, lossByRuns:null, lossByWkts:null,
-    streak:0, bestStreak:0, partners:{}, foes:{}, list:[]
+    streak:0, bestStreak:0, partners:{}, foes:{}, list:[],
+    // Every 50+ score this player has posted this cycle. Populated below
+    // from mt.fifties records that name this player.
+    fifties:[]
   };
   var run = 0;
 
@@ -1805,6 +1831,21 @@ function statsFor(name){
           s.lossByWkts = { v:wkl, no:mt.no, sub:card };
       }
     }
+
+    // 50+ scores this player posted in this match. The mate is what got
+    // stored on save, but derive it fresh from the pair so an edit to the
+    // pair after the fact still resolves to a sensible partner.
+    (mt.fifties || []).forEach(function(f){
+      if(f.p !== name) return;
+      var pairSide = ((mt.w || []).indexOf(name) >= 0 ? (mt.w || []) : (mt.l || [])).slice();
+      var mate = pairSide.filter(function(x){ return x !== name; })[0] || f.m || "";
+      var foes = ((mt.w || []).indexOf(name) >= 0 ? (mt.l || []) : (mt.w || [])).slice();
+      s.fifties.push({
+        r: f.r, b: f.b, mate: mate,
+        no: mt.no, d: mt.d, counts: counts,
+        foes: foes
+      });
+    });
   });
 
   s.pcw = s.m ? (s.w / s.m) * 100 : 0;
@@ -2003,11 +2044,36 @@ function renderModal(){
              s.w >= CYCLE.minWins ? "in contention" : "wins still needed", false) +
   '</div>';
 
+  var fifties = s.fifties.filter(function(f){ return f.counts; });
+  var highScore = fifties.length ? fifties.reduce(function(a, f){ return f.r > a ? f.r : a; }, 0) : null;
+
   html += sectionTitle("Form", "solo") + '<div class="stats">' +
     statCard("Current streak", s.streak > 0 ? s.streak + "W" : (s.l ? "&mdash;" : null),
              s.streak > 0 ? "unbeaten" : "last one lost", false) +
     statCard("Longest streak", s.bestStreak || null, "consecutive wins", false) +
+    statCard("50+ scores", fifties.length || null,
+             fifties.length ? "individual innings past fifty" : "none yet", false) +
+    statCard("Highest score", highScore,
+             highScore ? "personal best in a duo innings" : "no fifty on record", false) +
   '</div>';
+
+  if(fifties.length){
+    // Personal list of 50+ innings, sorted by runs desc. Same visual language
+    // as the "Every match on record" list — rank stays out (the value is the
+    // rank), but partner and opposition still read on a single row.
+    html += sectionTitle("50+ scores", "solo") + '<ul class="mlist">' +
+      fifties.slice().sort(function(a,b){ return b.r - a.r || b.no - a.no; }).map(function(f){
+        var sr = f.b > 0 ? (f.r / f.b * 100).toFixed(1) : null;
+        return '<li>' +
+          '<span class="d">' + matchLink(f.no) + '</span>' +
+          '<span class="res w">' + f.r + '</span>' +
+          '<span class="vs">off <b>' + f.b + '</b> balls' +
+            (sr ? ' &middot; SR ' + sr : '') +
+            ' &middot; with <b>' + esc(realName(f.mate)) + '</b>' +
+            ' v ' + esc(f.foes.map(realName).join(" & ")) + '</span>' +
+        '</li>';
+      }).join("") + '</ul>';
+  }
 
   html += wlTable(s.partners, "Alongside");
   html += wlTable(s.foes, "Against");
@@ -2252,6 +2318,14 @@ function renderEntry(){
       '<div class="dlsout" id="dlsOut"></div>' +
       '<button class="btn fill" id="dlsApply" hidden>Save as DLS result</button>' +
     '</div>' +
+    '<div class="fiftybox">' +
+      '<div class="fiftyhead">' +
+        '<h3>50+ scores <span class="fifty-sub">(individual)</span></h3>' +
+        '<button class="btn quiet" id="addFifty" type="button">+ Add 50+</button>' +
+      '</div>' +
+      '<p class="why">Individual player 50+ scores in this match. Same player can\u2019t score two 50s in one match; their partner is inferred from the pair.</p>' +
+      '<div id="fiftyList"></div>' +
+    '</div>' +
     '<div class="reading" id="reading"></div>' +
     '<div class="row">' +
       '<button class="btn fill" id="save" hidden>Save result</button>' +
@@ -2276,17 +2350,20 @@ function renderEntry(){
       if(editing.dls.n1 !== undefined && editing.dls.n1 !== null) $("dlsN1").value = editing.dls.n1;
       if(editing.dls.n2 !== undefined && editing.dls.n2 !== null) $("dlsN2").value = editing.dls.n2;
     }
+    // seed the fifties list from the record — copy so edits don't mutate storage
+    S.fifties = (editing.fifties || []).map(function(f){ return { p:f.p, r:f.r, b:f.b }; });
   } else {
     S.formBF = null;
     S.dlsOpen = false;
     S.dlsMode = "chase";
+    S.fifties = [];
     ["a1","a2","b1","b2"].forEach(function(id,k){ $(id).selectedIndex = Math.min(k, PLAYERS.length - 1); });
     $("played").value = new Date().toISOString().slice(0,10);
   }
   if(!$("dlsN1").value) $("dlsN1").value = MATCH_OVERS;
   if(!$("dlsN2").value) $("dlsN2").value = MATCH_OVERS;
 
-  ["a1","a2","b1","b2"].forEach(function(id){ $(id).onchange = refresh; });
+  ["a1","a2","b1","b2"].forEach(function(id){ $(id).onchange = function(){ renderFiftyList(); refresh(); }; });
   ["rA","kA","oA","rB","kB","oB","rSA","kSA","rSB","kSB","dlsN1","dlsN2"].forEach(function(id){
     if($(id)) $(id).oninput = refresh;
   });
@@ -2300,6 +2377,15 @@ function renderEntry(){
   $("dlsMc").onclick = function(){ S.dlsMode = "chase"; refresh(); };
   $("dlsMf").onclick = function(){ S.dlsMode = "first"; refresh(); };
   $("dlsApply").onclick  = function(){ commitDls(); };
+  $("addFifty").onclick = function(){
+    // Default the new row's player to the first pick that isn't already used
+    var picks = ["a1","a2","b1","b2"].map(function(id){ return $(id).value; });
+    var used = {}; S.fifties.forEach(function(f){ if(f.p) used[f.p] = true; });
+    var p = picks.filter(function(x){ return !used[x]; })[0] || picks[0];
+    S.fifties.push({ p:p, r:null, b:null });
+    renderFiftyList();
+  };
+  renderFiftyList();
   $("winA").onclick = function(){ commit("A", dlsPayloadIfOpen()); };
   $("winB").onclick = function(){ commit("B", dlsPayloadIfOpen()); };
   $("save").onclick = function(){ commit(null, dlsPayloadIfOpen()); };
@@ -2319,10 +2405,12 @@ function clearForm(){
   S.formBF = null;
   S.dlsOpen = false;
   S.dlsMode = "chase";
+  S.fifties = [];
   if($("soBox")) $("soBox").hidden = true;
   if($("dlsN1")) $("dlsN1").value = MATCH_OVERS;
   if($("dlsN2")) $("dlsN2").value = MATCH_OVERS;
   paintBF();
+  renderFiftyList();
   refresh();
 }
 
@@ -2331,6 +2419,42 @@ function paintBF(){
   ["A","B","N"].forEach(function(t){
     var want = (t === "N" ? null : t);
     $("bf" + t).classList.toggle("on", S.formBF === want);
+  });
+}
+
+// Draws one row per staged 50 with player select, runs, balls and remove.
+// Options come from the four selected players so the row can only ever
+// name someone actually in the match; the partner is derived on save.
+function renderFiftyList(){
+  var box = $("fiftyList"); if(!box) return;
+  var picks = ["a1","a2","b1","b2"].map(function(id){ return $(id).value; });
+  var opts = picks.map(function(p){ return '<option value="' + esc(p) + '">' + esc(p) + '</option>'; }).join("");
+  box.innerHTML = S.fifties.map(function(f, i){
+    return '<div class="fifty" data-i="' + i + '">' +
+      '<select class="fp">' + opts + '</select>' +
+      '<label class="field"><span>Runs</span><input class="n fr" type="number" min="50" value="' + (f.r == null ? '' : f.r) + '"></label>' +
+      '<label class="field"><span>Balls</span><input class="n fb" type="number" min="1" value="' + (f.b == null ? '' : f.b) + '"></label>' +
+      '<button class="fx" type="button" aria-label="Remove">&times;</button>' +
+    '</div>';
+  }).join("");
+  // Restore selects to the stored player (a re-render doesn't remember `.value` on innerHTML replacement)
+  Array.prototype.forEach.call(box.querySelectorAll("select.fp"), function(sel){
+    var i = Number(sel.closest(".fifty").dataset.i);
+    var p = S.fifties[i].p;
+    for(var j = 0; j < sel.options.length; j++){
+      if(sel.options[j].value === p){ sel.selectedIndex = j; return; }
+    }
+    // stored player is no longer one of the four (someone swapped in a new
+    // selection); default to whichever pick is at that position instead
+    S.fifties[i].p = sel.value || picks[0];
+  });
+  // Hook up per-row handlers
+  Array.prototype.forEach.call(box.querySelectorAll(".fifty"), function(row){
+    var i = Number(row.dataset.i);
+    row.querySelector("select.fp").onchange = function(e){ S.fifties[i].p = e.target.value; };
+    row.querySelector("input.fr").oninput   = function(e){ S.fifties[i].r = num(e.target.value); };
+    row.querySelector("input.fb").oninput   = function(e){ S.fifties[i].b = num(e.target.value); };
+    row.querySelector(".fx").onclick        = function(){ S.fifties.splice(i, 1); renderFiftyList(); };
   });
 }
 
@@ -2385,19 +2509,43 @@ function dlsRead(){
   if(n2 === null || n2 <= 0) n2 = MATCH_OVERS;
 
   if(S.dlsMode === "first"){
-    // First-innings crash: raw score is the target. The chase, when it
-    // happens, plays a full innings. Winner comes from the sheet, not DLS.
-    if(fr === null) return { err:"Enter the first innings total at the moment it died." };
+    // First-innings crash. Scale the truncated total up to the resources the
+    // chase gets: target = firstRuns * r_chase / r_first_used. This is the
+    // same shape the chase-mode branch uses (target = runs * r2 / r1), just
+    // with r1 measured off the first innings' USED resources — because the
+    // first side didn't get to spend them all — and r2 off the chase's FULL
+    // allotment. Reads first-innings wickets and overs from the main sheet.
+    var fw = num($("k" + firstTag).value);
+    var fo = num($("o" + firstTag).value);
+    if(fr === null) return { err:"Enter the first innings total when it was cut short." };
+    if(fo === null) return { err:"Enter the overs the first innings had faced when it died." };
+    var facedFirst = ovDec(fo);
+    if(facedFirst > ovDec(n1)) return { err:"The first innings faced more overs than it was allotted — check the numbers." };
+
+    var r1u = dlsAvailable(ovDec(n1), facedFirst, fw === null ? 0 : fw);
+    var r2a = dlsRes(ovDec(n2), 0);
+    if(!(r1u > 0)) return { err:"Those numbers leave the first innings no resource to work with." };
+
+    var exactF = fr * r2a / r1u;
+    var floorParF = Math.floor(exactF);
+    var needF = floorParF + 1;
+
     var side = null;
-    if(cr !== null) side = cr > fr ? "chase" : (cr === fr ? "tie" : "first");
+    if(cr !== null){
+      if(DLS_STRICT_PAR) side = cr > exactF ? "chase" : (cr === exactF ? "tie" : "first");
+      else                side = cr > floorParF ? "chase" : (cr === floorParF ? "tie" : "first");
+    }
+
     return {
       mode:"first", firstTag:firstTag, chaseTag:chaseTag,
-      firstRuns:fr, chaseRuns:cr, n1:n1, n2:n2,
-      par:fr, target:fr + 1, exact:fr,
-      // Nothing to scale, but keep the fields so downstream code that touches
-      // them (results-log tag, storage) has stable shape.
-      r1:null, r2:null,
-      side:side
+      firstRuns:fr, firstWkts: fw === null ? 0 : fw, chaseRuns:cr,
+      n1:n1, n2:n2,
+      par: DLS_STRICT_PAR ? needF : floorParF,
+      target: needF,
+      exact: exactF, floorPar: floorParF, need: needF,
+      r1: r1u, r2: r2a,
+      facedTxt: oversText(toBalls(fo)),
+      side: side
     };
   }
 
@@ -2434,9 +2582,11 @@ function refreshDls(){
 
   // The "why" note under the mode picker changes with the mode.
   whyEl.innerHTML = S.dlsMode === "first"
-    ? 'Fill the first-innings score in the sheet above as far as it got when the innings was cut ' +
-      'short. That raw score becomes the <b>target</b>; the chase then plays out a full ' +
-      MATCH_OVERS + ' overs against it (no scaling, no par math). Needs the <b>innings order</b> set.'
+    ? 'Fill the first-innings runs, wickets, and <b>overs faced</b> in the sheet above ' +
+      'when the innings was cut short. That total is <b>scaled up</b> to what it would have been ' +
+      'over the chase\u2019s full ' + MATCH_OVERS + ' overs, using the resources the first side ' +
+      'actually spent. The chase then plays a normal ' + MATCH_OVERS + '-over innings against that ' +
+      'target. Needs the <b>innings order</b> set.'
     : 'Fill the sheet above with the score as far as the game got, including the ' +
       '<b>overs the chase had faced</b> when it died. Par comes off those overs and the wickets down. ' +
       'Needs the <b>innings order</b> set — DLS can\u2019t tell a defence from a chase without it.';
@@ -2455,19 +2605,19 @@ function refreshDls(){
   var chaseName = esc(nameOf(v.chaseTag)), firstName = esc(nameOf(v.firstTag));
 
   if(v.mode === "first"){
-    // No DLS math to explain. Report the target and, if the chase has been
-    // entered in the sheet, who took it.
     var call;
-    if(v.side === "chase")    call = "<b>" + chaseName + "</b> chased it down.";
-    else if(v.side === "tie") call = "Chase level with target — a <b>tie</b>. Play the Super Over and enter that instead.";
-    else if(v.side === "first") call = "<b>" + firstName + "</b> held on — the chase fell short.";
+    if(v.side === "chase")    call = "<b>" + chaseName + "</b> chased the scaled target.";
+    else if(v.side === "tie") call = "Chase level with the scaled target &mdash; a <b>tie</b>. Play the Super Over and enter that instead.";
+    else if(v.side === "first") call = "<b>" + firstName + "</b> held on &mdash; the chase fell short.";
     else                     call = "Play the chase, then come back here to save.";
     outEl.innerHTML =
       '<span class="par">Target ' + v.target + '</span>' +
-      '<b>' + firstName + '</b> were on <b>' + v.firstRuns + '</b> when the innings was cut short. ' +
-      '<b>' + chaseName + '</b> get a full <b>' + MATCH_OVERS + '</b> overs to reach ' + v.target +
-      '. ' + call +
-      '<span class="res">No DLS scaling in this mode &middot; raw score is the target</span>';
+      '<b>' + firstName + '</b> were <b>' + v.firstRuns + '/' + v.firstWkts + '</b> after <b>' + v.facedTxt +
+      '</b> ov when the innings was cut short. Scaled up to a full <b>' + MATCH_OVERS +
+      '</b>-over chase, <b>' + chaseName + '</b> need <b>' + v.target + '</b> to win. ' + call +
+      '<span class="res">Scaled exactly ' + v.exact.toFixed(2) +
+        (DLS_STRICT_PAR ? ', so ' + v.need + ' wins it and ' + v.floorPar + ' falls short' : ', level at ' + v.floorPar + ' ties') +
+        ' &middot; resources ' + v.r1.toFixed(1) + '% (1st used) v ' + v.r2.toFixed(1) + '% (chase full)</span>';
     applyEl.hidden = (v.side === null || v.side === "tie");
     applyEl.textContent = (S.editing ? "Update as DLS result" : "Save as DLS result");
     return;
@@ -2623,6 +2773,25 @@ function commit(forced, dlsInfo){
     else            { rec.sow = soB; rec.sol = soA; }
   }
 
+  // 50+ scores. Validate each staged row: skip fully-empty ones, reject
+  // partial or invalid ones, and derive the partner from the pair the player
+  // is in. A player can appear at most once in a match's fifties list.
+  var validFifties = [], seenP = {};
+  for(var fi = 0; fi < S.fifties.length; fi++){
+    var f = S.fifties[fi];
+    if(!f.p && f.r == null && f.b == null) continue;   // untouched row
+    if(!f.p){ say("Pick a player for each 50+ score.", true); return; }
+    if(f.r == null || f.r < 50){ say("A 50+ score is at least 50 runs.", true); return; }
+    if(f.b == null || f.b < 1){ say("Enter balls faced for each 50+ score.", true); return; }
+    if(seenP[f.p]){ say(f.p + " can't score two 50s in the same match.", true); return; }
+    seenP[f.p] = true;
+    var pairSide = A.indexOf(f.p) >= 0 ? A : (B.indexOf(f.p) >= 0 ? B : null);
+    if(!pairSide){ say("Each 50+ scorer must be one of the four players.", true); return; }
+    var mate = pairSide.filter(function(x){ return x !== f.p; })[0];
+    validFifties.push({ p:f.p, r:f.r, b:f.b, m:mate });
+  }
+  if(validFifties.length) rec.fifties = validFifties;
+
   var verb = S.editing ? "updated" : "logged";
   var note = rec.w.join(" & ") + " " + verb + (dlsInfo ? " on DLS (par " + dlsInfo.par + ")" : "") +
     (inWindow(rec) ? "." : " — outside the window, so it won't count.");
@@ -2706,7 +2875,7 @@ function render(){
             id:id, d:m.d || "", ts:m.ts || 0,
             w:(m.w || []).map(canon), l:(m.l || []).map(canon),
             sw:m.sw || null, sl:m.sl || null, sow:m.sow || null, sol:m.sol || null,
-            bf:m.bf || null, dls:m.dls || null
+            bf:m.bf || null, dls:m.dls || null, fifties:m.fifties || null
           };
         }).sort(function(a,b){
           return (a.d || "").localeCompare(b.d || "") || a.ts - b.ts;
