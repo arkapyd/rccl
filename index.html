@@ -418,6 +418,20 @@ footer img{width:26px;height:auto;opacity:.7}
 .mnote b{color:var(--white);font-weight:700}
 .mnote em{font-style:normal;color:var(--gold);font-weight:700}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(142px,1fr));gap:9px;margin-bottom:22px}
+/* The With-the-bat section has five cards, and the auto-fit above squeezes
+   the fifth one onto a lonely second row. Reflow it into a deliberate 2+3
+   grid at widths where a 6-column split still leaves each card legible.
+   The first two cards each span half the row, the last three each span a
+   third. Below the breakpoint we fall back to auto-fit so mobile still
+   stacks sensibly. */
+@media (min-width:640px){
+  .stats-bat{grid-template-columns:repeat(6, minmax(0, 1fr))}
+  .stats-bat > .stat:nth-child(1),
+  .stats-bat > .stat:nth-child(2){grid-column:span 3}
+  .stats-bat > .stat:nth-child(3),
+  .stats-bat > .stat:nth-child(4),
+  .stats-bat > .stat:nth-child(5){grid-column:span 2}
+}
 .stat{border:1px solid var(--hair-soft);border-radius:2px;padding:11px 13px;display:flex;flex-direction:column}
 .stat.lead{border-color:var(--gold);background:rgba(255,228,99,.07)}
 .stat s{display:block;font-size:8.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim);text-decoration:none;margin-bottom:5px;line-height:1.35}
@@ -1670,7 +1684,7 @@ function renderHighsModal(key){
     (fan ? ' The ranking strip is the one exception: it takes those same duo totals and divides ' +
            'them by <em>that player\u2019s own</em> innings and overs.'
          : ' This league records nothing individually, by design.') + '</p>';
-  html += '<div class="stats">' + highsBlock(key, d) + '</div>';
+  html += '<div class="stats stats-' + esc(key) + '">' + highsBlock(key, d) + '</div>';
   html += fan;
 
   html += '<div class="hnav">' + HIGHS.map(function(h){
