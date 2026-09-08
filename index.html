@@ -1433,8 +1433,11 @@ var TOPS = {
 
   // Most individual 50+ scores in the cycle, per player. Ties break on the
   // highest single score — someone whose three 50s include a 100 sits above
-  // someone whose three 50s top out at 60. The sub carries the highest
-  // score's IGN when the player recorded one for it.
+  // someone whose three 50s top out at 60. The sub reads
+  //   "highest 106(58) as Rohit Sharma in Match #10"
+  // where Match #10 is the match the highest 50 was scored in (linked via
+  // matchLink), balls faced sits in parentheses next to the runs, and the
+  // "as X" clause is dropped when no in-game persona was recorded.
   mostFifties: { name:"Most 50+ scores", sec:"bat", dir:1, unit:"fifties",
     tie:function(a,b){ return (b.highScore || 0) - (a.highScore || 0); },
     rows:function(d){
@@ -1442,13 +1445,14 @@ var TOPS = {
         var fs = (s.fifties || []).filter(function(f){ return f.counts; });
         if(!fs.length) return null;
         var top = fs.reduce(function(m, f){ return f.r > m.r ? f : m; }, fs[0]);
-        var high = top.r;
-        var subTail = "highest " + high + (top.ign ? ' as <b>' + esc(top.ign) + '</b>' : '');
+        var sub = "highest " + top.r + "(" + top.b + ")" +
+                  (top.ign ? " as <b>" + esc(top.ign) + "</b>" : "") +
+                  (top.no ? " in " + matchLink(top.no) : "");
         return {
           v: fs.length,
           who: s.real,
-          sub: subTail,
-          highScore: high
+          sub: sub,
+          highScore: top.r
         };
       }).filter(Boolean);
     } }
