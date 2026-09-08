@@ -1293,10 +1293,18 @@ function highsBlock(key, d){
       recCard("Biggest match", R.agg, undefined, null, "agg");
   }
   if(key === "bat"){
+    // mostFifties is a per-player aggregate, not a per-innings record, so it
+    // doesn't fit recCard's shape. Pluck the head of its list and hand-build
+    // a stat card that opens the same top-5 the sibling chip does.
+    var topFif = topEntries("mostFifties", d)[0];
     return recCard("Highest total", R.high, undefined, null, "high") +
       recCard("Lowest completed innings", R.lowDone, undefined, null, "lowDone") +
       recCard("Fastest innings", R.rate, 2, null, "rate") +
-      recCard("Highest chased", R.chased, undefined, null, "chased");
+      recCard("Highest chased", R.chased, undefined, null, "chased") +
+      statCard("Most 50+ scores",
+               topFif ? withUnit(topFif.v, "fifties") : null,
+               topFif ? esc(topFif.who) + " &middot; " + topFif.sub : "nothing on record",
+               false, null, topFif ? "mostFifties" : null);
   }
   if(key === "ball"){
     return recCard("Best economy", R.econ, 2, "per over", "econ") +
