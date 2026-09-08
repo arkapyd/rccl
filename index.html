@@ -1417,6 +1417,7 @@ var TOPS = {
   // like a player row rather than a duo row; there is no match number
   // (aggregate stat), so the second row of the list card is omitted.
   batFirstAvg: { name:"Batting-first average", sec:"bat", dir:1, unit:"runs per innings",
+    note: "Per-player figure &mdash; duo totals from every innings this player batted first in, summed and divided by that player&rsquo;s own completed innings count.",
     rows:function(d){
       return d.stats.filter(function(s){ return s.innsFirstDone > 0; }).map(function(s){
         return { v: Math.round(s.runsFirst / s.innsFirstDone), who: s.real,
@@ -1424,6 +1425,7 @@ var TOPS = {
       });
     } },
   chaseAvg: { name:"Chasing average", sec:"bat", dir:1, unit:"runs per innings",
+    note: "Per-player figure &mdash; duo totals from every innings this player chased in, summed and divided by that player&rsquo;s own completed innings count.",
     rows:function(d){
       return d.stats.filter(function(s){ return s.innsChaseDone > 0; }).map(function(s){
         return { v: Math.round(s.runsChase / s.innsChaseDone), who: s.real,
@@ -1439,6 +1441,7 @@ var TOPS = {
   // matchLink), balls faced sits in parentheses next to the runs, and the
   // "as X" clause is dropped when no in-game persona was recorded.
   mostFifties: { name:"Most 50+ scores", sec:"bat", dir:1, unit:"fifties",
+    note: "Per-player count &mdash; each 50+ score belongs to the batter who made it, not to the pair.",
     tie:function(a,b){ return (b.highScore || 0) - (a.highScore || 0); },
     rows:function(d){
       return d.stats.map(function(s){
@@ -1520,10 +1523,10 @@ function renderTopModal(key){
       (list.length === 1 ? "entry ranked" : "entries ranked") + '</span></div>' +
   '</div>';
 
-  html += '<p class="mnote">' + (t.sec === "pairs"
+  html += '<p class="mnote">' + (t.note || (t.sec === "pairs"
     ? 'Ranked across every pairing that has taken the field this cycle.'
     : 'Every figure here is a <b>duo figure</b> &mdash; it belongs to the pair that was on the ' +
-      'field, not to either player alone.') + '</p>';
+      'field, not to either player alone.')) + '</p>';
 
   html += list.length
     ? '<ol class="tlist">' + list.map(function(e, i){
