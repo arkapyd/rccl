@@ -2075,12 +2075,13 @@ function renderModal(){
     statCard("Biggest win by wickets", citeVal(s.winByWkts), citeLine(s.winByWkts), false, null, "winWkts") +
     statCard("Super overs", s.soPlayed ? s.soWon + "/" + s.soPlayed : null, "won of played", false) +
     statCard("DLS results", s.dlsPlayed ? s.dlsWon + "/" + s.dlsPlayed : null, "won of settled", false) +
-    statCard("Through the gate", s.w >= CYCLE.minWins ? "YES" : (CYCLE.minWins - s.w),
-             s.w >= CYCLE.minWins ? "in contention" : "wins still needed", false) +
   '</div>';
 
   var fifties = s.fifties.filter(function(f){ return f.counts; });
-  var highScore = fifties.length ? fifties.reduce(function(a, f){ return f.r > a ? f.r : a; }, 0) : null;
+  // Track the whole top-scoring fifty (not just its runs), so the Highest
+  // score card can quote the balls faced and link the match it came from.
+  var highFifty = fifties.length ? fifties.reduce(function(a, f){ return f.r > a.r ? f : a; }, fifties[0]) : null;
+  var highScore = highFifty ? highFifty.r : null;
 
   html += sectionTitle("Form", "solo") + '<div class="stats">' +
     statCard("Current streak", s.streak > 0 ? s.streak + "W" : (s.l ? "&mdash;" : null),
@@ -2090,7 +2091,9 @@ function renderModal(){
              fifties.length ? "individual innings past fifty" : "none yet", false, null,
              fifties.length ? "mostFifties" : null) +
     statCard("Highest score", highScore,
-             highScore ? "personal best in a duo innings" : "no fifty on record", false) +
+             highFifty ? "off <b>" + highFifty.b + "</b> balls in " + matchLink(highFifty.no)
+                       : "no fifty on record",
+             false) +
   '</div>';
 
   if(fifties.length){
