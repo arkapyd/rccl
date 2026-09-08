@@ -206,16 +206,18 @@ input::placeholder{color:#7E868F}
 .fiftybox h3{margin:0;font-family:'Teko',sans-serif;font-weight:700;font-size:19px;letter-spacing:.08em;text-transform:uppercase;color:var(--bronze-lit);flex:1 1 auto}
 .fiftybox .fifty-sub{font-family:'Manrope',sans-serif;font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--lilac-dim);margin-left:6px}
 .fiftybox .why{font-size:12px;color:var(--lilac-dim);margin:0 0 12px;line-height:1.5;max-width:64ch}
-.fifty{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) 32px;gap:8px;
+.fifty{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,0.7fr) minmax(0,0.7fr) 32px;gap:8px;
   align-items:end;margin-top:8px}
 .fifty select.fp{width:100%;font-size:14px;padding:9px 10px}
+.fifty input.fi{width:100%;font-size:14px}
 .fifty .fx{background:none;border:0;color:var(--lilac-dim);font-size:22px;line-height:1;padding:4px 8px;cursor:pointer;border-radius:2px;align-self:end;margin-bottom:5px}
 .fifty .fx:hover{color:var(--gold)}
 #addFifty{padding:8px 12px;font-size:11px}
 @media (max-width:520px){
-  .fifty{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto}
+  .fifty{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto auto}
   .fifty select.fp{grid-column:1/-1}
-  .fifty .fx{grid-column:2;grid-row:2;justify-self:end}
+  .fifty .ign-field{grid-column:1/-1}
+  .fifty .fx{grid-column:2;grid-row:3;justify-self:end}
 }
 
 /* ---------------- RCCL Highs ---------------- */
@@ -478,9 +480,12 @@ footer img{width:26px;height:auto;opacity:.7}
 .mlist li{padding:11px 0;border-top:1px solid var(--hair-soft);display:flex;flex-wrap:wrap;gap:4px 11px;align-items:baseline;font-size:13.5px}
 /* windowed dossier match list. `max-height` is set from JS by measuring the
    first N rows, because rows differ in height (a scorecard line, a wrap on a
-   long pair name). Scrollbar is a mini bronze pill on a transparent track so
-   it reads against the purple modal instead of the page's steel one. */
+   long pair name). The CSS falls back to a reasonable cap in case the JS
+   measurement doesn't fire (e.g. a race between modal show and layout).
+   Scrollbar is a mini bronze pill on a transparent track so it reads against
+   the purple modal instead of the page's steel one. */
 .mlistwrap{overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;
+  max-height:min(46vh, 240px);
   scrollbar-width:thin;scrollbar-color:rgba(240,200,120,.45) transparent}
 .mlistwrap::-webkit-scrollbar{width:6px}
 .mlistwrap::-webkit-scrollbar-track{background:transparent;border:0}
@@ -497,6 +502,10 @@ footer img{width:26px;height:auto;opacity:.7}
 .mlist .vs b{color:var(--white);font-weight:600}
 .mlist .sc2{margin-left:auto;font-family:'Teko',sans-serif;font-size:16px;color:var(--lilac);white-space:nowrap}
 .mlist .by{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--bronze-lit)}
+/* the in-game persona a player was scoring as — bronze italic so it reads
+   as an aside, not a competing name */
+.mlist .ign{font-size:12px;font-style:italic;color:var(--bronze-lit)}
+.mlist .ign b{color:var(--bronze-lit);font-weight:700;font-style:normal}
 .mlist li.void{opacity:.4}
 .mfoot{font-size:12px;color:var(--lilac-dim);margin:-12px 0 22px;line-height:1.5}
 .mnone{padding:22px 0;color:var(--lilac-dim);font-size:14px;border-top:1px solid var(--hair-soft)}
@@ -1402,18 +1411,21 @@ var TOPS = {
 
   // Most individual 50+ scores in the cycle, per player. Ties break on the
   // highest single score — someone whose three 50s include a 100 sits above
-  // someone whose three 50s top out at 60.
+  // someone whose three 50s top out at 60. The sub carries the highest
+  // score's IGN when the player recorded one for it.
   mostFifties: { name:"Most 50+ scores", sec:"bat", dir:1, unit:"fifties",
     tie:function(a,b){ return (b.highScore || 0) - (a.highScore || 0); },
     rows:function(d){
       return d.stats.map(function(s){
         var fs = (s.fifties || []).filter(function(f){ return f.counts; });
         if(!fs.length) return null;
-        var high = fs.reduce(function(m, f){ return f.r > m ? f.r : m; }, 0);
+        var top = fs.reduce(function(m, f){ return f.r > m.r ? f : m; }, fs[0]);
+        var high = top.r;
+        var subTail = "highest " + high + (top.ign ? ' as <b>' + esc(top.ign) + '</b>' : '');
         return {
           v: fs.length,
           who: s.real,
-          sub: "highest " + high,
+          sub: subTail,
           highScore: high
         };
       }).filter(Boolean);
@@ -1837,7 +1849,7 @@ function statsFor(name){
       var mate = pairSide.filter(function(x){ return x !== name; })[0] || f.m || "";
       var foes = ((mt.w || []).indexOf(name) >= 0 ? (mt.l || []) : (mt.w || [])).slice();
       s.fifties.push({
-        r: f.r, b: f.b, mate: mate,
+        r: f.r, b: f.b, mate: mate, ign: f.ign || "",
         no: mt.no, d: mt.d, counts: counts,
         foes: foes
       });
@@ -2062,6 +2074,7 @@ function renderModal(){
         return '<li>' +
           '<span class="d">' + matchLink(f.no) + '</span>' +
           '<span class="res w">' + f.r + '</span>' +
+          (f.ign ? '<span class="ign">as <b>' + esc(f.ign) + '</b></span>' : '') +
           '<span class="vs">off <b>' + f.b + '</b> balls' +
             (sr ? ' &middot; SR ' + sr : '') +
             ' &middot; with <b>' + esc(realName(f.mate)) + '</b>' +
@@ -2180,8 +2193,20 @@ function sizeLogWindow(){
 }
 
 function sizeMatchWindow(){
-  var body = $("modalBody"); if(!body) return;
-  sizeScrollWindow(body.querySelector(".mlistwrap"), body.querySelector(".mlist"), LOG_VISIBLE);
+  // Defer to the next frame — modalBody's innerHTML was just replaced and the
+  // modal itself may have just switched from display:none to display:flex, so
+  // giving the browser one frame to lay out the list produces reliable
+  // heights instead of racing to measure something not yet on screen.
+  // Scope the .mlist query to inside .mlistwrap: the dossier also has a
+  // .mlist for the 50+ scores section, and a bare querySelector would grab
+  // that one and miss the Every-match list we actually want to window.
+  var run = function(){
+    var body = $("modalBody"); if(!body) return;
+    var wrap = body.querySelector(".mlistwrap"); if(!wrap) return;
+    sizeScrollWindow(wrap, wrap.querySelector(".mlist"), LOG_VISIBLE);
+  };
+  if(typeof requestAnimationFrame === "function") requestAnimationFrame(run);
+  else run();
 }
 
 function renderLog(){
@@ -2346,7 +2371,7 @@ function renderEntry(){
       if(editing.dls.n2 !== undefined && editing.dls.n2 !== null) $("dlsN2").value = editing.dls.n2;
     }
     // seed the fifties list from the record — copy so edits don't mutate storage
-    S.fifties = (editing.fifties || []).map(function(f){ return { p:f.p, r:f.r, b:f.b }; });
+    S.fifties = (editing.fifties || []).map(function(f){ return { p:f.p, r:f.r, b:f.b, ign:f.ign || "" }; });
   } else {
     S.formBF = null;
     S.dlsOpen = false;
@@ -2377,7 +2402,7 @@ function renderEntry(){
     var picks = ["a1","a2","b1","b2"].map(function(id){ return $(id).value; });
     var used = {}; S.fifties.forEach(function(f){ if(f.p) used[f.p] = true; });
     var p = picks.filter(function(x){ return !used[x]; })[0] || picks[0];
-    S.fifties.push({ p:p, r:null, b:null });
+    S.fifties.push({ p:p, r:null, b:null, ign:"" });
     renderFiftyList();
   };
   renderFiftyList();
@@ -2417,9 +2442,12 @@ function paintBF(){
   });
 }
 
-// Draws one row per staged 50 with player select, runs, balls and remove.
-// Options come from the four selected players so the row can only ever
-// name someone actually in the match; the partner is derived on save.
+// Draws one row per staged 50 with player select, in-game persona, runs,
+// balls and remove. Options come from the four selected players so the row
+// can only ever name someone actually in the match; the partner is derived
+// on save. The IGN input is free-form text — whatever the league player
+// chose to play as in-game (a real-cricketer avatar, a custom character,
+// whatever) — and is optional.
 function renderFiftyList(){
   var box = $("fiftyList"); if(!box) return;
   var picks = ["a1","a2","b1","b2"].map(function(id){ return $(id).value; });
@@ -2427,6 +2455,7 @@ function renderFiftyList(){
   box.innerHTML = S.fifties.map(function(f, i){
     return '<div class="fifty" data-i="' + i + '">' +
       '<select class="fp">' + opts + '</select>' +
+      '<label class="field ign-field"><span>Played as</span><input class="fi" type="text" placeholder="in-game name" value="' + esc(f.ign || "") + '"></label>' +
       '<label class="field"><span>Runs</span><input class="n fr" type="number" min="50" value="' + (f.r == null ? '' : f.r) + '"></label>' +
       '<label class="field"><span>Balls</span><input class="n fb" type="number" min="1" value="' + (f.b == null ? '' : f.b) + '"></label>' +
       '<button class="fx" type="button" aria-label="Remove">&times;</button>' +
@@ -2447,6 +2476,7 @@ function renderFiftyList(){
   Array.prototype.forEach.call(box.querySelectorAll(".fifty"), function(row){
     var i = Number(row.dataset.i);
     row.querySelector("select.fp").onchange = function(e){ S.fifties[i].p = e.target.value; };
+    row.querySelector("input.fi").oninput   = function(e){ S.fifties[i].ign = e.target.value.trim(); };
     row.querySelector("input.fr").oninput   = function(e){ S.fifties[i].r = num(e.target.value); };
     row.querySelector("input.fb").oninput   = function(e){ S.fifties[i].b = num(e.target.value); };
     row.querySelector(".fx").onclick        = function(){ S.fifties.splice(i, 1); renderFiftyList(); };
@@ -2783,7 +2813,9 @@ function commit(forced, dlsInfo){
     var pairSide = A.indexOf(f.p) >= 0 ? A : (B.indexOf(f.p) >= 0 ? B : null);
     if(!pairSide){ say("Each 50+ scorer must be one of the four players.", true); return; }
     var mate = pairSide.filter(function(x){ return x !== f.p; })[0];
-    validFifties.push({ p:f.p, r:f.r, b:f.b, m:mate });
+    var entry = { p:f.p, r:f.r, b:f.b, m:mate };
+    if(f.ign && f.ign.trim()) entry.ign = f.ign.trim();
+    validFifties.push(entry);
   }
   if(validFifties.length) rec.fifties = validFifties;
 
