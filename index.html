@@ -1317,7 +1317,7 @@ function highsBlock(key, d){
       recCard("Highest chased", R.chased, undefined, null, "chased") +
       statCard("Most 50+ scores",
                topFif ? withUnit(topFif.v, "fifties") : null,
-               topFif ? esc(topFif.who) + " &middot; " + topFif.sub : "nothing on record",
+               topFif ? esc(topFif.who) + " &middot; " + (topFif.subCard || topFif.sub) : "nothing on record",
                false, null, topFif ? "mostFifties" : null);
   }
   if(key === "ball"){
@@ -1448,13 +1448,20 @@ var TOPS = {
         var fs = (s.fifties || []).filter(function(f){ return f.counts; });
         if(!fs.length) return null;
         var top = fs.reduce(function(m, f){ return f.r > m.r ? f : m; }, fs[0]);
-        var sub = "highest " + top.r + "(" + top.b + ")" +
-                  (top.ign ? " as <b>" + esc(top.ign) + "</b>" : "") +
-                  (top.no ? " in " + matchLink(top.no) : "");
+        // scoreline + linked match, always
+        var core = "highest " + top.r + "(" + top.b + ")" +
+                   (top.no ? " in " + matchLink(top.no) : "");
+        // full byline for the top-5 rows adds the in-game persona when it's
+        // recorded; the section card uses `subCard` and skips the persona so
+        // the "Most 50s" tile in With the bat stays scoreline + match only.
+        var full = "highest " + top.r + "(" + top.b + ")" +
+                   (top.ign ? " as <b>" + esc(top.ign) + "</b>" : "") +
+                   (top.no ? " in " + matchLink(top.no) : "");
         return {
           v: fs.length,
           who: s.real,
-          sub: sub,
+          sub: full,
+          subCard: core,
           highScore: top.r
         };
       }).filter(Boolean);
