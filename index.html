@@ -528,11 +528,11 @@ footer img{width:26px;height:auto;opacity:.7}
 </head>
 
 <body>
-<h1 class="sr">Real Cricket Champions' League</h1>
+<h1 class="sr">Real Cricket s' League</h1>
 
 <header class="crest">
   <div class="shell crest-grid">
-    <div class="plate"><img id="logo" src="RCCL.png" alt="Real Cricket Champions' League 2026"></div>
+    <div class="plate"><img id="logo" src="RCCL.png" alt="Real Cricket s' League 2026"></div>
     <div>
       <div class="season">
         <span id="cycleName">Cycle I</span><span class="dot"></span>
@@ -625,7 +625,7 @@ footer img{width:26px;height:auto;opacity:.7}
 
   <footer>
     <img src="RCCL.png" alt="" onerror="this.remove()">
-    <span>Real Cricket Champions' League</span>
+    <span>Real Cricket s' League</span>
     <span id="footWindow"></span>
   </footer>
 </main>
@@ -1774,8 +1774,17 @@ function statsFor(name){
     if(!counts) return;                 // out-of-window games don't feed the record
 
     s.m++;
-    if(won){ s.w++; run++; if(run > s.bestStreak) s.bestStreak = run; }
-    else   { s.l++; run = 0; }
+    // Signed running streak: positive is a win streak, negative is a loss
+    // streak. A win that ends a losing run resets to +1 (and vice versa),
+    // so |s.streak| always names the length of whichever streak is active.
+    if(won){
+      s.w++;
+      run = run >= 0 ? run + 1 : 1;
+      if(run > s.bestStreak) s.bestStreak = run;
+    } else {
+      s.l++;
+      run = run <= 0 ? run - 1 : -1;
+    }
     s.streak = run;
 
     var mate = side.filter(function(p){ return p !== name; })[0];
@@ -2091,8 +2100,10 @@ function renderModal(){
   var highScore = highFifty ? highFifty.r : null;
 
   html += sectionTitle("Form", "solo") + '<div class="stats">' +
-    statCard("Current streak", s.streak > 0 ? s.streak + "W" : (s.l ? "&mdash;" : null),
-             s.streak > 0 ? "unbeaten" : "last one lost", false) +
+    statCard("Current streak",
+             s.streak > 0 ? s.streak + "W" : (s.streak < 0 ? (-s.streak) + "L" : null),
+             s.streak > 0 ? "unbeaten" : (s.streak < 0 ? "on the slide" : "no matches yet"),
+             false) +
     statCard("Longest streak", s.bestStreak || null, "consecutive wins", false) +
     statCard("50+ scores", fifties.length || null,
              fifties.length ? "individual innings past fifty" : "none yet", false, null,
