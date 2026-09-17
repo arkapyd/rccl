@@ -2276,9 +2276,10 @@ function scoreCard(m){
   var main = innings(m.sw), lost = innings(m.sl);
   if(main && lost) bits.push('<span class="sc">' + main + ' <span class="dash">&mdash;</span> ' + lost + '</span>');
   if(m.dls){
-    var dlsLabel = m.dls.mode === "first"
-      ? "D/L &middot; 1st inns cut &middot; target " + m.dls.target
-      : "D/L &middot; par " + m.dls.par;
+    var dlsLabel;
+    if(m.dls.mode === "first")     dlsLabel = "D/L &middot; 1st inns cut &middot; target " + m.dls.target;
+    else if(m.dls.mode === "both") dlsLabel = "D/L &middot; both cut &middot; par " + m.dls.par;
+    else                            dlsLabel = "D/L &middot; par " + m.dls.par;
     bits.push('<span class="dlstag">' + dlsLabel + '</span>');
   }
   if(m.sow && m.sol){
@@ -2442,6 +2443,7 @@ function renderEntry(){
         '<span class="bflabel">Which innings crashed?</span>' +
         '<button class="chip bronze" id="dlsMc" type="button">Chase</button>' +
         '<button class="chip bronze" id="dlsMf" type="button">First innings</button>' +
+        '<button class="chip bronze" id="dlsMb" type="button">Both</button>' +
       '</div>' +
       '<p class="why" id="dlsWhy"></p>' +
       '<div class="dlsgrid">' +
@@ -2478,7 +2480,7 @@ function renderEntry(){
     // stored relative to winner/loser, so map it back onto left/right
     S.formBF = editing.bf === "w" ? "A" : editing.bf === "l" ? "B" : null;
     S.dlsOpen = !!editing.dls;
-    S.dlsMode = (editing.dls && editing.dls.mode === "first") ? "first" : "chase";
+    S.dlsMode = editing.dls ? (editing.dls.mode || "chase") : "chase";
     if(editing.dls){
       if(editing.dls.n1 !== undefined && editing.dls.n1 !== null) $("dlsN1").value = editing.dls.n1;
       if(editing.dls.n2 !== undefined && editing.dls.n2 !== null) $("dlsN2").value = editing.dls.n2;
@@ -2509,6 +2511,7 @@ function renderEntry(){
   $("dlsToggle").onclick = function(){ S.dlsOpen = !S.dlsOpen; refresh(); };
   $("dlsMc").onclick = function(){ S.dlsMode = "chase"; refresh(); };
   $("dlsMf").onclick = function(){ S.dlsMode = "first"; refresh(); };
+  $("dlsMb").onclick = function(){ S.dlsMode = "both"; refresh(); };
   $("dlsApply").onclick  = function(){ commitDls(); };
   $("addFifty").onclick = function(){
     // Default the new row's player to the first pick that isn't already used
@@ -2687,6 +2690,53 @@ function dlsRead(){
     };
   }
 
+  if(S.dlsMode === "both"){
+    // Both innings cut short. Par at the point the chase died decides it,
+    // using each side's actual spent resources: r1 = dlsAvailable off the
+    // first innings' truncated state, r2 = dlsAvailable off the chase's
+    // truncated state. Same par-vs-runs comparison the chase branch uses,
+    // just with r1 measuring what the first side actually spent instead of
+    // their full allotment.
+    var fwB = num($("k" + firstTag).value);
+    var foB = num($("o" + firstTag).value);
+    var cwB = num($("k" + chaseTag).value);
+    var coB = num($("o" + chaseTag).value);
+    if(fr === null) return { err:"Enter the first innings total when it was cut short." };
+    if(foB === null) return { err:"Enter the overs the first innings had faced when it died." };
+    if(cr === null) return { err:"Enter the chasing side's runs at the moment it died." };
+    if(coB === null) return { err:"Enter the overs the chase had faced when it died." };
+    var facedFB = ovDec(foB), facedCB = ovDec(coB);
+    if(facedFB > ovDec(n1)) return { err:"The first innings faced more overs than it was allotted." };
+    if(facedCB > ovDec(n2)) return { err:"The chase faced more overs than it was allotted." };
+
+    var r1b = dlsAvailable(ovDec(n1), facedFB, fwB === null ? 0 : fwB);
+    var r2b = dlsAvailable(ovDec(n2), facedCB, cwB === null ? 0 : cwB);
+    if(!(r1b > 0)) return { err:"Those first-innings numbers leave no resource to work with." };
+    if(!(r2b > 0)) return { err:"Those chase numbers leave no resource to work with." };
+
+    var exactB = fr * r2b / r1b;
+    var floorParB = Math.floor(exactB);
+    var needB = floorParB + 1;
+
+    var sideB;
+    if(DLS_STRICT_PAR) sideB = cr > exactB ? "chase" : (cr === exactB ? "tie" : "first");
+    else               sideB = cr > floorParB ? "chase" : (cr === floorParB ? "tie" : "first");
+
+    return {
+      mode:"both", firstTag:firstTag, chaseTag:chaseTag,
+      firstRuns:fr, firstWkts: fwB === null ? 0 : fwB,
+      chaseRuns:cr, wkts: cwB === null ? 0 : cwB,
+      n1:n1, n2:n2,
+      par: DLS_STRICT_PAR ? needB : floorParB,
+      target: needB,
+      exact: exactB, floorPar: floorParB, need: needB,
+      r1: r1b, r2: r2b,
+      facedTxtFirst: oversText(toBalls(foB)),
+      facedTxt: oversText(toBalls(coB)),
+      side: sideB
+    };
+  }
+
   // Chase-crashed (default): DLS math.
   var cw = num($("k" + chaseTag).value);
   var co = num($("o" + chaseTag).value);
@@ -2717,6 +2767,7 @@ function refreshDls(){
   // Mode chips
   $("dlsMc").classList.toggle("on", S.dlsMode === "chase");
   $("dlsMf").classList.toggle("on", S.dlsMode === "first");
+  $("dlsMb").classList.toggle("on", S.dlsMode === "both");
 
   // The "why" note under the mode picker changes with the mode.
   whyEl.innerHTML = S.dlsMode === "first"
@@ -2725,6 +2776,11 @@ function refreshDls(){
       'over the chase\u2019s full ' + MATCH_OVERS + ' overs, using the resources the first side ' +
       'actually spent. The chase then plays a normal ' + MATCH_OVERS + '-over innings against that ' +
       'target. Needs the <b>innings order</b> set.'
+    : S.dlsMode === "both"
+    ? 'Both innings were cut short. Fill the first-innings runs, wickets and <b>overs faced</b> ' +
+      'when it died, then the chase runs, wickets and <b>overs faced</b> at its own crash. Par is ' +
+      'set on each side\u2019s actual spent resources &mdash; whoever\u2019s ahead of it at the ' +
+      'chase\u2019s crash point takes it. Needs the <b>innings order</b> set.'
     : 'Fill the sheet above with the score as far as the game got, including the ' +
       '<b>overs the chase had faced</b> when it died. Par comes off those overs and the wickets down. ' +
       'Needs the <b>innings order</b> set — DLS can\u2019t tell a defence from a chase without it.';
@@ -2757,6 +2813,24 @@ function refreshDls(){
         (DLS_STRICT_PAR ? ', so ' + v.need + ' wins it and ' + v.floorPar + ' falls short' : ', level at ' + v.floorPar + ' ties') +
         ' &middot; resources ' + v.r1.toFixed(1) + '% (1st used) v ' + v.r2.toFixed(1) + '% (chase full)</span>';
     applyEl.hidden = (v.side === null || v.side === "tie");
+    applyEl.textContent = (S.editing ? "Update as DLS result" : "Save as DLS result");
+    return;
+  }
+
+  if(v.mode === "both"){
+    var lineB;
+    if(v.side === "chase")     lineB = "<b>" + chaseName + "</b> clear par and take it.";
+    else if(v.side === "tie")  lineB = "Dead level with par &mdash; a <b>tie</b>. Play the Super Over and enter that instead.";
+    else                       lineB = "<b>" + firstName + "</b> hold on &mdash; the chase is short of par.";
+    outEl.innerHTML =
+      '<span class="par">Par ' + v.par + '</span>' +
+      '<b>' + firstName + '</b> were <b>' + v.firstRuns + '/' + v.firstWkts + '</b> after <b>' + v.facedTxtFirst +
+      '</b> ov when their innings was cut short. <b>' + chaseName + '</b> were <b>' + v.chaseRuns + '/' + v.wkts +
+      '</b> after <b>' + v.facedTxt + '</b> ov when the game died. ' + lineB +
+      '<span class="res">Break-even exactly ' + v.exact.toFixed(2) +
+        (DLS_STRICT_PAR ? ', so ' + v.need + ' wins it and ' + v.floorPar + ' falls short' : ', level at ' + v.floorPar + ' ties') +
+        ' &middot; resources ' + v.r1.toFixed(1) + '% (1st used) v ' + v.r2.toFixed(1) + '% (chase used)</span>';
+    applyEl.hidden = (v.side === "tie");
     applyEl.textContent = (S.editing ? "Update as DLS result" : "Save as DLS result");
     return;
   }
