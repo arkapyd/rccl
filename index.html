@@ -539,7 +539,7 @@ footer img{width:26px;height:auto;opacity:.7}
         <span id="cycleWindow">&mdash;</span><span class="dot"></span>
         <span id="cycleClock">&mdash;</span>
       </div>
-      <p class="lede">Two a side, twenty overs, <em>no fixture list</em>. Highest win percentage over seven wins takes the cycle!</p>
+      <p class="lede">Two a side, twenty overs, <em>no fixture list</em>. Top four by PCW settle the cycle in a closing 2v2 &mdash; 1st and 4th v 2nd and 3rd!</p>
       <div class="tally">
         <div><b id="tPlayers">0</b><span>Players currently playing</span></div>
         <div><b id="tMatches">0</b><span>Matches played in this cycle</span></div>
@@ -617,7 +617,7 @@ footer img{width:26px;height:auto;opacity:.7}
       <li><b>PCW</b> is wins as a percentage of matches played. It is the only ranking number, borrowed from the WTC &mdash; minus the points, since a match here cannot end level.</li>
       <li>A tied match goes to a <b>two-over Super Over</b>. Whoever takes it takes the W, exactly as if they had won in regulation.</li>
       <li>The gate stands at <b>seven wins</b>. Below it you appear on the table but are not in contention.</li>
-      <li>At the close, the highest PCW among those through the gate takes the cycle. Level on PCW, they settle it 2v2 until it breaks.</li>
+      <li>At the close, the top four by PCW play a 2v2 final &mdash; 1st and 4th team against 2nd and 3rd. Whoever wins takes the cycle; short of four contenders past the gate, the cycle goes uncrowned.</li>
       <li>If the game falls over mid-chase, the result stands on the <b>D/L par score</b> at the moment it died. The chase must <b>pass par outright</b> &mdash; short of it, however narrowly, is a loss.</li>
     </ol>
     </div>
@@ -882,14 +882,42 @@ function plinth(w){
   return '<div class="plinth" title="' + esc(label) + '" aria-label="' + esc(label) + '">' + s + '</div>';
 }
 
-// The gold row is the cycle leader, not everyone past the gate: through on
-// wins AND top on PCW among those through. Ties share it, matching the
-// decider the verdict panel calls for. Rows arrive sorted by PCW.
-function cycleLeaders(rows){
+// Top four by PCW are the finalists. 1st and 4th team up against 2nd and 3rd
+// for the closing 2v2. Every top-4 seat still has to clear the win gate;
+// short of four contenders past the gate, no pairing exists yet. Rows arrive
+// PCW-sorted (with wins/matches/name as the secondary keys), so ties at the
+// top-4 border resolve the same way the table itself does.
+function finalPairing(rows){
   var through = rows.filter(function(r){ return r.w >= CYCLE.minWins; });
-  if(!through.length) return [];
-  var top = through[0].pcw;
-  return through.filter(function(r){ return Math.abs(r.pcw - top) < 1e-9; });
+  if(through.length < 4) return null;
+  var top4 = through.slice(0, 4);
+  return {
+    a: [top4[0], top4[3]],   // 1st + 4th
+    b: [top4[1], top4[2]],   // 2nd + 3rd
+    ranks: top4
+  };
+}
+
+// The final is a match logged between the four players the final pairing
+// names. In a strict reading it&rsquo;d have to be the 1+4 v 2+3 split, but
+// logging the final itself shifts PCW &mdash; the current top-4 arrangement
+// may no longer match its own logged split. So we take the most recent
+// match involving all four current top-of-standings players. Seed labels
+// in the verdict use the current standings, so the winning seeds still
+// read correctly.
+function finalMatch(rows){
+  var fp = finalPairing(rows);
+  if(!fp) return null;
+  var top4Key = fp.ranks.map(function(r){ return r.name; }).sort().join("|");
+  var candidates = S.matches.filter(function(m){
+    if(!m.w || !m.l || m.w.length !== 2 || m.l.length !== 2) return false;
+    var involved = m.w.concat(m.l).slice().sort().join("|");
+    return involved === top4Key;
+  });
+  if(!candidates.length) return null;
+  return candidates.slice().sort(function(a,b){
+    return (b.d || "").localeCompare(a.d || "") || (b.ts || 0) - (a.ts || 0);
+  })[0];
 }
 
 function renderTable(rows){
@@ -939,23 +967,58 @@ function renderVerdict(rows){
     return;
   }
 
-  var level = cycleLeaders(rows);
+  var fp = finalPairing(rows);
 
-  if(level.length > 1){
-    $("vKicker").textContent = "Decider required";
-    $("vName").textContent = level.map(function(r){ return r.name; }).join(" · ");
-    $("vNote").innerHTML = "Level through the gate on <b>" + level[0].pcw.toFixed(2) +
-      " PCW</b>. They settle it 2v2 until the tie breaks.";
+  // Fewer than four through the gate — the closing 2v2 needs four contenders,
+  // so we're either still building toward it or the cycle has shut short.
+  if(!fp){
+    if(closed){
+      $("vKicker").textContent = "Cycle closed · no final";
+      $("vName").textContent = "Uncrowned";
+      $("vNote").innerHTML = "The window shut with only <b>" + through.length + "</b> player" +
+        (through.length === 1 ? "" : "s") + " through the gate. The closing 2v2 needs four contenders.";
+    } else {
+      $("vName").classList.add("chase");
+      $("vKicker").textContent = through.length === 1 ? "1 in contention" : through.length + " in contention";
+      $("vName").innerHTML = through.map(function(r){ return '<span class="chaser">' + esc(r.name) + '</span>'; }).join(" &middot; ");
+      var need = 4 - through.length;
+      $("vNote").innerHTML = "The closing 2v2 needs four contenders &mdash; <b>" + need + " more</b> " +
+        (need === 1 ? "player" : "players") +
+        " past the gate before the pairing is set. Top four by PCW: 1st and 4th team against 2nd and 3rd.";
+    }
     return;
   }
 
-  var c = level[0];
-  box.classList.add("crowned");
-  $("vKicker").textContent = closed ? "Champion of " + CYCLE.name : "Leading the pack";
-  $("vName").textContent = c.name;
-  $("vNote").innerHTML = "<b>" + c.w + "–" + c.l + "</b> from " + c.m + " matches at <b>" +
-    c.pcw.toFixed(2) + " PCW</b>." +
-    (closed ? " " : " ");
+  // Top four set. Only look for the final match once the window has shut —
+  // any earlier configuration match is treated as a regular fixture, not the
+  // crown-decider.
+  var final = closed ? finalMatch(rows) : null;
+
+  if(final){
+    box.classList.add("crowned");
+    $("vName").classList.add("chase");
+    $("vKicker").textContent = "Champions of " + CYCLE.name;
+    $("vName").innerHTML = final.w.map(function(n){ return esc(n); }).join(" &amp; ");
+    // Describe the outcome in seed language so the reader can trace the pairing
+    var seedFor = function(name){ return fp.ranks.findIndex(function(r){ return r.name === name; }) + 1; };
+    var winSeeds = final.w.map(seedFor).sort(function(a,b){ return a - b; }).join(" &amp; ");
+    var loseSeeds = final.l.map(seedFor).sort(function(a,b){ return a - b; }).join(" &amp; ");
+    $("vNote").innerHTML = "Took the closing 2v2 against <b>" +
+      final.l.map(function(n){ return esc(n); }).join(" &amp; ") + "</b>. " +
+      "Seeds <b>" + winSeeds + "</b> beat seeds <b>" + loseSeeds + "</b>.";
+    return;
+  }
+
+  // Four (or more) through, pairing set, but the final hasn't been logged.
+  $("vName").classList.add("chase");
+  $("vKicker").textContent = closed ? "Final pending" : "Top four set";
+  $("vName").innerHTML =
+    '<span class="chaser">' + esc(fp.a[0].name) + ' &amp; ' + esc(fp.a[1].name) + '</span> v ' +
+    esc(fp.b[0].name) + ' &amp; ' + esc(fp.b[1].name);
+  var ranksLine = fp.ranks.map(function(r,i){ return (i+1) + '. ' + esc(r.name); }).join(" &middot; ");
+  var when = closed ? " The window has shut &mdash; log the final to crown the champions."
+                    : " Cycle continues; log this match when it&rsquo;s played to crown the champions.";
+  $("vNote").innerHTML = "<b>" + ranksLine + "</b>. 1st and 4th team up against 2nd and 3rd for the closing 2v2." + when;
 }
 
 /* ───────── overs arithmetic ─────────
