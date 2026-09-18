@@ -1017,7 +1017,7 @@ function renderVerdict(rows){
     esc(fp.b[0].name) + ' &amp; ' + esc(fp.b[1].name);
   var ranksLine = fp.ranks.map(function(r,i){ return (i+1) + '. ' + esc(r.name); }).join(" &middot; ");
   var when = closed ? " The window has shut &mdash; log the final to crown the champions."
-                    : " Cycle continues; log this match when it&rsquo;s played to crown the champions.";
+                    : "";
   $("vNote").innerHTML = "<b>" + ranksLine + "</b>. 1st and 4th team up against 2nd and 3rd for the closing 2v2." + when;
 }
 
