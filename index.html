@@ -1011,7 +1011,7 @@ function renderVerdict(rows){
 
   // Four (or more) through, pairing set, but the final hasn't been logged.
   $("vName").classList.add("chase");
-  $("vKicker").textContent = closed ? "Final pending" : "Top four set";
+  $("vKicker").textContent = closed ? "Final pending" : "Top four as of now";
   $("vName").innerHTML =
     '<span class="chaser">' + esc(fp.a[0].name) + ' &amp; ' + esc(fp.a[1].name) + '</span> v ' +
     esc(fp.b[0].name) + ' &amp; ' + esc(fp.b[1].name);
