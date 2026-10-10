@@ -327,6 +327,9 @@ select:disabled{opacity:.55}
 .hcard:hover .hgo{color:var(--gold)}
 .hcard[data-h="cycle"] .hv{font-size:clamp(40px,5.2vw,58px);line-height:.98}
 .hblank{border:1px solid var(--frame);border-radius:2px;padding:22px;color:var(--lilac-dim);font-size:14px;margin:0;grid-column:1/-1;background:linear-gradient(158deg,var(--royal) 0%,var(--royal-panel) 46%,var(--royal-deep) 100%)}
+.scopebar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:0 0 18px}
+.scopebar .chip{font-size:10px;padding:7px 11px}
+#highsScope .scopebar{margin:6px 0 14px}
 .hnav{display:flex;flex-wrap:wrap;gap:7px;border-top:1px solid rgba(201,162,39,.22);padding-top:16px}
 .hnav .chip{font-size:10px;padding:7px 11px}
 .hnav .chip:not(.on){background:transparent}
@@ -595,6 +598,7 @@ footer img{width:26px;height:auto;opacity:.7}
       <span class="aside" id="highsAside">The record book</span>
     </div>
     <div class="hairline"></div>
+    <div class="scopebar-wrap" id="highsScope"></div>
     <div class="hcards" id="highs"></div>
   </section>
 
@@ -722,7 +726,8 @@ const LOGO      = "RCCL.png";
 // the admin panel (stored at rccl/index) and need no entry here. A database
 // entry with the same id overrides what is written here.
 const SEED_CYCLES = [
-  { id:"cycle1", name:"Cycle I", start:"2026-08-22", end:"2026-09-30", minWins:7 }
+  { id:"cycle1", name:"Cycle I",  start:"2026-08-22", end:"2026-09-30", minWins:7 },
+  { id:"cycle2", name:"Cycle II", start:"2026-10-08", end:"2026-10-31", minWins:7 }
 ];
 
 // Win gate a new cycle starts with (editable per cycle in the admin panel).
@@ -796,7 +801,8 @@ var S = {
   formType:"regular", formCycle:null, formCycleManual:false,
   formBF:null, dlsOpen:false, dlsMode:"chase", fifties:[],
   openPlayer:null, openHighs:null, openTop:null, topFromPlayer:null,
-  sortAll:"pcw"
+  sortAll:"pcw",
+  statScope:"view"  // "view": stats follow the cycle on screen · "all": all-time league
 };
 
 document.documentElement.style.setProperty('--wm', 'url("' + LOGO + '")');
@@ -897,20 +903,39 @@ function rebuild(){
   S.view = (S.want && ok(S.want)) ? S.want : defaultView();
 }
 
-function scopeCycles(){
-  return S.view === "all" ? S.cycles : S.cycles.filter(function(c){ return c.id === S.view; });
+// Two scopes: the view (table, log, final) and the stats scope (records,
+// dossiers, highs), which can be flipped to the all-time league from any cycle.
+function statId(){ return (S.view === "all" || S.statScope === "all") ? "all" : S.view; }
+function scopeCycles(id){
+  id = id || S.view;
+  return id === "all" ? S.cycles : S.cycles.filter(function(c){ return c.id === id; });
 }
 // every match in view, out-of-window ones included, final last in each cycle
-function scopeEverything(){
+function scopeEverything(id){
   var out = [];
-  scopeCycles().forEach(function(c){
+  scopeCycles(id).forEach(function(c){
     c.matches.forEach(function(m){ out.push(m); });
     if(c.final) out.push(c.final);
   });
   return out;
 }
-function scopeCounted(){ return scopeEverything().filter(function(m){ return m.counts; }); }
-function scopeRegular(){ return scopeCounted().filter(function(m){ return !m.isFinal; }); }
+function scopeCounted(id){ return scopeEverything(id).filter(function(m){ return m.counts; }); }
+function scopeRegular(id){ return scopeCounted(id).filter(function(m){ return !m.isFinal; }); }
+
+// "Stats for: Cycle II | All-time league" — shown on the highs and every modal.
+function scopeChips(){
+  if(S.view === "all") return "";
+  var c = cyc(S.view), id = statId();
+  return '<div class="scopebar"><span class="bflabel">Stats for</span>' +
+    '<button class="chip' + (id !== "all" ? ' on' : '') + '" type="button" data-ss="view">' + esc(c.name) + '</button>' +
+    '<button class="chip' + (id === "all" ? ' on' : '') + '" type="button" data-ss="all">All-time league</button></div>';
+}
+function onScopeClick(e){
+  var b = e.target.closest && e.target.closest("[data-ss]");
+  if(!b) return;
+  S.statScope = b.dataset.ss;
+  render();
+}
 
 function mLabel(m){
   if(!m) return "";
@@ -1553,10 +1578,10 @@ var HIGHS = [
   { key:"margins", name:"Margins" },
   { key:"pairs",   name:"Pairings" }
 ];
-function highsName(h){ return h.key === "cycle" && S.view === "all" ? "The league so far" : h.name; }
+function highsName(h){ return h.key === "cycle" && statId() === "all" ? "The league so far" : h.name; }
 
 function highsData(){
-  var ms = scopeCounted();
+  var ms = scopeCounted(statId());
   var R = leagueRecords(ms), lg = leagueAverages(ms);
   var pairs = Object.keys(R.pairs).map(function(k){
     var p = R.pairs[k]; p.n = p.w + p.l; p.pcw = p.n ? p.w / p.n * 100 : 0; return p;
@@ -1750,7 +1775,7 @@ function bindTopLinks(root, fromPlayer){
   });
 }
 
-function scopeName(){ return S.view === "all" ? "All-time" : (cyc(S.view) || {}).name; }
+function scopeName(){ return statId() === "all" ? "All-time league" : (cyc(S.view) || {}).name; }
 
 function renderTopModal(key){
   var t = TOPS[key];
@@ -1766,6 +1791,7 @@ function renderTopModal(key){
     '<div class="mrec"><b>' + list.length + '</b><span>' + (list.length === 1 ? "entry ranked" : "entries ranked") + '</span></div>' +
   '</div>';
 
+  html += scopeChips();
   html += '<p class="mnote">' + (t.note || (t.sec === "pairs"
     ? 'Ranked across every pairing that has taken the field in view.'
     : 'Every figure here is a <b>duo figure</b> &mdash; it belongs to the pair that was on the field, not to either player alone.')) + '</p>';
@@ -1840,9 +1866,9 @@ function highsFan(key, d){
 function renderHighs(){
   var box = $("highs"); if(!box) return;
   var d = highsData();
-  $("highsAside").textContent = d.R.n
-    ? "Across " + matchesWord(d.R.n) + (S.view === "all" ? " · every cycle" : "")
-    : "The record book";
+  $("highsScope").innerHTML = scopeChips();
+  $("highsAside").textContent = (statId() === "all" ? "All-time league" : cyc(S.view).name) +
+    (d.R.n ? " · " + matchesWord(d.R.n) : "");
   if(!d.R.n){
     box.innerHTML = '<p class="hblank">Nothing on record yet. The first result opens the book.</p>';
     return;
@@ -1869,7 +1895,7 @@ function renderHighsModal(key){
     '<div><h3 class="mhandle" id="mHandle">' + esc(highsName(meta)) + '</h3>' +
     '<p class="mreal">RCCL Highs &middot; ' + esc(scopeName()) + '</p></div>' +
     '<div class="mrec"><b>' + d.R.n + '</b><span>' + (d.R.n === 1 ? "match" : "matches") + ' on record</span></div>' +
-  '</div>';
+  '</div>' + scopeChips();
   if(!d.R.n){
     html += '<div class="mnone">Nothing on record yet. The first result opens the book.</div>';
     $("modalBody").innerHTML = html;
@@ -1916,7 +1942,7 @@ function statsFor(name){
   };
   var run = 0;
 
-  scopeEverything().forEach(function(mt){
+  scopeEverything(statId()).forEach(function(mt){
     var won  = (mt.w || []).indexOf(name) >= 0;
     var lost = (mt.l || []).indexOf(name) >= 0;
     if(!won && !lost) return;
@@ -2106,7 +2132,7 @@ function renderModal(){
   if(S.openTop){ renderTopModal(S.openTop); return; }
   if(S.openHighs){ renderHighsModal(S.openHighs); return; }
   if(!S.openPlayer){ $("modal").hidden = true; return; }
-  var all = S.view === "all", c = all ? null : cyc(S.view);
+  var all = statId() === "all", c = all ? null : cyc(S.view);
   var s = statsFor(S.openPlayer), best = leagueBests();
   $("modal").hidden = false;
 
@@ -2121,10 +2147,9 @@ function renderModal(){
         (s.titles ? ' &middot; ' + s.titles + ' title' + (s.titles === 1 ? '' : 's') : '') + '</span></div>' +
     '</div>';
 
+  html += scopeChips();
   if(!s.m && !s.list.length){
     html += '<div class="mnone">Nothing logged against ' + esc(s.name) + (all ? '' : ' in ' + esc(c.name)) + ' yet.</div>';
-    if(all){ $("modalBody").innerHTML = html; return; }
-    html += cycleTableWrap();
     $("modalBody").innerHTML = html;
     return;
   }
@@ -2163,7 +2188,7 @@ function renderModal(){
 
   var bf = s.batFirst, ch = s.chasing;
   var unset = s.m - bf.p - ch.p;
-  var lg = leagueAverages(scopeCounted());
+  var lg = leagueAverages(scopeCounted(statId()));
   var avgSet   = s.innsFirstDone ? Math.round(s.runsFirst / s.innsFirstDone) : null;
   var avgChase = s.innsChaseDone ? Math.round(s.runsChase / s.innsChaseDone) : null;
 
@@ -2219,7 +2244,6 @@ function renderModal(){
 
   html += wlTable(s.partners, "Alongside");
   html += wlTable(s.foes, "Against");
-  if(!all) html += cycleTableWrap();
 
   html += sectionTitle("Every match on record", "duo", "Duo scores") + '<div class="mlistwrap"><ul class="mlist">' +
     s.list.map(function(e){
@@ -2238,17 +2262,11 @@ function renderModal(){
   bindTopLinks($("modalBody"), s.name);
   bindCycleLinks($("modalBody"), s.name);
   sizeMatchWindow();
-
-  // in a single cycle, a quiet pointer to the career view
-  function cycleTableWrap(){
-    return '<p class="mfoot" style="margin-top:0"><button class="golink" type="button" data-cv="all">See ' +
-      esc(s.name) + '\u2019s career across every cycle &rsaquo;</button></p>';
-  }
 }
 
 function bindCycleLinks(root, name){
   Array.prototype.forEach.call(root.querySelectorAll("[data-cv]"), function(b){
-    b.onclick = function(){ setView(b.dataset.cv); openPlayer(name); };
+    b.onclick = function(){ S.statScope = "view"; setView(b.dataset.cv); openPlayer(name); };
   });
 }
 
@@ -2271,6 +2289,8 @@ function closeModal(){
   $("modal").hidden = true;
 }
 $("modalX").onclick = closeModal;
+$("modalBody").addEventListener("click", onScopeClick);
+$("highsScope").addEventListener("click", onScopeClick);
 $("scrim").onclick  = closeModal;
 document.addEventListener("keydown", function(e){
   if(e.key === "Escape" && (S.openPlayer || S.openHighs || S.openTop)) closeModal();
@@ -2880,6 +2900,12 @@ function commitDls(){
 }
 
 function cycleRecord(c){ return { name:c.name, start:c.start, end:c.end, minWins:c.minWins }; }
+function dbErr(e){
+  var c = (e && (e.code || e.message)) || "";
+  return /permission/i.test(c)
+    ? "The database rules don't allow this yet — paste the rules from the comment near the bottom of index.html into Firebase (Realtime Database → Rules), then try again."
+    : "The database refused that: " + c;
+}
 function writeRoot(patch){ return S.fb.update(S.fb.ref(S.fb.db, ROOT), patch); }
 
 function commit(forced, dlsInfo){
@@ -2972,7 +2998,7 @@ function commit(forced, dlsInfo){
       if(remoteEdit && editing.c !== cid){ patch[editing.c + "/matches/" + id] = null; patch[editing.c + "/proof/" + id] = null; }
       patch[cid + "/matches/" + id] = rec; patch[cid + "/proof/" + id] = ADMIN_KEY;
     }
-    writeRoot(patch).then(done).catch(function(e){ say("The database refused that write: " + (e.code || e.message), true); });
+    writeRoot(patch).then(done).catch(function(e){ say(dbErr(e), true); });
   } else {
     if(isF){ rec.id = "final"; dataOf(cid).final = rec; }
     else if(editing){
@@ -3072,7 +3098,7 @@ function renderCycleAdmin(){
       S.want = d.id; S.formCycle = null; S.formCycleManual = false;
       setView(d.id);
       caSay(d.name + " is open: " + fmt(d.start) + " – " + fmt(d.end) + ".");
-    }).catch(function(e){ caSay("The database refused that: " + (e.code || e.message), true); });
+    }).catch(function(e){ caSay(dbErr(e), true); });
   };
   Array.prototype.forEach.call(box.querySelectorAll(".carow"), function(row){
     var id = row.dataset.id;
@@ -3081,7 +3107,7 @@ function renderCycleAdmin(){
                    end: row.querySelector(".ce").value, minWins: num(row.querySelector(".cg").value) };
       var err = checkCycle(id, info); if(err){ caSay(err, true); return; }
       writeCycle(id, info).then(function(){ S.adminKey = null; render(); caSay(info.name + " saved."); })
-        .catch(function(e){ caSay("The database refused that: " + (e.code || e.message), true); });
+        .catch(function(e){ caSay(dbErr(e), true); });
     };
     var del = row.querySelector(".cdel");
     if(del) del.onclick = function(){
