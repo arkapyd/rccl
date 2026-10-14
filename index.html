@@ -1233,7 +1233,7 @@ function renderTable(){
     $("thead").innerHTML = '<tr><th class="tl" colspan="2">Player</th><th class="tl tcell">Titles</th>' +
       '<th class="hide-sm">Cycles</th><th>M</th><th>W</th><th>L</th><th>PCW</th></tr>';
   } else {
-    $("tableTitle").textContent = "The Table";
+    $("tableTitle").textContent = "League Table";
     $("tableAside").textContent = "Ranked by PCW · ties by wins, then fewer played";
     $("sortRow").hidden = true;
     $("thead").innerHTML = '<tr><th class="tl" colspan="2">Player</th><th class="tl plinth-cell">The Threshold</th>' +
@@ -1800,7 +1800,7 @@ function renderTopModal(key){
   html += scopeChips();
   html += '<p class="mnote">' + (t.note || (t.sec === "pairs"
     ? 'Ranked across every pairing that has taken the field in view.'
-    : 'Every figure here is a <b>duo figure</b> &mdash; it belongs to the pair that was on the field, not to either player alone.')) + '</p>';
+    : 'Every figure here is a <b>duo figure</b> &mdash; not to either player alone.')) + '</p>';
 
   html += list.length
     ? '<ol class="tlist">' + list.map(function(e, i){
@@ -1908,9 +1908,9 @@ function renderHighsModal(key){
     return;
   }
   var fan = highsFan(key, d);
-  html += '<p class="mnote">Every figure in the cards below is a <b>duo figure</b> — it belongs to the pair that was on the field, not to either player alone.' +
+  html += '<p class="mnote">Every figure in the cards below is a <b>duo figure</b> — not to either player alone.' +
     (fan ? ' The ranking strip is the one exception: it takes those same duo totals and divides them by <em>that player\u2019s own</em> innings and overs.'
-         : ' This league records nothing individually, by design.') + '</p>';
+         : ' ') + '</p>';
   html += '<div class="stats stats-' + esc(key) + '">' + highsBlock(key, d) + '</div>' + fan;
   html += '<div class="hnav">' + HIGHS.map(function(h){
     return '<button class="chip' + (h.key === key ? " on" : "") + '" type="button" data-h="' + esc(h.key) + '">' + esc(highsName(h)) + '</button>';
@@ -2434,7 +2434,7 @@ function renderEntry(){
     $("entryAside").textContent = "Locked";
     box.innerHTML =
       '<div class="lock">' +
-        '<p>Results, finals and new cycles are logged here. Matches end in wins or losses &mdash; a clear result, a Super Over, or D/L.</p>' +
+        '<p>Results, finals and new cycles are logged here. Matches end in wins or losses &mdash; enforced by Super Overs, D/L method, or by way of forfeiture.</p>' +
         '<input type="password" id="pw" placeholder="Admin password" autocomplete="off" aria-label="Admin password">' +
         '<button class="btn fill" id="unlock">Unlock</button>' +
       '</div><div class="flash" id="flash"></div>';
