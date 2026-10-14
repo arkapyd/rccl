@@ -1246,6 +1246,18 @@ function renderTable(){
   var seeds = all ? [] : cycleSeeds(c, rows);
   var champs = (!all && c.final) ? c.final.w : [];
 
+  // A cycle's table lists only who has played in it (or its final).
+  // Everyone's earlier cycles stay intact under those cycles and All-time.
+  if(!all){
+    var inFinal = c.final ? (c.final.w || []).concat(c.final.l || []) : [];
+    rows = rows.filter(function(r){ return r.m > 0 || inFinal.indexOf(r.name) >= 0; });
+    if(!rows.length){
+      $("table").innerHTML = '<tr><td class="tl blank" colspan="7">Nobody has played in ' + esc(c.name) +
+        ' yet. Players appear here after their first match.</td></tr>';
+      return;
+    }
+  }
+
   $("table").innerHTML = rows.map(function(r, i){
     var tag = champs.indexOf(r.name) >= 0 ? '<span class="champtag">Champion</span>'
             : seeds.indexOf(r.name) >= 0 ? '<span class="seedtag">Seed ' + (seeds.indexOf(r.name) + 1) + '</span>' : '';
