@@ -745,6 +745,9 @@ const MATCH_OVERS = 20;
 // How many results stay in view before the log starts scrolling.
 const LOG_VISIBLE = 6;
 
+// The Final panel appears this many days before a cycle closes.
+const FINAL_SHOW_DAYS = 3;
+
 // How many entries a record card lists when you open it.
 const TOP_N = 5;
 
@@ -1276,8 +1279,14 @@ function finalSide(list, label, sc, champ){
 function renderFinal(){
   var sec = $("finalSection");
   if(S.view === "all"){ sec.hidden = true; return; }
-  sec.hidden = false;
-  var c = cyc(S.view), rows = buildTable([c]), fp = finalPairing(rows, c.minWins), f = c.final;
+  var c = cyc(S.view);
+  // Stays out of sight until the cycle's last FINAL_SHOW_DAYS days, unless a
+  // final is already logged or the window has shut.
+  var show = !!c.final || isClosed(c) ||
+             (!(c.start && todayISO() < c.start) && daysLeft(c) <= FINAL_SHOW_DAYS);
+  sec.hidden = !show;
+  if(!show) return;
+  var rows = buildTable([c]), fp = finalPairing(rows, c.minWins), f = c.final;
   var st = statusOf(c);
   $("finalAside").textContent = st.label;
   var admin = function(label){
