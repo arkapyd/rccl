@@ -394,6 +394,9 @@ select:disabled{opacity:.55}
 .card .sc{white-space:nowrap}
 .card .sc b{color:var(--white);font-weight:700}
 .card .dash{color:var(--lilac-dim)}
+.fftag{font-family:'Manrope',sans-serif;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--bad);border:1px solid var(--bad);padding:2px 7px;border-radius:2px}
+.chip.ff.on{background:var(--bad);border-color:var(--bad);color:var(--royal-deep)}
+.chip.ff:hover{border-color:var(--bad);color:var(--bad)}
 .sotag{font-family:'Manrope',sans-serif;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--royal-deep);background:var(--gold);padding:3px 8px;border-radius:2px}
 @media (max-width:560px){
   .log li{display:block}
@@ -624,7 +627,7 @@ footer img{width:26px;height:auto;opacity:.7}
   <section>
     <div class="head">
       <h2>Road to RCCL</h2>
-      <span class="aside">Seven clauses</span>
+      <span class="aside">Eight clauses</span>
     </div>
     <div class="hairline"></div>
     <div class="panel">
@@ -634,6 +637,7 @@ footer img{width:26px;height:auto;opacity:.7}
       <li>A tied match goes to a <b>two-over Super Over</b>. Whoever takes it takes the W, exactly as if they had won in regulation.</li>
       <li>Each cycle has a <b>win gate</b> (seven by default). Below it you appear on the table but are not in contention.</li>
       <li>At the close, the top four by PCW past the gate play a <b>2v2 final</b> &mdash; 1st and 4th against 2nd and 3rd. The final decides the title only and never moves the table. Short of four past the gate, the cycle goes uncrowned.</li>
+      <li>A pair that <b>forfeits</b> loses and the other pair wins. Everything played up to the forfeit &mdash; runs, wickets, overs, 50s &mdash; still counts; the match just carries no margin.</li>
       <li>If the game falls over mid-innings, the result stands on the <b>D/L par score</b>. The chase must <b>pass par outright</b> &mdash; short of it, however narrowly, is a loss.</li>
       <li>Cycles run <b>month by month</b>. Each keeps its own table, final and champions; the <b>all-time</b> view adds every cycle together and counts the titles.</li>
     </ol>
@@ -799,7 +803,7 @@ var S = {
   editing:null,     // key of the match being edited
   entryKey:null, adminKey:null,
   formType:"regular", formCycle:null, formCycleManual:false,
-  formBF:null, dlsOpen:false, dlsMode:"chase", fifties:[],
+  formBF:null, formFF:null, dlsOpen:false, dlsMode:"chase", fifties:[],
   openPlayer:null, openHighs:null, openTop:null, topFromPlayer:null,
   sortAll:"pcw",
   statScope:"view"  // "view": stats follow the cycle on screen · "all": all-time league
@@ -1094,6 +1098,7 @@ function renderWire(){
 
 // " by 12 runs", " in a Super Over", " on D/L" — reads after "won".
 function marginPhrase(mt){
+  if(mt.ff) return " by forfeit";
   if(mt.sow && mt.sol) return " in a Super Over";
   if(mt.dls) return " on D/L (par " + mt.dls.par + ")";
   var m = marginOf(mt);
@@ -1424,7 +1429,7 @@ function dlsVerdict(first, chase){
    they never feed a pairing's W/L or streak. */
 function leagueRecords(ms){
   var R = {
-    n: ms.length, runs:0, wkts:0, balls:0, so:0, dls:0,
+    n: ms.length, runs:0, wkts:0, balls:0, so:0, dls:0, ff:0,
     firstWins:0, chaseWins:0, ordered:0, pairs:{},
     all:{ high:[], lowDone:[], rate:[], econ:[], srate:[], agg:[],
           runMargins:[], wktMargins:[], defended:[], chased:[] }
@@ -1463,7 +1468,7 @@ function leagueRecords(ms){
       }
       var ent = { v:sc.r, tail:tail, who:i.bat, foe:i.bowl, d:day, mk:mk };
       R.all.high.push(ent);
-      if(inningsComplete(sc)) R.all.lowDone.push(ent);
+      if(inningsComplete(sc) && !mt.ff) R.all.lowDone.push(ent);
       if(b >= MIN_ECON_BALLS){
         var rr = sc.r / (b / 6);
         R.all.rate.push({ v:rr, who:i.bat,  foe:i.bowl, d:day, sub:full, mk:mk });
@@ -1476,12 +1481,13 @@ function leagueRecords(ms){
       R.all.agg.push({ v:total, who:W + " v " + L, d:day, mk:mk, sub:scoreFull(mt.sw) + " v " + scoreFull(mt.sl) });
 
     if(mt.sow && mt.sol) R.so++;
+    if(mt.ff) R.ff++;
     if(mt.dls) R.dls++;
 
     if(mt.bf){
       R.ordered++;
       if(mt.bf === "w") R.firstWins++; else R.chaseWins++;
-      var settled = !(mt.sow && mt.sol) && !mt.dls && has(mt.sw) && has(mt.sl);
+      var settled = !(mt.sow && mt.sol) && !mt.dls && !mt.ff && has(mt.sw) && has(mt.sl);
       if(settled){
         var beat = { who:W + " beat " + L, sub:scoreFull(mt.sw) + " v " + scoreFull(mt.sl) };
         if(mt.bf === "w"){
@@ -1617,7 +1623,8 @@ function recCard(label, e, dp, unit, top){
 function highsBlock(key, d){
   var R = d.R, lg = d.lg;
   if(key === "cycle"){
-    return statCard("Matches", R.n, R.so ? R.so + " to a Super Over" : "none to a Super Over", false) +
+    return statCard("Matches", R.n, [R.so ? R.so + " to a Super Over" : "none to a Super Over", R.ff ? R.ff + " by forfeit" : ""]
+             .filter(Boolean).join(" &middot; "), false) +
       statCard("Runs scored", R.runs.toLocaleString(), d.rr ? d.rr.toFixed(2) + " an over" : null, false) +
       statCard("Wickets fallen", R.wkts, oversText(R.balls) + " overs bowled", false) +
       statCard("Bat first", R.ordered ? R.firstWins + "&ndash;" + R.chaseWins : null,
@@ -1916,6 +1923,7 @@ function renderHighsModal(key){
 
 /* ───────── per-player record book ───────── */
 function marginOf(mt){
+  if(mt.ff) return "forfeit";
   if(mt.sow && mt.sol) return "Super Over";
   if(mt.dls) return "D/L · par " + mt.dls.par;
   if(!mt.bf || !has(mt.sw) || !has(mt.sl)) return "";
@@ -1936,7 +1944,7 @@ function statsFor(name){
     lowDefended:null, highChased:null,
     batFirst:{p:0,w:0,l:0}, chasing:{p:0,w:0,l:0},
     runsFirst:0, innsFirst:0, innsFirstDone:0, runsChase:0, innsChase:0, innsChaseDone:0,
-    soPlayed:0, soWon:0, dlsPlayed:0, dlsWon:0, winByRuns:null, winByWkts:null,
+    soPlayed:0, soWon:0, dlsPlayed:0, dlsWon:0, ffWon:0, ffLost:0, winByRuns:null, winByWkts:null,
     streak:0, bestStreak:0, partners:{}, foes:{}, list:[], fifties:[],
     fp:0, fw:0, titles:0
   };
@@ -1976,15 +1984,16 @@ function statsFor(name){
     }
 
     if(mt.sow && mt.sol){ s.soPlayed++; if(won) s.soWon++; }
+    if(mt.ff){ if(won) s.ffWon++; else s.ffLost++; }
     if(mt.dls){ s.dlsPlayed++; if(won) s.dlsWon++; }
 
     if(has(mine)){
       s.runs += mine.r; s.inns++;
-      if(battingComplete(mine, first === false && won)) s.innsDone++;
+      if(!mt.ff && battingComplete(mine, first === false && won)) s.innsDone++;
       s.ballsFaced += toBalls(mine.o);
       if(mine.k !== undefined && mine.k !== null) s.wktsLost += mine.k;
       if(s.high === null || mine.r > s.high){ s.high = mine.r; s.highTail = scoreTail(mine); s.highMk = mt.key; }
-      if(inningsComplete(mine) && (s.lowDone === null || mine.r < s.lowDone)){
+      if(!mt.ff && inningsComplete(mine) && (s.lowDone === null || mine.r < s.lowDone)){
         s.lowDone = mine.r; s.lowDoneTail = scoreTail(mine); s.lowDoneMk = mt.key;
       }
     }
@@ -2001,18 +2010,18 @@ function statsFor(name){
 
     if(first === true){
       if(reg){ s.batFirst.p++; s.batFirst[won ? "w" : "l"]++; }
-      if(has(mine)){ s.runsFirst += mine.r; s.innsFirst++; if(battingComplete(mine, false)) s.innsFirstDone++; }
+      if(has(mine)){ s.runsFirst += mine.r; s.innsFirst++; if(!mt.ff && battingComplete(mine, false)) s.innsFirstDone++; }
     }
     if(first === false){
       if(reg){ s.chasing.p++; s.chasing[won ? "w" : "l"]++; }
-      if(has(mine)){ s.runsChase += mine.r; s.innsChase++; if(battingComplete(mine, won)) s.innsChaseDone++; }
+      if(has(mine)){ s.runsChase += mine.r; s.innsChase++; if(!mt.ff && battingComplete(mine, won)) s.innsChaseDone++; }
     }
-    if(won && first === true && has(mine) && (s.lowDefended === null || mine.r < s.lowDefended.v))
+    if(!mt.ff && won && first === true && has(mine) && (s.lowDefended === null || mine.r < s.lowDefended.v))
       s.lowDefended = { v:mine.r, tail:scoreTail(mine), mk:mt.key };
-    if(won && first === false && has(theirs) && (s.highChased === null || theirs.r > s.highChased.v))
+    if(!mt.ff && won && first === false && has(theirs) && (s.highChased === null || theirs.r > s.highChased.v))
       s.highChased = { v:theirs.r, tail:scoreTail(theirs), mk:mt.key };
 
-    var noMargin = !!(mt.sow && mt.sol) || !!mt.dls;
+    var noMargin = !!(mt.sow && mt.sol) || !!mt.dls || !!mt.ff;
     if(!noMargin && first !== null && won){
       var card = scoreFull(mine) + " v " + scoreFull(theirs);
       if(first === true && has(mine) && has(theirs)){
@@ -2042,11 +2051,12 @@ function leagueAverages(ms){
   var f = { r:0, n:0 }, c = { r:0, n:0 };
   ms.forEach(function(mt){
     if(!mt.bf) return;
+    var ffm = !!mt.ff;
     var one = mt.bf === "w" ? mt.sw : mt.sl;
     var two = mt.bf === "w" ? mt.sl : mt.sw;
     var chaseWon = mt.bf === "l";
-    if(has(one)){ f.r += one.r; if(battingComplete(one, false)) f.n++; }
-    if(has(two)){ c.r += two.r; if(battingComplete(two, chaseWon)) c.n++; }
+    if(has(one)){ f.r += one.r; if(!ffm && battingComplete(one, false)) f.n++; }
+    if(has(two)){ c.r += two.r; if(!ffm && battingComplete(two, chaseWon)) c.n++; }
   });
   return { first: f.n ? Math.round(f.r / f.n) : null, firstN:f.n,
            second: c.n ? Math.round(c.r / c.n) : null, secondN:c.n };
@@ -2214,6 +2224,8 @@ function renderModal(){
     statCard("Biggest win by wickets", citeVal(s.winByWkts), citeLine(s.winByWkts), false, null, "winWkts") +
     statCard("Super overs", s.soPlayed ? s.soWon + "/" + s.soPlayed : null, "won of played", false) +
     statCard("DLS results", s.dlsPlayed ? s.dlsWon + "/" + s.dlsPlayed : null, "won of settled", false) +
+    statCard("Forfeits", (s.ffWon + s.ffLost) ? s.ffWon + "&ndash;" + s.ffLost : null,
+             (s.ffWon + s.ffLost) ? "won by forfeit &ndash; conceded" : "none", false) +
   '</div>';
 
   var fifties = s.fifties.filter(function(f){ return f.counts; });
@@ -2315,6 +2327,7 @@ function scoreCard(m){
     else                           lab = "D/L &middot; par " + m.dls.par;
     bits.push('<span class="dlstag">' + lab + '</span>');
   }
+  if(m.ff) bits.push('<span class="fftag">Forfeit &middot; ' + esc((m.l || []).map(realName).join(" & ")) + ' conceded</span>');
   if(m.sow && m.sol){
     var sow = innings(m.sow), sol = innings(m.sol);
     bits.push('<span class="sotag">Super Over</span>');
@@ -2480,6 +2493,12 @@ function renderEntry(){
       '<h3>Super Over &middot; two overs</h3>' +
       '<div class="sheet">' + inningsBlock("SA","Left pair",false) + inningsBlock("SB","Right pair",false) + '</div>' +
     '</div>' +
+    '<div class="bfrow" id="ffRow">' +
+      '<span class="bflabel">Forfeit</span>' +
+      '<button class="chip ff" id="ffN" type="button">No forfeit</button>' +
+      '<button class="chip ff" id="ffA" type="button">Left pair forfeited</button>' +
+      '<button class="chip ff" id="ffB" type="button">Right pair forfeited</button>' +
+    '</div>' +
     '<div class="dlsrow"><button class="chip bronze" id="dlsToggle" type="button">Game died mid-innings? Settle on DLS</button></div>' +
     '<div class="dlsbox" id="dlsBox" hidden>' +
       '<h3>DLS par score</h3>' +
@@ -2520,6 +2539,7 @@ function renderEntry(){
     $("played").value = editing.d || todayISO();
     $("fCycle").value = editing.c;
     S.formBF = editing.bf === "w" ? "A" : editing.bf === "l" ? "B" : null;
+    S.formFF = editing.ff ? "B" : null;
     S.dlsOpen = !!editing.dls;
     S.dlsMode = editing.dls ? (editing.dls.mode || "chase") : "chase";
     if(editing.dls){
@@ -2528,7 +2548,7 @@ function renderEntry(){
     }
     S.fifties = (editing.fifties || []).map(function(f){ return { p:f.p, r:f.r, b:f.b, ign:f.ign || "" }; });
   } else {
-    S.formBF = null; S.dlsOpen = false; S.dlsMode = "chase"; S.fifties = [];
+    S.formBF = null; S.formFF = null; S.dlsOpen = false; S.dlsMode = "chase"; S.fifties = [];
     ["a1","a2","b1","b2"].forEach(function(id,k){ $(id).selectedIndex = Math.min(k, PLAYERS.length - 1); });
     $("played").value = todayISO();
     $("fCycle").value = defaultFormCycle();
@@ -2562,7 +2582,14 @@ function renderEntry(){
   });
   paintBF();
 
-  $("dlsToggle").onclick = function(){ S.dlsOpen = !S.dlsOpen; refresh(); };
+  ["N","A","B"].forEach(function(t){
+    $("ff" + t).onclick = function(){
+      S.formFF = (t === "N" ? null : t);
+      if(S.formFF) S.dlsOpen = false;
+      refresh();
+    };
+  });
+  $("dlsToggle").onclick = function(){ S.dlsOpen = !S.dlsOpen; if(S.dlsOpen) S.formFF = null; refresh(); };
   $("dlsMc").onclick = function(){ S.dlsMode = "chase"; refresh(); };
   $("dlsMf").onclick = function(){ S.dlsMode = "first"; refresh(); };
   $("dlsMb").onclick = function(){ S.dlsMode = "both"; refresh(); };
@@ -2631,7 +2658,7 @@ function refreshMeta(){
 
 function clearForm(){
   ["rA","kA","oA","rB","kB","oB","rSA","kSA","rSB","kSB"].forEach(function(id){ if($(id)) $(id).value = ""; });
-  S.formBF = null; S.dlsOpen = false; S.dlsMode = "chase"; S.fifties = [];
+  S.formBF = null; S.formFF = null; S.dlsOpen = false; S.dlsMode = "chase"; S.fifties = [];
   if($("soBox")) $("soBox").hidden = true;
   if($("dlsN1")) $("dlsN1").value = MATCH_OVERS;
   if($("dlsN2")) $("dlsN2").value = MATCH_OVERS;
@@ -2831,7 +2858,9 @@ function refreshDls(){
 
 function refresh(){
   var rA = num($("rA").value), rB = num($("rB").value);
-  $("soBox").hidden = !(rA !== null && rB !== null && rA === rB);
+  $("soBox").hidden = !!S.formFF || !(rA !== null && rB !== null && rA === rB);
+  ["N","A","B"].forEach(function(t){ $("ff" + t).classList.toggle("on", S.formFF === (t === "N" ? null : t)); });
+  $("dlsToggle").disabled = !!S.formFF;
 
   var A = [$("a1").value, $("a2").value], B = [$("b1").value, $("b2").value];
   ["A","SA"].forEach(function(t){ if($("lab" + t)) $("lab" + t).textContent = A.join(" & "); });
@@ -2851,6 +2880,12 @@ function refresh(){
   refreshMeta();
 
   var v = verdictFromScores(), isF = S.formType === "final";
+  if(S.formFF){
+    var quit = S.formFF === "A" ? A : B, take = S.formFF === "A" ? B : A;
+    v = { side: S.formFF === "A" ? "B" : "A",
+          msg: "<b>" + esc(quit.join(" & ")) + "</b> forfeit, so <b>" + esc(take.join(" & ")) + "</b> take the win. " +
+               "Enter the scores as far as the match got &mdash; runs, wickets, overs and 50s all count; margins don\u2019t." };
+  }
   $("reading").innerHTML = S.dlsOpen
     ? "Settling this one on D/L. Use the panel above, or name the winner below to log the game's own call — either way it's tagged D/L."
     : v.msg;
@@ -2859,7 +2894,7 @@ function refresh(){
   $("winA").hidden = auto;
   $("winB").hidden = auto;
   var noun = isF ? "final" : "result";
-  if(auto) $("save").textContent = (S.editing ? "Update " : "Save ") + noun;
+  if(auto) $("save").textContent = (S.editing ? "Update " : "Save ") + (S.formFF ? "forfeit" : noun);
   else {
     $("winA").textContent = (S.editing ? "Update: left pair won" : "Left pair won");
     $("winB").textContent = (S.editing ? "Update: right pair won" : "Right pair won");
@@ -2918,6 +2953,7 @@ function commit(forced, dlsInfo){
   var isF = S.formType === "final", editing = editingMatch();
 
   var side = forced;
+  if(S.formFF) side = S.formFF === "A" ? "B" : "A";
   if(!side){
     var vv = verdictFromScores();
     if(!vv.side){ say(vv.msg.replace(/<[^>]+>/g, ""), true); return; }
@@ -2941,10 +2977,11 @@ function commit(forced, dlsInfo){
   var d = $("played").value || todayISO();
   var rec = { d:d, w: side === "A" ? A : B, l: side === "A" ? B : A, ts: Date.now() };
   if(S.formBF) rec.bf = (S.formBF === side) ? "w" : "l";
-  if(dlsInfo) rec.dls = dlsInfo;
+  if(S.formFF) rec.ff = true;
+  else if(dlsInfo) rec.dls = dlsInfo;
   if(side === "A"){ if(scA) rec.sw = scA; if(scB) rec.sl = scB; }
   else            { if(scB) rec.sw = scB; if(scA) rec.sl = scA; }
-  if(levelled && soA && soB && !dlsInfo){
+  if(levelled && soA && soB && !dlsInfo && !S.formFF){
     if(side === "A"){ rec.sow = soA; rec.sol = soB; } else { rec.sow = soB; rec.sol = soA; }
   }
 
@@ -2975,7 +3012,7 @@ function commit(forced, dlsInfo){
 
   var note = isF
     ? rec.w.join(" & ") + " take " + c.name + (S.editing ? " (final updated)." : ".")
-    : rec.w.join(" & ") + " " + (S.editing ? "updated" : "logged") + " in " + c.name +
+    : rec.w.join(" & ") + " " + (S.editing ? "updated" : "logged") + " in " + c.name + (rec.ff ? " by forfeit" : "") +
       (dlsInfo ? " on DLS (par " + dlsInfo.par + ")" : "") + (inWindow(c, rec) ? "." : " — outside the window, so it won't count.");
 
   var wasEdit = !!S.editing;
@@ -3138,7 +3175,7 @@ function normalize(id, m){
     id:id, d:m.d || "", ts:m.ts || 0,
     w:(m.w || []).map(canon), l:(m.l || []).map(canon),
     sw:m.sw || null, sl:m.sl || null, sow:m.sow || null, sol:m.sol || null,
-    bf:m.bf || null, dls:m.dls || null,
+    bf:m.bf || null, dls:m.dls || null, ff: !!m.ff,
     fifties: m.fifties ? m.fifties.map(function(f){
       return { p:canon(f.p), r:f.r, b:f.b, m: f.m ? canon(f.m) : "", ign:f.ign || "" };
     }) : null,
