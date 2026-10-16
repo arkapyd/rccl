@@ -318,6 +318,21 @@ select:disabled{opacity:.55}
 .resultbar .reading{flex:1 1 240px;margin:0;font-size:13px}
 .resultbar .btn{padding:11px 16px}
 
+/* ---------------- league admin ---------------- */
+.adblock+.adblock{margin-top:22px;padding-top:18px;border-top:1px solid var(--hair)}
+.addrow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) 72px auto;gap:8px;align-items:end;margin-bottom:6px}
+.addrow.pl{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
+.addrow .field span{text-align:left}
+.addrow input{padding:9px 10px;font-size:14px}
+.roster{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.rtag{font-family:'Manrope',sans-serif;font-size:12px;display:inline-flex;gap:7px;align-items:baseline;padding:6px 10px;border:1px solid rgba(201,162,39,.24);border-radius:2px;background:rgba(0,0,0,.22);color:var(--lilac);cursor:pointer;transition:.15s}
+.rtag b{color:var(--white);font-weight:700}
+.rtag em{font-style:normal;font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--bronze-lit)}
+.rtag:hover{border-color:var(--gold)}
+.rtag:hover b{color:var(--gold)}
+.calist{margin-top:10px}
+@media (max-width:680px){.addrow{grid-template-columns:1fr 1fr}.addrow .field:first-child{grid-column:1/-1}.addrow.pl{grid-template-columns:1fr 1fr}.addrow.pl .btn{grid-column:1/-1}}
+
 /* ---------------- cycle admin ---------------- */
 .cadmin{margin-top:14px}
 .cahead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:6px}
@@ -732,6 +747,8 @@ footer img{width:26px;height:auto;opacity:.7}
   must exist (plain string). Rules can read it; no client can.
 
   Layout:
+      rccl/players/<handle>         real name, date added       (readable)
+      rccl/playerproof/<handle>     write keys                   (never readable)
       rccl/index/<cycleId>          name, start, end, minWins   (readable)
       rccl/<cycleId>/matches/<id>   league matches               (readable)
       rccl/<cycleId>/final          the cycle final              (readable)
@@ -743,6 +760,14 @@ footer img{width:26px;height:auto;opacity:.7}
     "rules": {
       "rccl": {
         "config": { ".read": false, ".write": false },
+        "players": {
+          ".read": true,
+          "$p": {
+            ".write": true,
+            ".validate": "newData.parent().parent().child('playerproof').child($p).val() === root.child('rccl/config/key').val()"
+          }
+        },
+        "playerproof": { ".read": false, "$p": { ".write": true } },
         "index": {
           ".read": true,
           "$c": {
@@ -830,6 +855,8 @@ const DLS_F = [1.000, 0.900, 0.787, 0.663, 0.531, 0.400, 0.276, 0.168, 0.084, 0.
 // false: official reading, level with the rounded-down par is a tie.
 const DLS_STRICT_PAR = true;
 
+// The founding roster. Players added later from the admin panel are stored in
+// the database (rccl/players) and join this list automatically on every device.
 const PLAYERS = ["zombdapro","chrispfor2","loiteringmedic","partialcost","ninjaadarsh","northwestlease","milneristan","kronox"];
 
 // Old names already in the database, translated on read.
@@ -860,6 +887,7 @@ var ALL_LEDE   = 'Every cycle on one board &mdash; <em>titles</em>, PCW and the 
 
 var S = {
   info:{},          // rccl/index, keyed by cycle id
+  roster:{},        // rccl/players, keyed by handle: { real, added }
   data:{},          // cycle id -> { matches:[raw], final:raw|null }
   cycles:[],        // derived, sorted by start date
   byKey:{},         // match key -> match, across every cycle
@@ -941,9 +969,21 @@ function defaultView(){
   return (started.length ? started[started.length - 1] : S.cycles[0]).id;
 }
 
+// Players added from the admin panel join the founding list. Every stat is
+// keyed by handle and computed from the matches, so a new player's career
+// starts with their first match and simply keeps adding up across cycles.
+function mergeRoster(){
+  Object.keys(S.roster).forEach(function(h){
+    var r = S.roster[h] || {};
+    if(PLAYERS.indexOf(h) < 0) PLAYERS.push(h);
+    if(r.real) REAL_NAMES[h] = r.real;
+  });
+}
+
 // Everything downstream reads S.cycles, so this is the one place raw data
 // turns into numbered, window-checked, cross-referenced matches.
 function rebuild(){
+  mergeRoster();
   var ids = {};
   SEED_CYCLES.forEach(function(c){ ids[c.id] = true; });
   Object.keys(S.info).forEach(function(id){ if(S.info[id]) ids[id] = true; });
@@ -2594,7 +2634,7 @@ function defaultFormCycle(){
 
 function renderEntry(){
   var sig = S.cycles.map(function(c){ return c.id + ":" + c.name + ":" + c.start + ":" + c.end; }).join(",");
-  var key = (S.unlocked ? "open" : "shut") + "|" + (S.editing || "") + "|" + S.formType + "|" + sig;
+  var key = (S.unlocked ? "open" : "shut") + "|" + (S.editing || "") + "|" + S.formType + "|" + sig + "|" + PLAYERS.join(",");
   if(key === S.entryKey) return;      // don't nuke half-typed input on every sync
   S.entryKey = key;
 
@@ -3271,40 +3311,111 @@ function writeCycle(id, info){
   return Promise.resolve();
 }
 
+var HANDLE_RE = /^[A-Za-z0-9_-]{2,24}$/;
+
+function writePlayer(h, real){
+  var rec = { real:real, added: (S.roster[h] && S.roster[h].added) || todayISO() };
+  if(S.fb){
+    var patch = {};
+    patch["players/" + h] = rec; patch["playerproof/" + h] = ADMIN_KEY;
+    return writeRoot(patch);
+  }
+  S.roster[h] = rec;
+  return Promise.resolve();
+}
+
 function renderCycleAdmin(){
   var box = $("cycleAdmin");
   if(!S.unlocked){ box.hidden = true; box.innerHTML = ""; S.adminKey = null; return; }
   box.hidden = false;
-  var key = JSON.stringify(S.cycles.map(function(c){ return [c.id, c.name, c.start, c.end, c.minWins, c.matches.length, !!c.final]; }));
+  var key = JSON.stringify([PLAYERS.map(function(h){ return h + ":" + realName(h); }),
+    S.cycles.map(function(c){ return [c.id, c.name, c.start, c.end, c.minWins, c.matches.length, !!c.final]; })]);
   if(key === S.adminKey) return;
   S.adminKey = key;
 
   var nx = nextCycleDraft();
-  box.innerHTML =
-    '<div class="cahead"><h3>Cycles</h3><button class="btn fill" id="newCycle" type="button">+ Start ' + esc(nx.name) + '</button></div>' +
-    '<p class="why">Next one runs <b>' + fmt(nx.start) + ' – ' + fmt(nx.end) + '</b> with a gate of <b>' + nx.minWins +
-      '</b>. Adjust any cycle\u2019s dates or gate below; matches re-sort into or out of the window automatically.</p>' +
-    S.cycles.slice().reverse().map(function(c){
-      var empty = !c.matches.length && !c.final, st = statusOf(c);
-      return '<div class="carow" data-id="' + esc(c.id) + '">' +
-        '<label class="field"><span>Name</span><input class="cn" type="text" value="' + esc(c.name) + '"></label>' +
-        '<label class="field"><span>Starts</span><input class="cs" type="date" value="' + esc(c.start) + '"></label>' +
-        '<label class="field"><span>Ends</span><input class="ce" type="date" value="' + esc(c.end) + '"></label>' +
-        '<label class="field"><span>Gate</span><input class="cg n" type="number" min="1" value="' + c.minWins + '"></label>' +
-        '<div class="acts"><button class="btn quiet csave" type="button">Save</button>' +
-          (empty && !c.seeded ? '<button class="btn quiet danger cdel" type="button">Delete</button>' : '') + '</div>' +
-        '<div class="cameta"><i class="sdot ' + st.k + '"></i>' + esc(st.label) + ' &middot; ' +
-          matchesWord(c.matches.length) + (c.final ? ' &middot; final logged' : '') + '</div>' +
-      '</div>';
-    }).join("") + '<div class="flash" id="caFlash"></div>';
+  var allRows = buildTable(S.cycles), played = {};
+  allRows.forEach(function(r){ played[r.name] = r.m + r.fp; });
 
-  $("newCycle").onclick = function(){
-    var d = nextCycleDraft(), info = { name:d.name, start:d.start, end:d.end, minWins:d.minWins };
+  box.innerHTML =
+    // ── players
+    '<div class="adblock">' +
+      '<div class="cahead"><h3>Players</h3></div>' +
+      '<p class="why">Add someone and they’re in every dropdown straight away. Their stats start with their first match and build into a <b>career</b> across cycles &mdash; sitting a cycle out pauses it, it never resets. Click a name to change the real name shown.</p>' +
+      '<div class="addrow pl">' +
+        '<label class="field"><span>Game handle</span><input id="npH" type="text" placeholder="e.g. silentseamer" autocomplete="off" spellcheck="false"></label>' +
+        '<label class="field"><span>Real name</span><input id="npR" type="text" placeholder="e.g. Rohan" autocomplete="off"></label>' +
+        '<button class="btn fill" id="npGo" type="button">Add player</button>' +
+      '</div>' +
+      '<div class="roster">' + PLAYERS.map(function(h){
+        return '<button class="rtag" type="button" data-h="' + esc(h) + '"><b>' + esc(h) + '</b>' + esc(realName(h)) +
+          '<em>' + (played[h] ? matchesWord(played[h]) : 'new') + '</em></button>';
+      }).join("") + '</div>' +
+    '</div>' +
+    // ── cycles
+    '<div class="adblock">' +
+      '<div class="cahead"><h3>Cycles</h3></div>' +
+      '<p class="why">Set the window and the win gate. The <b>Final</b> appears ' + FINAL_SHOW_DAYS + ' days before the end date, ' +
+        'seeded 1st &amp; 4th v 2nd &amp; 3rd from the top four past the gate. Matches re-sort automatically if you move dates.</p>' +
+      '<div class="addrow">' +
+        '<label class="field"><span>New cycle</span><input id="ncN" type="text" value="' + esc(nx.name) + '"></label>' +
+        '<label class="field"><span>Starts</span><input id="ncS" type="date" value="' + esc(nx.start) + '"></label>' +
+        '<label class="field"><span>Ends</span><input id="ncE" type="date" value="' + esc(nx.end) + '"></label>' +
+        '<label class="field"><span>Gate</span><input id="ncG" class="n" type="number" min="1" value="' + nx.minWins + '"></label>' +
+        '<button class="btn fill" id="ncGo" type="button">Add cycle</button>' +
+      '</div>' +
+      '<div class="calist">' +
+      S.cycles.slice().reverse().map(function(c){
+        var empty = !c.matches.length && !c.final, st = statusOf(c);
+        return '<div class="carow" data-id="' + esc(c.id) + '">' +
+          '<label class="field"><span>Name</span><input class="cn" type="text" value="' + esc(c.name) + '"></label>' +
+          '<label class="field"><span>Starts</span><input class="cs" type="date" value="' + esc(c.start) + '"></label>' +
+          '<label class="field"><span>Ends</span><input class="ce" type="date" value="' + esc(c.end) + '"></label>' +
+          '<label class="field"><span>Gate</span><input class="cg n" type="number" min="1" value="' + c.minWins + '"></label>' +
+          '<div class="acts"><button class="btn quiet csave" type="button">Save</button>' +
+            (empty && !c.seeded ? '<button class="btn quiet danger cdel" type="button">Delete</button>' : '') + '</div>' +
+          '<div class="cameta"><i class="sdot ' + st.k + '"></i>' + esc(st.label) + ' &middot; ' +
+            matchesWord(c.matches.length) + (c.final ? ' &middot; final logged' : '') + '</div>' +
+        '</div>';
+      }).join("") + '</div>' +
+    '</div>' +
+    '<div class="flash" id="caFlash"></div>';
+
+  // players
+  var syncBtn = function(){
+    var h = $("npH").value.trim();
+    $("npGo").textContent = PLAYERS.indexOf(h) >= 0 ? "Update name" : "Add player";
+  };
+  $("npH").oninput = syncBtn;
+  $("npGo").onclick = function(){
+    var h = $("npH").value.trim(), real = $("npR").value.trim();
+    if(!HANDLE_RE.test(h)){ caSay("Handles are 2–24 letters, numbers, - or _ (no spaces or dots).", true); return; }
+    var clash = PLAYERS.filter(function(x){ return x !== h && x.toLowerCase() === h.toLowerCase(); })[0];
+    if(clash){ caSay(clash + " already exists — handles differ only in capitals.", true); return; }
+    if(!real){ caSay("Add the player’s real name too.", true); return; }
+    var isNew = PLAYERS.indexOf(h) < 0;
+    writePlayer(h, real).then(function(){
+      mergeRoster(); S.adminKey = null; S.entryKey = null; render();
+      caSay(isNew ? h + " (" + real + ") is in. Pick them from any dropdown." : h + " now shows as " + real + ".");
+    }).catch(function(e){ caSay(dbErr(e), true); });
+  };
+  [$("npH"), $("npR")].forEach(function(el){ el.onkeydown = function(e){ if(e.key === "Enter") $("npGo").click(); }; });
+  Array.prototype.forEach.call(box.querySelectorAll(".rtag"), function(b){
+    b.onclick = function(){
+      $("npH").value = b.dataset.h; $("npR").value = realName(b.dataset.h); syncBtn(); $("npR").focus(); $("npR").select();
+    };
+  });
+
+  // cycles
+  $("ncGo").onclick = function(){
+    var d = nextCycleDraft();
+    var info = { name: $("ncN").value.trim(), start: $("ncS").value, end: $("ncE").value, minWins: num($("ncG").value) };
     var err = checkCycle(d.id, info); if(err){ caSay(err, true); return; }
     writeCycle(d.id, info).then(function(){
       S.want = d.id; S.formCycle = null; S.formCycleManual = false;
+      if(S.fb) watchCycle(d.id);
       setView(d.id);
-      caSay(d.name + " is open: " + fmt(d.start) + " – " + fmt(d.end) + ".");
+      caSay(info.name + " added: " + fmt(info.start) + " – " + fmt(info.end) + ", gate " + info.minWins + ".");
     }).catch(function(e){ caSay(dbErr(e), true); });
   };
   Array.prototype.forEach.call(box.querySelectorAll(".carow"), function(row){
@@ -3383,6 +3494,10 @@ function watchAll(){
       var db = rtdb.getDatabase(app.initializeApp(FIREBASE));
       S.fb = { db:db, ref:rtdb.ref, push:rtdb.push, update:rtdb.update, onValue:rtdb.onValue };
       rtdb.onValue(rtdb.ref(db, ".info/connected"), function(s){ S.live = !!s.val(); renderWire(); });
+      rtdb.onValue(rtdb.ref(db, ROOT + "/players"), function(snap){
+        S.roster = snap.val() || {};
+        render();
+      }, function(err){ console.warn("Player roster read failed (check the rules):", err); });
       rtdb.onValue(rtdb.ref(db, ROOT + "/index"), function(snap){
         S.info = snap.val() || {};
         watchAll(); render();
