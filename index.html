@@ -265,6 +265,59 @@ select:disabled{opacity:.55}
 .flash{min-height:1.5em;margin-top:12px;font-size:13.5px;color:var(--gold)}
 .flash.bad{color:var(--bad)}
 
+/* ---------------- streamlined entry form ---------------- */
+.etop{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.etop select{flex:1 1 210px;padding:9px 11px;font-size:14px}
+.etop input[type=date]{padding:8px 10px;font-size:14px;flex:0 0 auto}
+.seg{display:inline-flex;border:1px solid rgba(201,162,39,.30);border-radius:2px;overflow:hidden;flex:0 0 auto}
+.seg button{font-family:'Manrope',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:9px 12px;border:0;background:rgba(0,0,0,.25);color:var(--lilac-dim);cursor:pointer;transition:.15s}
+.seg button+button{border-left:1px solid rgba(201,162,39,.22)}
+.seg button:hover{color:var(--gold)}
+.seg button.on{background:var(--gold);color:var(--royal-deep)}
+.seg button:disabled{opacity:.5;cursor:not-allowed}
+.seg.bronze button.on{background:var(--bronze-lit)}
+.etop .btn.quiet{padding:9px 12px;margin-left:auto}
+.sides{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:center;margin-bottom:12px}
+.side{border:1px solid rgba(201,162,39,.22);background:rgba(0,0,0,.22);border-radius:2px;padding:12px;min-width:0;transition:border-color .15s ease,opacity .15s ease}
+.side.first{border-color:var(--gold)}
+.side.ffd{border-color:var(--bad);opacity:.78}
+.side-head{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.side-head select{width:100%;padding:8px 9px;font-size:13.5px}
+.side .fields{gap:6px}
+.side .field span{font-size:8.5px}
+.side .n{font-size:19px;padding:5px 6px}
+.side-foot{display:flex;gap:6px;margin-top:10px}
+.tog{flex:1 1 0;font-family:'Manrope',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:7px 8px;border-radius:2px;cursor:pointer;border:1px solid rgba(201,162,39,.22);background:transparent;color:var(--lilac-dim);transition:.15s}
+.tog:hover{border-color:var(--gold);color:var(--gold)}
+.tog.on{background:var(--gold);border-color:var(--gold);color:var(--royal-deep)}
+.tog.ff:hover{border-color:var(--bad);color:var(--bad)}
+.tog.ff.on{background:var(--bad);border-color:var(--bad);color:var(--royal-deep)}
+.sides .versus{text-align:center}
+@media (max-width:640px){.sides{grid-template-columns:1fr}.sides .versus{padding:2px 0}}
+.xrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px}
+.xrow .chip{font-size:10px;padding:7px 11px}
+.xrow .hint,.xhead .hint{font-size:11px;color:var(--lilac-dim);margin-left:4px;font-family:'Manrope',sans-serif;letter-spacing:0;text-transform:none}
+.xpanel{border:1px solid rgba(201,162,39,.22);border-left:2px solid var(--bronze-lit);background:rgba(0,0,0,.22);border-radius:2px;padding:10px 12px;margin-bottom:12px}
+.xpanel.gold{border-left-color:var(--gold)}
+.xhead{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+.xhead b{font-family:'Teko',sans-serif;font-size:17px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--bronze-lit);margin-right:auto}
+.xpanel.gold .xhead b{color:var(--gold)}
+.xhead .seg button{padding:6px 9px;font-size:9.5px}
+.xhead .mini{display:flex;align-items:center;gap:5px;font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--lilac-dim)}
+.xhead .mini input{width:58px;padding:4px 6px;font-size:16px}
+.xpanel .why{font-size:11.5px;color:var(--lilac-dim);margin:0 0 8px;line-height:1.45}
+.xpanel .why b{color:var(--lilac)}
+.sorow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.sorow .soside{display:flex;align-items:center;gap:6px;min-width:0}
+.sorow .soside .nm{flex:1 1 auto;min-width:0;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--lilac);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sorow .soside input{width:58px;padding:4px 6px;font-size:17px}
+@media (max-width:520px){.sorow{grid-template-columns:1fr}}
+.xpanel .fifty:first-child{margin-top:0}
+.xpanel .dlsout{margin-bottom:8px;padding:9px 11px;font-size:13px}
+.resultbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-top:12px;border-top:1px solid var(--hair-soft)}
+.resultbar .reading{flex:1 1 240px;margin:0;font-size:13px}
+.resultbar .btn{padding:11px 16px}
+
 /* ---------------- cycle admin ---------------- */
 .cadmin{margin-top:14px}
 .cahead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:6px}
@@ -303,10 +356,9 @@ select:disabled{opacity:.55}
 .fifty .fx:hover{color:var(--gold)}
 #addFifty{padding:8px 12px;font-size:11px}
 @media (max-width:520px){
-  .fifty{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto auto}
+  .fifty{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 32px}
   .fifty select.fp{grid-column:1/-1}
   .fifty .ign-field{grid-column:1/-1}
-  .fifty .fx{grid-column:2;grid-row:3;justify-self:end}
 }
 
 /* ---------------- highs ---------------- */
@@ -2586,72 +2638,73 @@ function renderEntry(){
     return '<option value="' + esc(c.id) + '">' + esc(c.name) + ' · ' + fmt(c.start) + ' – ' + fmt(c.end) + '</option>';
   }).join("");
 
-  box.innerHTML =
-    (editing ? '<div class="editbar"><span>Editing ' + esc(mLabel(editing)) +
-       (S.view === editing.c ? '' : '') + ' &middot; ' + esc(cyc(editing.c).name) + '</span>' +
-       '<button class="btn quiet" id="cancel" style="margin-left:auto">Cancel</button></div>' : '') +
-    '<div class="metarow">' +
-      '<label class="field cfield"><span>Cycle</span><select id="fCycle"' + (editing && isF ? ' disabled' : '') + '>' + copts + '</select></label>' +
-      '<div class="bfrow"><span class="bflabel">Match type</span>' +
-        '<button class="chip' + (isF ? '' : ' on') + '" id="tR" type="button"' + (editing ? ' disabled' : '') + '>League match</button>' +
-        '<button class="chip' + (isF ? ' on' : '') + '" id="tF" type="button"' + (editing ? ' disabled' : '') + '>Cycle final</button>' +
+  var sideCard = function(t, p1, p2){
+    return '<div class="side" id="side' + t + '">' +
+      '<div class="side-head">' +
+        '<select id="' + p1 + '" aria-label="' + (t === "A" ? "Left" : "Right") + ' pair, first player">' + opts + '</select>' +
+        '<select id="' + p2 + '" aria-label="' + (t === "A" ? "Left" : "Right") + ' pair, second player">' + opts + '</select>' +
       '</div>' +
+      '<div class="fields">' +
+        '<label class="field"><span>Runs</span><input class="n" type="number" min="0" id="r' + t + '"></label>' +
+        '<label class="field"><span>Wkts</span><input class="n" type="number" min="0" max="10" id="k' + t + '"></label>' +
+        '<label class="field"><span>Overs</span><input class="n" type="number" min="0" step="0.1" id="o' + t + '"></label>' +
+      '</div>' +
+      '<div class="side-foot">' +
+        '<button class="tog" id="bf' + t + '" type="button" title="Mark this pair as batting first">Batted first</button>' +
+        '<button class="tog ff" id="ff' + t + '" type="button" title="This pair conceded the match">Forfeited</button>' +
+      '</div></div>';
+  };
+  var soSide = function(t){
+    return '<div class="soside"><span class="nm" id="labS' + t + '"></span>' +
+      '<input class="n" type="number" min="0" id="rS' + t + '" placeholder="R" aria-label="Super Over runs">' +
+      '<input class="n" type="number" min="0" max="2" id="kS' + t + '" placeholder="W" aria-label="Super Over wickets"></div>';
+  };
+
+  box.innerHTML =
+    (editing ? '<div class="editbar"><span>Editing ' + esc(mLabel(editing)) + ' &middot; ' + esc(cyc(editing.c).name) + '</span>' +
+       '<button class="btn quiet" id="cancel" style="margin-left:auto">Cancel</button></div>' : '') +
+    '<div class="etop">' +
+      '<select id="fCycle" aria-label="Cycle"' + (editing && isF ? ' disabled' : '') + '>' + copts + '</select>' +
+      '<div class="seg" role="group" aria-label="Match type">' +
+        '<button class="' + (isF ? '' : 'on') + '" id="tR" type="button"' + (editing ? ' disabled' : '') + '>League</button>' +
+        '<button class="' + (isF ? 'on' : '') + '" id="tF" type="button"' + (editing ? ' disabled' : '') + '>Final</button>' +
+      '</div>' +
+      '<input type="date" id="played" aria-label="Date played">' +
+      '<button class="btn quiet" id="lock" type="button">Lock</button>' +
     '</div>' +
     '<div class="fnote" id="fnote"></div>' +
-    '<div class="teams">' +
-      '<div class="pair"><select id="a1" aria-label="First player, left pair">' + opts + '</select>' +
-      '<select id="a2" aria-label="Second player, left pair">' + opts + '</select></div>' +
-      '<span class="versus">vs</span>' +
-      '<div class="pair"><select id="b1" aria-label="First player, right pair">' + opts + '</select>' +
-      '<select id="b2" aria-label="Second player, right pair">' + opts + '</select></div>' +
+    '<div class="sides">' + sideCard("A","a1","a2") + '<span class="versus">vs</span>' + sideCard("B","b1","b2") + '</div>' +
+    '<div class="xpanel gold" id="soBox" hidden>' +
+      '<div class="xhead"><b>Super Over</b><span class="hint">Scores level &mdash; enter the two-over decider</span></div>' +
+      '<div class="sorow">' + soSide("A") + soSide("B") + '</div>' +
     '</div>' +
-    '<div class="bfrow">' +
-      '<span class="bflabel">Who batted first</span>' +
-      '<button class="chip" id="bfA" type="button">Left pair</button>' +
-      '<button class="chip" id="bfB" type="button">Right pair</button>' +
-      '<button class="chip" id="bfN" type="button">Not recorded</button>' +
+    '<div class="xrow">' +
+      '<button class="chip" id="addFifty" type="button">+ 50+ score</button>' +
+      '<button class="chip bronze" id="dlsToggle" type="button">D/L</button>' +
     '</div>' +
-    '<div class="sheet">' + inningsBlock("A","Left pair",true) + inningsBlock("B","Right pair",true) + '</div>' +
-    '<div class="sobox" id="soBox" hidden>' +
-      '<h3>Super Over &middot; two overs</h3>' +
-      '<div class="sheet">' + inningsBlock("SA","Left pair",false) + inningsBlock("SB","Right pair",false) + '</div>' +
+    '<div class="xpanel" id="fiftyBox" hidden>' +
+      '<div class="xhead"><b>50+ scores</b><span class="hint">One per player &middot; partner taken from the pair</span></div>' +
+      '<div id="fiftyList"></div>' +
     '</div>' +
-    '<div class="bfrow" id="ffRow">' +
-      '<span class="bflabel">Forfeit</span>' +
-      '<button class="chip ff" id="ffN" type="button">No forfeit</button>' +
-      '<button class="chip ff" id="ffA" type="button">Left pair forfeited</button>' +
-      '<button class="chip ff" id="ffB" type="button">Right pair forfeited</button>' +
-    '</div>' +
-    '<div class="dlsrow"><button class="chip bronze" id="dlsToggle" type="button">Game died mid-innings? Settle on DLS</button></div>' +
-    '<div class="dlsbox" id="dlsBox" hidden>' +
-      '<h3>DLS par score</h3>' +
-      '<div class="bfrow" style="margin-bottom:12px">' +
-        '<span class="bflabel">Which innings crashed?</span>' +
-        '<button class="chip bronze" id="dlsMc" type="button">Chase</button>' +
-        '<button class="chip bronze" id="dlsMf" type="button">First innings</button>' +
-        '<button class="chip bronze" id="dlsMb" type="button">Both</button>' +
+    '<div class="xpanel" id="dlsBox" hidden>' +
+      '<div class="xhead"><b>D/L</b>' +
+        '<div class="seg bronze" role="group" aria-label="Which innings was cut short">' +
+          '<button id="dlsMc" type="button">Chase cut</button>' +
+          '<button id="dlsMf" type="button">1st inns cut</button>' +
+          '<button id="dlsMb" type="button">Both</button>' +
+        '</div>' +
+        '<label class="mini">1st ov<input class="n" type="number" min="1" max="50" step="0.1" id="dlsN1"></label>' +
+        '<label class="mini">Chase ov<input class="n" type="number" min="1" max="50" step="0.1" id="dlsN2"></label>' +
       '</div>' +
       '<p class="why" id="dlsWhy"></p>' +
-      '<div class="dlsgrid">' +
-        '<label class="field"><span>1st inns allotted</span><input class="n" type="number" min="1" max="50" step="0.1" id="dlsN1"></label>' +
-        '<label class="field"><span>Chase allotted</span><input class="n" type="number" min="1" max="50" step="0.1" id="dlsN2"></label>' +
-      '</div>' +
       '<div class="dlsout" id="dlsOut"></div>' +
       '<button class="btn fill" id="dlsApply" hidden>Save as DLS result</button>' +
     '</div>' +
-    '<div class="fiftybox">' +
-      '<div class="fiftyhead"><h3>50+ scores <span class="fifty-sub">(individual)</span></h3>' +
-        '<button class="btn quiet" id="addFifty" type="button">+ Add 50+</button></div>' +
-      '<p class="why">Individual 50+ scores in this match. One per player; the partner is taken from the pair.</p>' +
-      '<div id="fiftyList"></div>' +
-    '</div>' +
-    '<div class="reading" id="reading"></div>' +
-    '<div class="row">' +
+    '<div class="resultbar">' +
+      '<div class="reading" id="reading"></div>' +
       '<button class="btn fill" id="save" hidden>Save result</button>' +
       '<button class="btn fill" id="winA">Left pair won</button>' +
       '<button class="btn fill" id="winB">Right pair won</button>' +
-      '<span class="when"><label for="played">Played</label><input type="date" id="played"></span>' +
-      '<button class="btn quiet" id="lock" style="margin-left:auto">Lock</button>' +
     '</div><div class="flash" id="flash"></div>';
 
   if(editing){
@@ -2700,18 +2753,16 @@ function renderEntry(){
   ["rA","kA","oA","rB","kB","oB","rSA","kSA","rSB","kSB","dlsN1","dlsN2"].forEach(function(id){
     if($(id)) $(id).oninput = refresh;
   });
-  ["A","B","N"].forEach(function(t){
-    $("bf" + t).onclick = function(){ S.formBF = (t === "N" ? null : t); paintBF(); refresh(); };
-  });
-  paintBF();
-
-  ["N","A","B"].forEach(function(t){
+  // Each side's toggles: tap to set, tap again to clear.
+  ["A","B"].forEach(function(t){
+    $("bf" + t).onclick = function(){ S.formBF = (S.formBF === t ? null : t); paintBF(); refresh(); };
     $("ff" + t).onclick = function(){
-      S.formFF = (t === "N" ? null : t);
+      S.formFF = (S.formFF === t ? null : t);
       if(S.formFF) S.dlsOpen = false;
       refresh();
     };
   });
+  paintBF();
   $("dlsToggle").onclick = function(){ S.dlsOpen = !S.dlsOpen; if(S.dlsOpen) S.formFF = null; refresh(); };
   $("dlsMc").onclick = function(){ S.dlsMode = "chase"; refresh(); };
   $("dlsMf").onclick = function(){ S.dlsMode = "first"; refresh(); };
@@ -2723,6 +2774,8 @@ function renderEntry(){
     var p = picks.filter(function(x){ return !used[x]; })[0] || picks[0];
     S.fifties.push({ p:p, r:null, b:null, ign:"" });
     renderFiftyList();
+    var last = $("fiftyList").querySelector(".fifty:last-child input.fr");
+    if(last) last.focus();
   };
   renderFiftyList();
   $("winA").onclick = function(){ commit("A", dlsPayloadIfOpen()); };
@@ -2763,7 +2816,7 @@ function refreshMeta(){
     el.className = "fnote" + (fp ? "" : " warn");
     el.innerHTML = fp
       ? "Seeds for <b>" + esc(c.name) + "</b>: " + fp.ranks.map(function(r,i){ return (i+1) + ". " + esc(r.name); }).join(" &middot; ") +
-        ". Left pair is 1st &amp; 4th, right pair 2nd &amp; 3rd. The final decides the title only &mdash; it never moves the table."
+        ". Left is 1st &amp; 4th, right 2nd &amp; 3rd."
       : "Fewer than four players are past the gate in <b>" + esc(c.name) + "</b>, so there are no seeds. Pick the four yourself if a final is being played anyway.";
     return;
   }
@@ -2775,8 +2828,8 @@ function refreshMeta(){
     return;
   }
   el.className = "fnote";
-  el.innerHTML = "Logging into <b>" + esc(c.name) + "</b>" +
-    (editing && editing.c !== c.id ? " &mdash; this moves it out of <b>" + esc(cyc(editing.c).name) + "</b>." : ".");
+  el.innerHTML = editing && editing.c !== c.id
+    ? "Saving moves this match from <b>" + esc(cyc(editing.c).name) + "</b> into <b>" + esc(c.name) + "</b>." : "";
 }
 
 function clearForm(){
@@ -2790,13 +2843,15 @@ function clearForm(){
 
 function paintBF(){
   if(!$("bfA")) return;
-  ["A","B","N"].forEach(function(t){
-    $("bf" + t).classList.toggle("on", S.formBF === (t === "N" ? null : t));
+  ["A","B"].forEach(function(t){
+    $("bf" + t).classList.toggle("on", S.formBF === t);
+    $("side" + t).classList.toggle("first", S.formBF === t);
   });
 }
 
 function renderFiftyList(){
   var box = $("fiftyList"); if(!box) return;
+  $("fiftyBox").hidden = !S.fifties.length;
   var picks = ["a1","a2","b1","b2"].map(function(id){ return $(id).value; });
   var opts = picks.map(function(p){ return '<option value="' + esc(p) + '">' + esc(p) + '</option>'; }).join("");
   box.innerHTML = S.fifties.map(function(f, i){
@@ -2846,11 +2901,11 @@ function readInnings(tag){
 
 function verdictFromScores(){
   var rA = num($("rA").value), rB = num($("rB").value);
-  if(rA === null || rB === null) return { side:null, tied:false, msg:"Enter both runs to settle it automatically, or just pick the winner." };
+  if(rA === null || rB === null) return { side:null, tied:false, msg:"Enter both totals, or just pick the winner." };
   if(rA > rB) return { side:"A", tied:false, msg:"Left pair take it by <b>" + (rA - rB) + "</b> run" + (rA - rB === 1 ? "" : "s") + "." };
   if(rB > rA) return { side:"B", tied:false, msg:"Right pair take it by <b>" + (rB - rA) + "</b> run" + (rB - rA === 1 ? "" : "s") + "." };
   var sA = num($("rSA").value), sB = num($("rSB").value);
-  if(sA === null || sB === null) return { side:null, tied:true, msg:"Scores level on <b>" + rA + "</b>. Enter the Super Over to settle it." };
+  if(sA === null || sB === null) return { side:null, tied:true, msg:"Level on <b>" + rA + "</b> &mdash; enter the Super Over." };
   if(sA > sB) return { side:"A", tied:true, msg:"Tied on <b>" + rA + "</b>. Left pair take the Super Over <b>" + sA + "&ndash;" + sB + "</b>." };
   if(sB > sA) return { side:"B", tied:true, msg:"Tied on <b>" + rA + "</b>. Right pair take the Super Over <b>" + sB + "&ndash;" + sA + "</b>." };
   return { side:null, tied:true, msg:"Super Over tied too. Play another and enter that one instead." };
@@ -2935,14 +2990,12 @@ function refreshDls(){
   $("dlsMf").classList.toggle("on", S.dlsMode === "first");
   $("dlsMb").classList.toggle("on", S.dlsMode === "both");
 
-  whyEl.innerHTML = S.dlsMode === "first"
-    ? 'Fill the first-innings runs, wickets and <b>overs faced</b> above when the innings was cut short. That total is <b>scaled up</b> ' +
-      'to the chase\u2019s full ' + MATCH_OVERS + ' overs, and the chase plays a normal innings against it. Needs the <b>innings order</b> set.'
+  whyEl.innerHTML = (S.dlsMode === "first"
+    ? 'Enter the first innings as it stood when cut short; it\u2019s scaled up to a full chase.'
     : S.dlsMode === "both"
-    ? 'Both innings were cut short. Fill each side\u2019s runs, wickets and <b>overs faced</b> when it died. Par is set on each side\u2019s ' +
-      'actual spent resources. Needs the <b>innings order</b> set.'
-    : 'Fill the sheet above with the score as far as the game got, including the <b>overs the chase had faced</b> when it died. ' +
-      'Needs the <b>innings order</b> set.';
+    ? 'Enter both innings as they stood when each was cut short, overs included.'
+    : 'Enter the chase as it stood when the game died, overs included.') +
+    (S.formBF ? '' : ' <b>Mark who batted first.</b>');
 
   var v = dlsRead();
   if(v.err){ outEl.innerHTML = '<span style="color:var(--bad)">' + esc(v.err) + '</span>'; applyEl.hidden = true; return; }
@@ -2981,23 +3034,17 @@ function refreshDls(){
 
 function refresh(){
   var rA = num($("rA").value), rB = num($("rB").value);
-  $("soBox").hidden = !!S.formFF || !(rA !== null && rB !== null && rA === rB);
-  ["N","A","B"].forEach(function(t){ $("ff" + t).classList.toggle("on", S.formFF === (t === "N" ? null : t)); });
+  $("soBox").hidden = !!S.formFF || !!S.dlsOpen || !(rA !== null && rB !== null && rA === rB);
+  ["A","B"].forEach(function(t){
+    $("ff" + t).classList.toggle("on", S.formFF === t);
+    $("side" + t).classList.toggle("ffd", S.formFF === t);
+  });
   $("dlsToggle").disabled = !!S.formFF;
+  $("dlsToggle").title = S.formFF ? "A forfeit can\u2019t also be settled on D/L" : "Game died mid-innings? Settle it on D/L";
 
   var A = [$("a1").value, $("a2").value], B = [$("b1").value, $("b2").value];
-  ["A","SA"].forEach(function(t){ if($("lab" + t)) $("lab" + t).textContent = A.join(" & "); });
-  ["B","SB"].forEach(function(t){ if($("lab" + t)) $("lab" + t).textContent = B.join(" & "); });
-
-  ["A","B"].forEach(function(t){
-    var b = $("bad" + t); if(!b) return;
-    if(!S.formBF){ b.hidden = true; return; }
-    var first = (S.formBF === t);
-    b.hidden = false;
-    b.textContent = first ? "Batted first" : "Chasing";
-    b.classList.toggle("first", first);
-    b.classList.toggle("chase", !first);
-  });
+  $("labSA").textContent = A.join(" & ");
+  $("labSB").textContent = B.join(" & ");
 
   refreshDls();
   refreshMeta();
@@ -3007,10 +3054,10 @@ function refresh(){
     var quit = S.formFF === "A" ? A : B, take = S.formFF === "A" ? B : A;
     v = { side: S.formFF === "A" ? "B" : "A",
           msg: "<b>" + esc(quit.join(" & ")) + "</b> forfeit, so <b>" + esc(take.join(" & ")) + "</b> take the win. " +
-               "Enter the scores as far as the match got &mdash; runs, wickets, overs and 50s all count; margins don\u2019t." };
+               "Scores up to the forfeit still count." };
   }
   $("reading").innerHTML = S.dlsOpen
-    ? "Settling this one on D/L. Use the panel above, or name the winner below to log the game's own call — either way it's tagged D/L."
+    ? "Settling on D/L &mdash; save from the panel above, or pick the winner to log the game\u2019s own call."
     : v.msg;
   var auto = !!v.side && !S.dlsOpen;
   $("save").hidden = !auto;
