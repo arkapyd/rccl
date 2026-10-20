@@ -318,6 +318,38 @@ select:disabled{opacity:.55}
 .resultbar .reading{flex:1 1 240px;margin:0;font-size:13px}
 .resultbar .btn{padding:11px 16px}
 
+/* ---------------- league records ---------------- */
+.recgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.rcard{border:1px solid var(--frame);border-radius:2px;padding:15px 16px 13px;display:flex;flex-direction:column;gap:4px;min-width:0;
+  background:linear-gradient(158deg,var(--royal) 0%,var(--royal-panel) 46%,var(--royal-deep) 100%);box-shadow:0 1px 0 rgba(255,255,255,.07) inset,0 8px 24px rgba(0,0,0,.42)}
+.rcard .rt{font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--frame-lit)}
+.rcard .rv{font-family:'Teko',sans-serif;font-weight:700;font-size:32px;line-height:1.02;color:var(--gold);word-break:break-word}
+.rcard .rh{font-size:14px;font-weight:700;color:var(--white)}
+.rcard .rh .kind{font-size:8.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-dim);margin-left:6px}
+.rcard .rm{font-size:11px;color:var(--lilac-dim)}
+.rcard .rn{font-size:11.5px;color:var(--lilac);font-style:italic}
+.rcard details{margin-top:8px;border-top:1px solid var(--hair-soft);padding-top:7px}
+.rcard summary{cursor:pointer;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-dim)}
+.rcard summary:hover{color:var(--gold)}
+.rcard .hist{list-style:none;margin:6px 0 0;padding:0}
+.rcard .hist li{font-size:12px;color:var(--lilac-dim);padding:4px 0;display:flex;flex-wrap:wrap;gap:3px 8px;align-items:baseline}
+.rcard .hist b{color:var(--lilac);font-family:'Teko',sans-serif;font-size:16px;font-weight:600}
+.rtools{display:inline-flex;gap:2px;margin-left:auto}
+.rtools button{background:none;border:1px solid transparent;color:var(--lilac-dim);font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;cursor:pointer;border-radius:2px}
+.rtools button:hover{color:var(--gold);border-color:var(--hair)}
+.recadmin{margin-bottom:14px}
+.recform{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.4fr);gap:8px;align-items:end}
+.recform .field span{text-align:left}
+.recform input,.recform select{padding:9px 10px;font-size:14px;width:100%}
+.recform .full{grid-column:1/-1}
+.recwho{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
+.recwho .seg{align-self:end}
+.recwho select{flex:1 1 150px;width:auto}
+.recbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.recbar .why{margin:0;flex:1 1 240px;font-size:11.5px;color:var(--lilac-dim)}
+.recempty{border:1px dashed var(--hair);border-radius:2px;padding:20px;color:var(--lilac-dim);font-size:14px;grid-column:1/-1}
+@media (max-width:680px){.recform{grid-template-columns:1fr}}
+
 /* ---------------- league admin ---------------- */
 .adblock+.adblock{margin-top:22px;padding-top:18px;border-top:1px solid var(--hair)}
 .addrow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) 72px auto;gap:8px;align-items:end;margin-bottom:6px}
@@ -685,6 +717,16 @@ footer img{width:26px;height:auto;opacity:.7}
     <div class="hcards" id="highs"></div>
   </section>
 
+  <section id="recordsSection">
+    <div class="head">
+      <h2>League Records</h2>
+      <span class="aside" id="recordsAside">Kept by hand</span>
+    </div>
+    <div class="hairline"></div>
+    <div class="panel recadmin" id="recAdmin" hidden></div>
+    <div class="recgrid" id="records"></div>
+  </section>
+
   <section id="entrySection">
     <div class="head">
       <h2 id="entryTitle">Enter a Result</h2>
@@ -749,6 +791,8 @@ footer img{width:26px;height:auto;opacity:.7}
   Layout:
       rccl/players/<handle>         real name, date added       (readable)
       rccl/playerproof/<handle>     write keys                   (never readable)
+      rccl/records/<id>             hand-kept league records     (readable)
+      rccl/recordproof/<id>         write keys                   (never readable)
       rccl/index/<cycleId>          name, start, end, minWins   (readable)
       rccl/<cycleId>/matches/<id>   league matches               (readable)
       rccl/<cycleId>/final          the cycle final              (readable)
@@ -768,6 +812,14 @@ footer img{width:26px;height:auto;opacity:.7}
           }
         },
         "playerproof": { ".read": false, "$p": { ".write": true } },
+        "records": {
+          ".read": true,
+          "$r": {
+            ".write": true,
+            ".validate": "newData.parent().parent().child('recordproof').child($r).val() === root.child('rccl/config/key').val()"
+          }
+        },
+        "recordproof": { ".read": false, "$r": { ".write": true } },
         "index": {
           ".read": true,
           "$c": {
@@ -888,6 +940,8 @@ var ALL_LEDE   = 'Every cycle on one board &mdash; <em>titles</em>, PCW and the 
 var S = {
   info:{},          // rccl/index, keyed by cycle id
   roster:{},        // rccl/players, keyed by handle: { real, added }
+  records:{},       // rccl/records, keyed by id: { t, v, kind, by:[], mk, d, note, ts }
+  recEditing:null, recKind:"pair", recKey:null,
   data:{},          // cycle id -> { matches:[raw], final:raw|null }
   cycles:[],        // derived, sorted by start date
   byKey:{},         // match key -> match, across every cycle
@@ -2278,7 +2332,7 @@ function gap(mine, league){
 var PSEC = {
   "With the bat":"bat", "With the ball":"ball", "Batting first":"first", "Chasing":"chase",
   "Margins":"margins", "Form":"form", "50+ scores":"fifties", "Alongside":"alongside",
-  "Against":"against", "Cycle by cycle":"cycles", "Every match on record":"matches"
+  "Against":"against", "Cycle by cycle":"cycles", "Every match on record":"matches", "League records":"records"
 };
 function sectionTitle(text, scope, label){
   return '<h4 class="mtitle"' + (PSEC[text] ? ' id="ps-' + PSEC[text] + '"' : '') + '>' + text + '<span class="scope ' + scope + '">' +
@@ -2451,6 +2505,20 @@ function renderModal(){
           '<span class="vs">off <b>' + f.b + '</b> balls' + (sr ? ' &middot; SR ' + sr : '') +
             ' &middot; with <b>' + plink(f.mate, "fifties") + '</b> v ' + plinks(f.foes, "fifties") + '</span></li>';
       }).join("") + '</ul>';
+  }
+
+  // hand-kept league records this player holds now, or held before
+  var mine = recordGroups().map(function(g){
+    var all = [g.cur].concat(g.past).filter(function(r){ return (r.by || []).indexOf(s.name) >= 0; });
+    return all.length ? { g:g, now: (g.cur.by || []).indexOf(s.name) >= 0, best: all[0] } : null;
+  }).filter(Boolean);
+  if(mine.length){
+    html += sectionTitle("League records", "solo", "Records") + '<ul class="mlist">' + mine.map(function(x){
+      var r = x.best, mate = (r.by || []).filter(function(h){ return h !== s.name; })[0];
+      return '<li><span class="res ' + (x.now ? 'w' : 'l') + '">' + (x.now ? 'HOLDS' : 'HELD') + '</span>' +
+        '<span class="vs"><b>' + esc(x.g.title) + '</b> &middot; ' + esc(r.v) + (mate ? ' &middot; with ' + plink(mate, "records") : '') + '</span>' +
+        '<span class="sc2">' + recWhere(r) + '</span></li>';
+    }).join("") + '</ul>';
   }
 
   html += wlTable(s.partners, "Alongside");
@@ -3469,12 +3537,199 @@ function renderCycleAdmin(){
   });
 }
 
+/* ───────── league records (kept by hand) ─────────
+   Each entry is one record set in one match. Entries sharing a title form
+   that record's history; the newest entry is the standing record. */
+function recTitleKey(t){ return String(t || "").trim().toLowerCase(); }
+function recordGroups(){
+  var g = {};
+  Object.keys(S.records).forEach(function(id){
+    var r = S.records[id]; if(!r || !r.t) return;
+    var k = recTitleKey(r.t);
+    (g[k] = g[k] || []).push(Object.assign({ id:id }, r));
+  });
+  return Object.keys(g).map(function(k){
+    var list = g[k].sort(function(a,b){ return (b.d || "").localeCompare(a.d || "") || (b.ts || 0) - (a.ts || 0); });
+    return { title:list[0].t, cur:list[0], past:list.slice(1) };
+  }).sort(function(a,b){ return a.title.localeCompare(b.title); });
+}
+function recHolders(r, sec){ return plinks(r.by || [], sec || "records"); }
+function recWhere(r){
+  // matchLink already names the cycle when it isn't the one on screen
+  return [r.mk && S.byKey[r.mk] ? matchLink(r.mk) : "", r.d ? fmt(r.d) : ""]
+    .filter(function(x){ return !!x; }).join(" &middot; ");
+}
+
+function renderRecords(){
+  var groups = recordGroups();
+  $("recordsAside").textContent = groups.length ? groups.length + " record" + (groups.length === 1 ? "" : "s") : "Kept by hand";
+  if(!groups.length){
+    $("records").innerHTML = '<div class="recempty">No league records yet.' +
+      (S.unlocked ? ' Add the first one above.' : ' Records are added by the admin as they fall.') + '</div>';
+  } else {
+    $("records").innerHTML = groups.map(function(g){
+      var r = g.cur;
+      var tools = function(x){
+        return S.unlocked ? '<span class="rtools"><button type="button" data-redit="' + esc(x.id) + '">Edit</button>' +
+          '<button type="button" data-rdel="' + esc(x.id) + '" aria-label="Delete">&times;</button></span>' : '';
+      };
+      return '<div class="rcard">' +
+        '<span class="rt">' + esc(g.title) + '</span>' +
+        '<span class="rv">' + esc(r.v) + '</span>' +
+        '<span class="rh">' + recHolders(r) + '<span class="kind">' + (r.kind === "solo" ? "Individual" : "Pair") + '</span></span>' +
+        '<span class="rm">' + recWhere(r) + tools(r) + '</span>' +
+        (r.note ? '<span class="rn">' + esc(r.note) + '</span>' : '') +
+        (g.past.length ? '<details><summary>Previously held &middot; ' + g.past.length + '</summary><ul class="hist">' +
+          g.past.map(function(x){
+            return '<li><b>' + esc(x.v) + '</b>' + recHolders(x) + '<span>' + recWhere(x) + '</span>' + tools(x) + '</li>';
+          }).join("") + '</ul></details>' : '') +
+      '</div>';
+    }).join("");
+  }
+  bindGoLinks($("records"));
+  Array.prototype.forEach.call($("records").querySelectorAll("[data-redit]"), function(b){
+    b.onclick = function(){ startRecordEdit(b.dataset.redit); };
+  });
+  Array.prototype.forEach.call($("records").querySelectorAll("[data-rdel]"), function(b){
+    b.onclick = function(){ deleteRecord(b.dataset.rdel); };
+  });
+  renderRecAdmin();
+}
+
+// Every match, newest first, as options for "set in".
+function matchOptions(){
+  var out = [];
+  S.cycles.slice().reverse().forEach(function(c){
+    var items = c.matches.slice().reverse();
+    if(c.final) items.unshift(c.final);
+    items.forEach(function(m){
+      out.push('<option value="' + esc(m.key) + '">' + esc(c.name) + ' · ' + (m.isFinal ? "Final" : "#" + m.no) + ' · ' +
+        esc((m.w || []).join(" & ")) + ' v ' + esc((m.l || []).join(" & ")) + (m.d ? ' · ' + fmt(m.d) : '') + '</option>');
+    });
+  });
+  return out.join("");
+}
+
+function renderRecAdmin(){
+  var box = $("recAdmin");
+  if(!S.unlocked){ box.hidden = true; box.innerHTML = ""; S.recKey = null; return; }
+  box.hidden = false;
+  var key = [S.recEditing || "", Object.keys(S.byKey).length, PLAYERS.join(","), Object.keys(S.records).length].join("|");
+  if(key === S.recKey) return;          // keep half-typed input through syncs
+  S.recKey = key;
+  var ed = S.recEditing ? S.records[S.recEditing] : null;
+  if(ed) S.recKind = ed.kind === "solo" ? "solo" : "pair";
+  var titles = recordGroups().map(function(g){ return '<option value="' + esc(g.title) + '">'; }).join("");
+
+  box.innerHTML =
+    (ed ? '<div class="editbar"><span>Editing a record</span><button class="btn quiet" id="recCancel" style="margin-left:auto">Cancel</button></div>' : '') +
+    '<div class="recform">' +
+      '<label class="field"><span>Record</span><input id="recT" list="recTitles" placeholder="e.g. Fastest powerplay" autocomplete="off"><datalist id="recTitles">' + titles + '</datalist></label>' +
+      '<label class="field"><span>Figure</span><input id="recV" placeholder="e.g. 84/0 in 6 ov" autocomplete="off"></label>' +
+      '<label class="field"><span>Set in</span><select id="recM"><option value="">No match linked</option>' + matchOptions() + '</select></label>' +
+      '<div class="recwho full">' +
+        '<div class="seg" role="group" aria-label="Held by"><button type="button" id="recKP">Pair</button><button type="button" id="recKS">Individual</button></div>' +
+        '<select id="recH" aria-label="Record holder"></select>' +
+        '<select id="recH2" aria-label="Partner" hidden></select>' +
+        '<input id="recD" type="date" aria-label="Date" style="flex:0 0 auto;width:auto">' +
+      '</div>' +
+      '<label class="field full"><span>Note (optional)</span><input id="recN" placeholder="e.g. beat the old mark by 6 runs" autocomplete="off"></label>' +
+    '</div>' +
+    '<div class="recbar"><p class="why">Re-use a record’s exact name to break it &mdash; the newest entry stands and the old one moves to its history. Pick the match and the holders come from it.</p>' +
+      '<button class="btn fill" id="recGo" type="button">' + (ed ? "Update record" : "Add record") + '</button></div>' +
+    '<div class="flash" id="recFlash"></div>';
+
+  if(ed){
+    $("recT").value = ed.t || ""; $("recV").value = ed.v || ""; $("recN").value = ed.note || "";
+    $("recM").value = ed.mk && S.byKey[ed.mk] ? ed.mk : ""; $("recD").value = ed.d || "";
+  } else $("recD").value = todayISO();
+
+  $("recKP").onclick = function(){ S.recKind = "pair"; recHolderUI(); };
+  $("recKS").onclick = function(){ S.recKind = "solo"; recHolderUI(); };
+  $("recM").onchange = function(){
+    var m = S.byKey[this.value]; if(m && m.d) $("recD").value = m.d;
+    recHolderUI();
+  };
+  $("recGo").onclick = saveRecord;
+  if($("recCancel")) $("recCancel").onclick = function(){ S.recEditing = null; S.recKey = null; renderRecAdmin(); };
+  recHolderUI(ed ? ed.by : null);
+}
+
+// With a match picked, the choices are that match's two pairs or four
+// players; without one, any player (and partner) from the roster.
+function recHolderUI(preset){
+  var m = S.byKey[$("recM").value], pair = S.recKind === "pair";
+  $("recKP").classList.toggle("on", pair); $("recKS").classList.toggle("on", !pair);
+  var h = $("recH"), h2 = $("recH2");
+  var opt = function(v, label){ return '<option value="' + esc(v) + '">' + esc(label) + '</option>'; };
+  var roster = PLAYERS.map(function(p){ return opt(p, p + " · " + realName(p)); }).join("");
+  if(m){
+    var four = (m.w || []).concat(m.l || []);
+    h.innerHTML = pair
+      ? opt((m.w || []).join("|"), (m.w || []).map(realName).join(" & ") + " (won)") + opt((m.l || []).join("|"), (m.l || []).map(realName).join(" & "))
+      : four.map(function(p){ return opt(p, realName(p) + " · " + p); }).join("");
+    h2.hidden = true;
+  } else {
+    h.innerHTML = roster; h2.innerHTML = roster; h2.hidden = !pair;
+  }
+  if(preset && preset.length){
+    var joined = preset.join("|");
+    if(m && pair){
+      var alt = preset.slice().reverse().join("|");
+      Array.prototype.forEach.call(h.options, function(o){ if(o.value === joined || o.value === alt) h.value = o.value; });
+    } else { h.value = preset[0]; if(preset[1]) h2.value = preset[1]; }
+  } else if(!m && pair && h2.options.length > 1) h2.selectedIndex = 1;
+}
+
+function recSay(t, bad){ var f = $("recFlash"); if(f){ f.className = "flash" + (bad ? " bad" : ""); f.textContent = t; } }
+
+function saveRecord(){
+  var t = $("recT").value.trim(), v = $("recV").value.trim(), mk = $("recM").value;
+  if(!t){ recSay("Name the record.", true); return; }
+  if(!v){ recSay("Enter the figure that set it.", true); return; }
+  var by;
+  if(S.byKey[mk] && S.recKind === "pair") by = $("recH").value.split("|");
+  else if(S.recKind === "pair") by = [$("recH").value, $("recH2").value];
+  else by = [$("recH").value];
+  if(S.recKind === "pair" && (by.length !== 2 || by[0] === by[1])){ recSay("A pair needs two different players.", true); return; }
+  // an existing title keeps its exact spelling
+  var same = recordGroups().filter(function(g){ return recTitleKey(g.title) === recTitleKey(t); })[0];
+  var rec = { t: same ? same.title : t, v:v, kind: S.recKind, by:by, d: $("recD").value || todayISO(), ts: Date.now() };
+  if(mk) rec.mk = mk;
+  var note = $("recN").value.trim(); if(note) rec.note = note;
+  var id = S.recEditing || ("r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+  var wasEdit = !!S.recEditing;
+  var done = function(){
+    S.recEditing = null; S.recKey = null; render();
+    recSay(wasEdit ? rec.t + " updated." : (same ? rec.t + ": new record logged, the old one moves to its history." : rec.t + " added."));
+  };
+  if(S.fb){
+    var patch = {}; patch["records/" + id] = rec; patch["recordproof/" + id] = ADMIN_KEY;
+    writeRoot(patch).then(done).catch(function(e){ recSay(dbErr(e), true); });
+  } else { S.records[id] = rec; done(); }
+}
+
+function startRecordEdit(id){
+  if(!S.unlocked || !S.records[id]) return;
+  S.recEditing = id; S.recKey = null; renderRecAdmin();
+  $("recordsSection").scrollIntoView({ behavior:"smooth", block:"start" });
+}
+function deleteRecord(id){
+  var r = S.records[id]; if(!r) return;
+  if(!window.confirm("Delete this entry for “" + r.t + "” (" + r.v + ")?")) return;
+  var finish = function(){ delete S.records[id]; if(S.recEditing === id) S.recEditing = null; S.recKey = null; render(); };
+  if(S.fb){
+    var patch = {}; patch["records/" + id] = null; patch["recordproof/" + id] = null;
+    writeRoot(patch).then(finish).catch(function(e){ recSay(dbErr(e), true); });
+  } else finish();
+}
+
 /* ───────── render ───────── */
 function render(){
   rebuild();
   if(S.editing && !S.byKey[S.editing]) S.editing = null;
   renderCycleBar(); renderCrest(); renderWire(); renderVerdict();
-  renderTable(); renderFinal(); renderRoll(); renderHighs();
+  renderTable(); renderFinal(); renderRoll(); renderHighs(); renderRecords();
   renderEntry(); renderCycleAdmin(); renderLog();
   if(S.openPlayer || S.openHighs || S.openTop) renderModal();
 }
@@ -3523,6 +3778,10 @@ function watchAll(){
       var db = rtdb.getDatabase(app.initializeApp(FIREBASE));
       S.fb = { db:db, ref:rtdb.ref, push:rtdb.push, update:rtdb.update, onValue:rtdb.onValue };
       rtdb.onValue(rtdb.ref(db, ".info/connected"), function(s){ S.live = !!s.val(); renderWire(); });
+      rtdb.onValue(rtdb.ref(db, ROOT + "/records"), function(snap){
+        S.records = snap.val() || {};
+        render();
+      }, function(err){ console.warn("League records read failed (check the rules):", err); });
       rtdb.onValue(rtdb.ref(db, ROOT + "/players"), function(snap){
         S.roster = snap.val() || {};
         render();
