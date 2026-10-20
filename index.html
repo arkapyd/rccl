@@ -1751,7 +1751,7 @@ var TOP_SEC = {
   econ:"ball", srate:"ball", defended:"first",
   winRuns:"margins", winWkts:"margins", thinRuns:"margins", thinWkts:"margins",
   pairPcw:"alongside", pairWins:"alongside", pairStreak:"alongside", pairPlayed:"alongside",
-  batFirstAvg:"first", chaseAvg:"chase", mostFifties:"fifties"
+  batFirstAvg:"first", chaseAvg:"chase", mostFifties:"fifties", fastFifty:"fifties"
 };
 function whoLinks(e, sec){
   if(!e.whoP) return esc(e.who || "");
@@ -1797,6 +1797,12 @@ function highsBlock(key, d){
       recCard("Lowest completed innings", R.lowDone, undefined, null, "lowDone") +
       recCard("Fastest innings", R.rate, 2, null, "rate") +
       recCard("Highest chased", R.chased, undefined, null, "chased") +
+      (function(){
+        var f = topEntries("fastFifty", d)[0];
+        return statCard("Fastest 50+", f ? withUnit(f.v.toFixed(1), "strike rate") : null,
+          f ? [matchLink(f.mk), whoLinks(f, "fifties"), f.sub].join(" &middot; ") : "nothing on record",
+          false, null, f ? "fastFifty" : null);
+      })() +
       statCard("Most 50+ scores",
                topFif ? withUnit(topFif.v, "fifties") : null,
                topFif ? whoLinks(topFif, "fifties") + " &middot; " + (topFif.subCard || topFif.sub) : "nothing on record",
@@ -1886,6 +1892,20 @@ var TOPS = {
       return d.stats.filter(function(s){ return s.innsChaseDone > 0; }).map(function(s){
         return { v:Math.round(s.runsChase / s.innsChaseDone), who:s.real, whoP:[s.name], sub:s.innsChaseDone + " completed innings chasing" };
       });
+    } },
+  fastFifty: { name:"Fastest 50+", sec:"bat", dir:1, dp:1, unit:"strike rate",
+    note:"Every individual 50+ innings, ranked by strike rate (runs per 100 balls). Level strike rates go to the innings that took fewer balls.",
+    tie:function(a,b){ return a.balls - b.balls; },
+    rows:function(d){
+      var out = [];
+      d.stats.forEach(function(s){
+        (s.fifties || []).forEach(function(f){
+          if(!f.counts || !(f.b > 0)) return;
+          out.push({ v: f.r / f.b * 100, balls:f.b, who:s.real, whoP:[s.name], mk:f.mk,
+                     sub: f.r + "(" + f.b + ")" + (f.ign ? " as <b>" + esc(f.ign) + "</b>" : "") });
+        });
+      });
+      return out;
     } },
   mostFifties: { name:"Most 50+ scores", sec:"bat", dir:1, unit:"fifties",
     note:"Per-player count &mdash; each 50+ score belongs to the batter who made it, not to the pair.",
@@ -2410,6 +2430,15 @@ function renderModal(){
              false, null, fifties.length ? "mostFifties" : null) +
     statCard("Highest score", highFifty ? highFifty.r : null,
              highFifty ? "off <b>" + highFifty.b + "</b> balls in " + matchLink(highFifty.mk) : "no fifty on record", false) +
+    (function(){
+      var ok = fifties.filter(function(f){ return f.b > 0; });
+      var q = ok.length ? ok.reduce(function(a, f){
+        var sa = a.r / a.b, sf = f.r / f.b;
+        return sf > sa || (sf === sa && f.b < a.b) ? f : a;
+      }, ok[0]) : null;
+      return statCard("Fastest 50+", q ? withUnit((q.r / q.b * 100).toFixed(1), "strike rate") : null,
+               q ? q.r + "(" + q.b + ") in " + matchLink(q.mk) : "no fifty on record", false, null, q ? "fastFifty" : null);
+    })() +
   '</div>';
 
   if(fifties.length){
