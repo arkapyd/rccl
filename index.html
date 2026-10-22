@@ -483,6 +483,7 @@ select:disabled{opacity:.55}
 .golink:hover,.golink:focus-visible{color:var(--gold);text-decoration-color:rgba(255,228,99,.65)}
 .mlist .d .golink{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
 .log .won{font-weight:700;color:var(--gold)}
+.log .role{font-size:12.5px;font-style:italic;color:var(--lilac-dim);margin-left:-12px;white-space:nowrap}
 .log .verb{font-family:'Teko',sans-serif;font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--lilac-dim)}
 .log .lost{color:var(--lilac)}
 .log .tools{margin-left:auto;display:flex;gap:4px;align-items:center}
@@ -2672,6 +2673,8 @@ function logRow(m){
     '<span class="day">' + (fmt(m.d) || "—") + '</span>' +
     '<div class="line">' +
       '<span class="won">' + plinks(m.w, "matches") + '</span>' +
+      // winners' innings role sits between the names: "A & B, batting first, beat C & D"
+      (m.bf ? '<span class="role">' + ', ' + (m.bf === "w" ? "batting first" : "chasing") + ',</span>' : '') +
       '<span class="verb">beat</span>' +
       '<span class="lost">' + plinks(m.l, "matches") + '</span>' +
       (m.isFinal ? '<span class="sotag">Final</span>' : '') +
