@@ -1634,7 +1634,9 @@ function leagueRecords(ms){
   function pair(key, side){
     if(!R.pairs[key]) R.pairs[key] = {
       names: side.map(realName).join(" & "), hs: side.slice(), w:0, l:0, run:0, best:0, lastDay:"",
-      batRuns:0, batBalls:0, batInns:0, bowlRuns:0, bowlBalls:0, bowlWkts:0, bowlInns:0
+      batRuns:0, batBalls:0, batInns:0, bowlRuns:0, bowlBalls:0, bowlWkts:0, bowlInns:0,
+      // innings splits: r = runs, n = completed innings (the divisor, as in a batting average)
+      setF:{ r:0, n:0 }, chase:{ r:0, n:0 }, concF:{ r:0, n:0 }, concD:{ r:0, n:0 }
     };
     return R.pairs[key];
   }
@@ -1679,6 +1681,23 @@ function leagueRecords(ms){
 
     if(mt.sow && mt.sol) R.so++;
     if(mt.ff) R.ff++;
+
+    // Pair averages by innings order. A forfeited innings adds its runs but
+    // never counts as completed, exactly like the per-player averages.
+    if(mt.bf && has(mt.sw) && has(mt.sl)){
+      var firstSc = mt.bf === "w" ? mt.sw : mt.sl, chaseSc = mt.bf === "w" ? mt.sl : mt.sw;
+      var firstKey = mt.bf === "w" ? wKey : lKey, chaseKey = mt.bf === "w" ? lKey : wKey;
+      var firstDone = !mt.ff && battingComplete(firstSc, false);
+      var chaseDone = !mt.ff && battingComplete(chaseSc, mt.bf === "l");
+      var add = function(key, slot, sc, done){
+        if(!key) return;
+        var b = R.pairs[key][slot]; b.r += sc.r; if(done) b.n++;
+      };
+      add(firstKey, "setF",  firstSc, firstDone);   // batting first
+      add(chaseKey, "chase", chaseSc, chaseDone);   // chasing
+      add(chaseKey, "concF", firstSc, firstDone);   // conceded bowling first
+      add(firstKey, "concD", chaseSc, chaseDone);   // conceded defending
+    }
     if(mt.dls) R.dls++;
 
     if(mt.bf){
@@ -1808,6 +1827,7 @@ var TOP_SEC = {
   econ:"ball", srate:"ball", defended:"first",
   winRuns:"margins", winWkts:"margins", thinRuns:"margins", thinWkts:"margins",
   pairPcw:"alongside", pairWins:"alongside", pairStreak:"alongside", pairPlayed:"alongside",
+  pairSetF:"alongside", pairChase:"alongside", pairConcF:"alongside", pairConcD:"alongside",
   batFirstAvg:"first", chaseAvg:"chase", mostFifties:"fifties", fastFifty:"fifties"
 };
 function whoLinks(e, sec){
@@ -1889,7 +1909,13 @@ function highsBlock(key, d){
              null, d.streak ? "pairStreak" : null) +
     statCard("Most played pairing", m ? m.n : null,
              m ? plinks(m.hs, "alongside") + " &middot; " + m.w + "&ndash;" + m.l : "nothing on record", false,
-             null, m ? "pairPlayed" : null);
+             null, m ? "pairPlayed" : null) +
+    ["pairSetF","pairChase","pairConcF","pairConcD"].map(function(k){
+      var e = topEntries(k, d)[0];
+      return statCard(TOPS[k].name, e ? withUnit(e.v.toFixed(1), "per innings") : null,
+        e ? plinks(e.whoP, "alongside") + " &middot; " + e.sub : "needs a completed innings with the order recorded",
+        false, null, e ? k : null);
+    }).join("");
 }
 
 function highsFace(key, d){
@@ -1912,6 +1938,13 @@ function highsFace(key, d){
 }
 
 /* ───────── the list behind each record ───────── */
+function pairSplit(d, slot, what){
+  return d.pairs.filter(function(p){ return p[slot] && p[slot].n > 0; }).map(function(p){
+    var b = p[slot];
+    return { v: b.r / b.n, who:p.names, whoP:p.hs,
+             sub: b.r + " in " + b.n + " completed innings " + what, n:b.n };
+  });
+}
 function pairRow(p, v){
   return { v:v, who:p.names, whoP:p.hs, sub:p.w + "&ndash;" + p.l + " from " + p.n + " together" };
 }
@@ -1936,6 +1969,18 @@ var TOPS = {
               rows:function(d){ return d.pairs.filter(function(p){ return p.best > 0; }).map(function(p){ return pairRow(p, p.best); }); } },
   pairPlayed:{ name:"Most played pairing", sec:"pairs", dir:1, unit:"matches",
               rows:function(d){ return d.pairs.filter(function(p){ return p.n > 0; }).map(function(p){ return pairRow(p, p.n); }); } },
+  pairSetF:  { name:"Average batting first", sec:"pairs", dir: 1, dp:1, tie:function(a,b){ return b.n - a.n; }, unit:"runs per innings",
+               note:"Runs the pair scored when batting first, divided by their completed first innings (all out, or the full overs).",
+               rows:function(d){ return pairSplit(d, "setF", "batting first"); } },
+  pairChase: { name:"Average chasing", sec:"pairs", dir: 1, dp:1, tie:function(a,b){ return b.n - a.n; }, unit:"runs per innings",
+               note:"Runs the pair scored when chasing, divided by their completed chases (won, all out, or the full overs).",
+               rows:function(d){ return pairSplit(d, "chase", "chasing"); } },
+  pairConcF: { name:"Fewest conceded bowling first", sec:"pairs", dir:-1, dp:1, tie:function(a,b){ return b.n - a.n; }, unit:"runs per innings",
+               note:"Runs the pair gave away when they bowled first, divided by the completed innings they bowled at. Lower is better.",
+               rows:function(d){ return pairSplit(d, "concF", "bowling first"); } },
+  pairConcD: { name:"Fewest conceded defending", sec:"pairs", dir:-1, dp:1, tie:function(a,b){ return b.n - a.n; }, unit:"runs per innings",
+               note:"Runs the pair gave away while defending a total, divided by the completed chases against them. Lower is better.",
+               rows:function(d){ return pairSplit(d, "concD", "defending"); } },
   batFirstAvg: { name:"Batting-first average", sec:"bat", dir:1, unit:"runs per innings",
     note:"Per-player figure &mdash; duo totals from every innings this player batted first in, divided by that player&rsquo;s own completed innings.",
     rows:function(d){
