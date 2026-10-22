@@ -1573,10 +1573,12 @@ function oversText(balls){
   return Math.floor(balls / 6) + (balls % 6 ? "." + (balls % 6) : "");
 }
 function ovDec(o){ return toBalls(o) / 6; }
+// "/4" for wickets down, "all out" once all ten have fallen.
+function wktTxt(k){ return k === 10 ? " all out" : "/" + k; }
 function scoreTail(sc){
   if(!has(sc)) return "";
   var t = "";
-  if(sc.k !== undefined && sc.k !== null) t += "/" + sc.k;
+  if(sc.k !== undefined && sc.k !== null) t += wktTxt(sc.k);
   if(sc.o !== undefined && sc.o !== null) t += " (" + sc.o + ")";
   return t;
 }
@@ -2625,7 +2627,7 @@ document.addEventListener("keydown", function(e){
 function innings(sc){
   if(!has(sc)) return "";
   var s = "<b>" + sc.r + "</b>";
-  if(sc.k !== null && sc.k !== undefined) s += "/" + sc.k;
+  if(sc.k !== null && sc.k !== undefined) s += wktTxt(sc.k);
   if(sc.o !== null && sc.o !== undefined) s += " (" + sc.o + ")";
   return s;
 }
@@ -3153,7 +3155,7 @@ function refreshDls(){
       : v.side === "first" ? "<b>" + firstName + "</b> held on &mdash; the chase fell short."
       : "Play the chase, then come back here to save.";
     outEl.innerHTML = '<span class="par">Target ' + v.target + '</span>' +
-      '<b>' + firstName + '</b> were <b>' + v.firstRuns + '/' + v.firstWkts + '</b> after <b>' + v.facedTxt +
+      '<b>' + firstName + '</b> were <b>' + v.firstRuns + wktTxt(v.firstWkts) + '</b> after <b>' + v.facedTxt +
       '</b> ov when the innings was cut short. Scaled to a full <b>' + MATCH_OVERS + '</b>-over chase, <b>' + chaseName +
       '</b> need <b>' + v.target + '</b>. ' + call + tail;
     applyEl.hidden = (v.side === null || v.side === "tie");
@@ -3163,9 +3165,9 @@ function refreshDls(){
       : "<b>" + firstName + "</b> hold on &mdash; the chase is short of par.";
     outEl.innerHTML = '<span class="par">Par ' + v.par + '</span>' +
       (v.mode === "both"
-        ? '<b>' + firstName + '</b> were <b>' + v.firstRuns + '/' + v.firstWkts + '</b> after <b>' + v.facedTxtFirst + '</b> ov; '
+        ? '<b>' + firstName + '</b> were <b>' + v.firstRuns + wktTxt(v.firstWkts) + '</b> after <b>' + v.facedTxtFirst + '</b> ov; '
         : '') +
-      chaseName + ' were <b>' + v.chaseRuns + '/' + v.wkts + '</b> after <b>' + v.facedTxt + '</b> ov' +
+      chaseName + ' were <b>' + v.chaseRuns + wktTxt(v.wkts) + '</b> after <b>' + v.facedTxt + '</b> ov' +
       (v.mode === "both" ? '' : ', chasing ' + v.firstRuns) + '. ' + line + tail;
     applyEl.hidden = (v.side === "tie");
   }
