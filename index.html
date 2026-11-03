@@ -363,6 +363,9 @@ select:disabled{opacity:.55}
 .rtag:hover{border-color:var(--gold)}
 .rtag:hover b{color:var(--gold)}
 .calist{margin-top:10px}
+.delrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.delrow select{flex:1 1 260px;padding:9px 10px;font-size:14px;min-width:0}
+.delrow .btn{padding:10px 14px}
 @media (max-width:680px){.addrow{grid-template-columns:1fr 1fr}.addrow .field:first-child{grid-column:1/-1}.addrow.pl{grid-template-columns:1fr 1fr}.addrow.pl .btn{grid-column:1/-1}}
 
 /* ---------------- cycle admin ---------------- */
@@ -3404,22 +3407,33 @@ function commit(forced, dlsInfo){
   }
 }
 
-function removeMatch(mk){
-  var m = S.byKey[mk]; if(!m) return;
-  var what = m.isFinal ? "the " + cyc(m.c).name + " final" : mLabel(m) + " (" + cyc(m.c).name + ")";
-  if(!window.confirm("Remove " + what + "? This can't be undone.")) return;
-  if(S.editing === mk) S.editing = null;
-  if(S.fb && (m.isFinal || isRemote(m.id))){
-    var patch = {};
-    if(m.isFinal){ patch[m.c + "/final"] = null; patch[m.c + "/proof/final"] = null; }
-    else         { patch[m.c + "/matches/" + m.id] = null; patch[m.c + "/proof/" + m.id] = null; }
-    writeRoot(patch).catch(function(e){ say("Could not remove that result: " + (e.code || e.message), true); });
-  } else {
+// Delete any set of matches/finals in one write. No confirmation here:
+// callers ask first. Returns a promise so the admin panel can report back.
+function deleteMatches(keys){
+  var ms = keys.map(function(k){ return S.byKey[k]; }).filter(Boolean);
+  if(!ms.length) return Promise.resolve(0);
+  if(ms.some(function(m){ return m.key === S.editing; })) S.editing = null;
+  var remote = ms.filter(function(m){ return S.fb && (m.isFinal || isRemote(m.id)); });
+  ms.forEach(function(m){                      // local copies go straight away
+    if(remote.indexOf(m) >= 0) return;
     var d = dataOf(m.c);
     if(m.isFinal) d.final = null;
     else d.matches = d.matches.filter(function(x){ return x.id !== m.id; });
-    render();
-  }
+  });
+  if(!remote.length){ render(); return Promise.resolve(ms.length); }
+  var patch = {};
+  remote.forEach(function(m){
+    if(m.isFinal){ patch[m.c + "/final"] = null; patch[m.c + "/proof/final"] = null; }
+    else         { patch[m.c + "/matches/" + m.id] = null; patch[m.c + "/proof/" + m.id] = null; }
+  });
+  return writeRoot(patch).then(function(){ render(); return ms.length; });
+}
+function matchWhat(m){ return m.isFinal ? "the " + cyc(m.c).name + " final" : mLabel(m) + " (" + cyc(m.c).name + ")"; }
+
+function removeMatch(mk){
+  var m = S.byKey[mk]; if(!m) return;
+  if(!window.confirm("Remove " + matchWhat(m) + "? This can't be undone.")) return;
+  deleteMatches([mk]).catch(function(e){ say("Could not remove that result: " + dbErr(e), true); });
 }
 
 /* ───────── cycle admin ───────── */
@@ -3526,7 +3540,52 @@ function renderCycleAdmin(){
         '</div>';
       }).join("") + '</div>' +
     '</div>' +
+    // ── match data
+    '<div class="adblock">' +
+      '<div class="cahead"><h3>Match data</h3></div>' +
+      '<p class="why">Deleting is permanent and updates every table, record and career at once. Hand-kept league records stay, just without the match link.</p>' +
+      '<div class="delrow">' +
+        '<select id="mdSel" aria-label="Match to delete"><option value="">Pick a match or final&hellip;</option>' + matchOptions() + '</select>' +
+        '<button class="btn quiet danger" id="mdDel" type="button">Delete match</button>' +
+      '</div>' +
+      '<div class="delrow">' +
+        '<select id="mdCyc" aria-label="Cycle">' + S.cycles.slice().reverse().map(function(c){
+          return '<option value="' + esc(c.id) + '">' + esc(c.name) + ' &middot; ' + matchesWord(c.matches.length) + (c.final ? ' + final' : '') + '</option>';
+        }).join("") + '</select>' +
+        '<button class="btn quiet danger" id="mdFin" type="button">Delete final</button>' +
+        '<button class="btn quiet danger" id="mdClr" type="button">Clear whole cycle</button>' +
+      '</div>' +
+    '</div>' +
     '<div class="flash" id="caFlash"></div>';
+
+  // match data
+  $("mdDel").onclick = function(){
+    var m = S.byKey[$("mdSel").value];
+    if(!m){ caSay("Pick a match first.", true); return; }
+    var what = matchWhat(m);
+    if(!window.confirm("Delete " + what + "? This can't be undone.")) return;
+    deleteMatches([m.key]).then(function(){ caSay("Deleted " + what + "."); })
+      .catch(function(e){ caSay(dbErr(e), true); });
+  };
+  $("mdFin").onclick = function(){
+    var c = cyc($("mdCyc").value); if(!c) return;
+    if(!c.final){ caSay(c.name + " has no final logged.", true); return; }
+    if(!window.confirm("Delete the " + c.name + " final? The cycle goes back to final pending.")) return;
+    deleteMatches([c.final.key]).then(function(){ caSay("Deleted the " + c.name + " final."); })
+      .catch(function(e){ caSay(dbErr(e), true); });
+  };
+  $("mdClr").onclick = function(){
+    var c = cyc($("mdCyc").value); if(!c) return;
+    var keys = c.matches.map(function(m){ return m.key; });
+    if(c.final) keys.push(c.final.key);
+    if(!keys.length){ caSay(c.name + " has nothing to clear.", true); return; }
+    var typed = window.prompt("This deletes all " + matchesWord(c.matches.length) + (c.final ? " and the final" : "") +
+      " in " + c.name + ". The cycle itself stays.\n\nType the cycle name to confirm:");
+    if(typed === null) return;
+    if(typed.trim().toLowerCase() !== c.name.toLowerCase()){ caSay("Name didn\u2019t match \u2014 nothing deleted.", true); return; }
+    deleteMatches(keys).then(function(n){ caSay("Cleared " + c.name + ": " + n + " deleted."); })
+      .catch(function(e){ caSay(dbErr(e), true); });
+  };
 
   // players
   var syncBtn = function(){
