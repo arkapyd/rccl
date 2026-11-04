@@ -641,6 +641,8 @@ footer img{width:26px;height:auto;opacity:.7}
 .mlistwrap .mlist li:first-child{border-top:0;padding-top:0}
 .mlist .d{flex:0 0 auto;min-width:74px;font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--lilac-dim)}
 .mlist .res{font-family:'Teko',sans-serif;font-size:16px;font-weight:700;letter-spacing:.08em;flex:0 0 42px}
+.mlist .res.fsc{flex:0 0 auto;min-width:74px;white-space:nowrap}
+.mlist .res .fbl{color:var(--lilac);font-weight:600}
 .mlist .res.w{color:var(--gold)}
 .mlist .res.l{color:var(--lilac-dim)}
 .mlist .vs{color:var(--lilac)}
@@ -2601,13 +2603,11 @@ function renderModal(){
   if(fifties.length){
     html += sectionTitle("50+ scores", "solo") + '<ul class="mlist">' +
       fifties.slice().sort(function(a,b){ return b.r - a.r; }).map(function(f){
-        var sr = f.b > 0 ? (f.r / f.b * 100).toFixed(1) : null;
         return '<li><span class="d">' + matchLink(f.mk) + '</span>' +
-          '<span class="res w">' + runsTxt(f) + '</span>' +
-          (f.no ? '<span class="by">not out</span>' : '') +
+          // 67* (53) as Shoaib Malik with Neil v Arka & Girija
+          '<span class="res w fsc">' + runsTxt(f) + ' <span class="fbl">(' + f.b + ')</span></span>' +
           (f.ign ? '<span class="ign">as <b>' + esc(f.ign) + '</b></span>' : '') +
-          '<span class="vs">off <b>' + f.b + '</b> balls' + (sr ? ' &middot; SR ' + sr : '') +
-            ' &middot; with <b>' + plink(f.mate, "fifties") + '</b> v ' + plinks(f.foes, "fifties") + '</span></li>';
+          '<span class="vs">with <b>' + plink(f.mate, "fifties") + '</b> v ' + plinks(f.foes, "fifties") + '</span></li>';
       }).join("") + '</ul>';
   }
 
