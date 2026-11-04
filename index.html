@@ -577,9 +577,7 @@ footer img{width:26px;height:auto;opacity:.7}
 .mnote em{font-style:normal;color:var(--gold);font-weight:700}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(142px,1fr));gap:9px;margin-bottom:22px}
 @media (min-width:640px){
-  .stats-bat{grid-template-columns:repeat(6, minmax(0, 1fr))}
-  .stats-bat > .stat:nth-child(1),.stats-bat > .stat:nth-child(2){grid-column:span 3}
-  .stats-bat > .stat:nth-child(3),.stats-bat > .stat:nth-child(4),.stats-bat > .stat:nth-child(5){grid-column:span 2}
+  .stats-bat{grid-template-columns:repeat(3, minmax(0, 1fr))}   /* six cards: two even rows of three */
 }
 .stat{border:1px solid var(--hair-soft);border-radius:2px;padding:11px 13px;display:flex;flex-direction:column}
 .stat.lead{border-color:var(--gold);background:rgba(255,228,99,.07)}
@@ -588,6 +586,9 @@ footer img{width:26px;height:auto;opacity:.7}
 .stat b .sfx{font-family:'Teko',sans-serif;font-style:normal;font-weight:600;font-size:.58em;color:var(--lilac-dim);margin-left:4px;letter-spacing:.01em;white-space:nowrap}
 .stat.lead b{color:var(--gold)}
 .stat i{font-style:normal;display:block;font-size:11px;color:var(--lilac);margin-top:3px}
+.stat{min-width:0}
+@media (max-width:520px){.stat b .sfx{white-space:normal}}
+.stat i b{display:inline;font-family:inherit;font-size:inherit;font-weight:700;line-height:inherit;color:var(--white)}
 .stat.ref{border-style:dashed;border-color:var(--hair);background:rgba(255,255,255,.03)}
 .stat.ref b{color:var(--lilac)}
 .stat u{display:inline-block;margin-top:auto;padding-top:9px;text-decoration:none;font-size:8px;font-weight:800;letter-spacing:.12em;color:var(--gold)}
@@ -639,6 +640,10 @@ footer img{width:26px;height:auto;opacity:.7}
 .mlistwrap::-webkit-scrollbar-thumb{background:rgba(240,200,120,.45);border:0;border-radius:99px}
 .mlistwrap::-webkit-scrollbar-thumb:hover{background:var(--bronze-lit)}
 .mlistwrap .mlist li:first-child{border-top:0;padding-top:0}
+.fiftywrap{overflow-y:auto;overscroll-behavior:contain;margin-bottom:22px;scrollbar-width:thin;scrollbar-color:rgba(240,200,120,.45) transparent}
+.fiftywrap::-webkit-scrollbar{width:6px}
+.fiftywrap::-webkit-scrollbar-track{background:transparent;border:0}
+.fiftywrap::-webkit-scrollbar-thumb{background:rgba(240,200,120,.45);border:0;border-radius:99px}
 .mlist .d{flex:0 0 auto;min-width:74px;font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--lilac-dim)}
 .mlist .res{font-family:'Teko',sans-serif;font-size:16px;font-weight:700;letter-spacing:.08em;flex:0 0 42px}
 .mlist .res.fsc{flex:0 0 auto;min-width:74px;white-space:nowrap}
@@ -2481,7 +2486,7 @@ function cycleTable(name){
 }
 
 function renderModal(){
-  if(S.openHundreds){ renderHundredsModal(); return; }
+  if(S.openHundreds){ if(S.openHundreds === "unbeaten") renderUnbeatenModal(); else renderHundredsModal(); return; }
   if(S.openTop){ renderTopModal(S.openTop); return; }
   if(S.openHighs){ renderHighsModal(S.openHighs); return; }
   if(!S.openPlayer){ $("modal").hidden = true; return; }
@@ -2501,7 +2506,7 @@ function renderModal(){
     '</div>';
 
   if(S.backTo){
-    var bk = S.backTo, bl = bk.type === "hundreds" ? "Most hundreds" :
+    var bk = S.backTo, bl = bk.type === "hundreds" ? (bk.kind === "unbeaten" ? "Highest unbeaten score" : "Most hundreds") :
              bk.type === "top" ? (TOPS[bk.key] || {}).name : (HIGHS.filter(function(h){ return h.key === bk.key; })[0] || {}).name;
     if(bl) html += '<div class="backbar"><button class="chip" type="button" data-back="1">&lsaquo; ' + esc(bl) + '</button></div>';
   }
@@ -2601,14 +2606,14 @@ function renderModal(){
   '</div>';
 
   if(fifties.length){
-    html += sectionTitle("50+ scores", "solo") + '<ul class="mlist">' +
+    html += sectionTitle("50+ scores", "solo") + '<div class="fiftywrap"><ul class="mlist">' +
       fifties.slice().sort(function(a,b){ return b.r - a.r; }).map(function(f){
         return '<li><span class="d">' + matchLink(f.mk) + '</span>' +
           // 67* (53) as Shoaib Malik with Neil v Arka & Girija
           '<span class="res w fsc">' + runsTxt(f) + ' <span class="fbl">(' + f.b + ')</span></span>' +
           (f.ign ? '<span class="ign">as <b>' + esc(f.ign) + '</b></span>' : '') +
           '<span class="vs">with <b>' + plink(f.mate, "fifties") + '</b> v ' + plinks(f.foes, "fifties") + '</span></li>';
-      }).join("") + '</ul>';
+      }).join("") + '</ul></div>';
   }
 
   // hand-kept league records this player holds now, or held before
@@ -2616,8 +2621,15 @@ function renderModal(){
     var all = [g.cur].concat(g.past).filter(function(r){ return (r.by || []).indexOf(s.name) >= 0; });
     return all.length ? { g:g, now: (g.cur.by || []).indexOf(s.name) >= 0, best: all[0] } : null;
   }).filter(Boolean);
-  if(mine.length){
-    html += sectionTitle("League records", "solo", "Records") + '<ul class="mlist">' + mine.map(function(x){
+  var autoHeld = [];
+  var ub = unbeatenAll()[0];
+  if(ub && ub.p === s.name) autoHeld.push('<li><span class="res w">HOLDS</span><span class="vs"><b>Highest unbeaten score</b> &middot; ' +
+    esc(tonText(ub)) + '</span><span class="sc2">' + fullMatchLink(ub.mk) + '</span></li>');
+  var hr = hundredsAll(), hTop = hr.length ? hr[0].list.length : 0;
+  hr.forEach(function(r){ if(r.p === s.name && r.list.length === hTop) autoHeld.push('<li><span class="res w">HOLDS</span><span class="vs"><b>Most hundreds</b> &middot; ' +
+    hTop + '</span><span class="sc2">all-time</span></li>'); });
+  if(mine.length || autoHeld.length){
+    html += sectionTitle("League records", "solo", "Records") + '<ul class="mlist">' + autoHeld.join("") + mine.map(function(x){
       var r = x.best, mate = (r.by || []).filter(function(h){ return h !== s.name; })[0];
       return '<li><span class="res ' + (x.now ? 'w' : 'l') + '">' + (x.now ? 'HOLDS' : 'HELD') + '</span>' +
         '<span class="vs"><b>' + esc(x.g.title) + '</b> &middot; ' + esc(r.v) + (mate ? ' &middot; with ' + plink(mate, "records") : '') + '</span>' +
@@ -2645,6 +2657,8 @@ function renderModal(){
   bindTopLinks($("modalBody"), s.name);
   bindCycleLinks($("modalBody"), s.name);
   sizeMatchWindow();
+  var fw = $("modalBody").querySelector(".fiftywrap");   // five 50+ scores in view, the rest scroll
+  if(fw) sizeScrollWindow(fw, fw.querySelector(".mlist"), 5);
   scrollToSection();
 }
 
@@ -2674,7 +2688,7 @@ function bindCycleLinks(root, name){
 
 function openPlayer(name, sec){
   // remember the list we came from, so the dossier can offer a way back
-  S.backTo = S.openHundreds ? { type:"hundreds" } :
+  S.backTo = S.openHundreds ? { type:"hundreds", kind:S.openHundreds } :
              S.openTop ? { type:"top", key:S.openTop } : (S.openHighs ? { type:"highs", key:S.openHighs } : null);
   S.openHundreds = null;
   S.openPlayer = name; S.openHighs = null; S.openTop = null; S.topFromPlayer = null;
@@ -2703,7 +2717,7 @@ document.addEventListener("click", function(ev){
   var back = t.closest("[data-back]");
   if(back && S.backTo){
     var b = S.backTo;
-    if(b.type === "hundreds") openHundreds(); else if(b.type === "top") openTop(b.key); else openHighs(b.key);
+    if(b.type === "hundreds") openHundreds(b.kind); else if(b.type === "top") openTop(b.key); else openHighs(b.key);
     return;
   }
   var pl = t.closest("[data-pl]");
@@ -3712,11 +3726,15 @@ function renderCycleAdmin(){
    Each entry is one record set in one match. Entries sharing a title form
    that record's history; the newest entry is the standing record. */
 function recTitleKey(t){ return String(t || "").trim().toLowerCase(); }
+// Hand-kept titles now tracked automatically; entries under them stay in the
+// database but are no longer shown.
+var AUTO_RECORDS = ["highest unbeaten score"];
 function recordGroups(){
   var g = {};
   Object.keys(S.records).forEach(function(id){
     var r = S.records[id]; if(!r || !r.t) return;
     var k = recTitleKey(r.t);
+    if(AUTO_RECORDS.indexOf(k) >= 0) return;
     (g[k] = g[k] || []).push(Object.assign({ id:id }, r));
   });
   return Object.keys(g).map(function(k){
@@ -3759,6 +3777,57 @@ function fullMatchLink(mk){
     (m.isFinal ? 'Final' : '#' + m.no) + '</button>';
 }
 
+/* Highest unbeaten score: every 50+ innings marked not out, across every
+   cycle. Fewer balls breaks a tie. */
+function unbeatenAll(){
+  var out = [];
+  S.cycles.forEach(function(c){
+    var ms = c.matches.filter(function(m){ return m.counts; });
+    if(c.final) ms.push(c.final);
+    ms.forEach(function(m){
+      (m.fifties || []).forEach(function(f){
+        if(!f.no) return;
+        out.push({ p:f.p, r:f.r, b:f.b, no:true, mk:m.key, d:m.d || "", ign:f.ign || "" });
+      });
+    });
+  });
+  return out.sort(function(a,b){ return b.r - a.r || a.b - b.b || a.d.localeCompare(b.d); });
+}
+function unbeatenTile(){
+  var top = unbeatenAll()[0];
+  return '<div class="rcard rauto" id="unbeatenTile" role="button" tabindex="0" title="Open the top ' + TOP_N + '">' +
+    '<span class="rt">Highest unbeaten score</span>' +
+    '<span class="rv">' + (top ? esc(runsTxt(top)) : "&mdash;") + '</span>' +
+    '<span class="rh">' + (top ? plink(top.p, "fifties") + '<span class="kind">Individual</span>'
+                               : '<span class="kind" style="margin:0">No unbeaten 50+ yet</span>') + '</span>' +
+    '<span class="rm">' + (top ? fullMatchLink(top.mk) + (top.d ? ' &middot; ' + fmt(top.d) : '') : 'All-time &middot; updates itself') +
+      '<span class="rgo">Top ' + TOP_N + ' &rsaquo;</span></span>' +
+  '</div>';
+}
+function renderUnbeatenModal(){
+  var all = unbeatenAll(), rows = all.slice(0, TOP_N);
+  $("modal").hidden = false;
+  var html = '<div class="mhead">' +
+    '<div><h3 class="mhandle" id="mHandle">Highest unbeaten score</h3>' +
+    '<p class="mreal">All-time league &middot; League records &middot; top ' + TOP_N + '</p></div>' +
+    '<div class="mrec"><b>' + all.length + '</b><span>unbeaten 50+ ' + (all.length === 1 ? "innings" : "innings") + '</span></div>' +
+  '</div>' +
+  '<p class="mnote">Every 50+ innings marked <b>not out</b>, across every cycle. Level scores go to the innings that took fewer balls. Scores read <b>runs (balls faced)</b>.</p>';
+  html += rows.length
+    ? '<ol class="tlist">' + rows.map(function(x, i){
+        return '<li><span class="tr">' + (i + 1) + '</span>' +
+          '<span class="tv">' + esc(runsTxt(x)) + '<em class="sfx">(' + x.b + ')</em></span>' +
+          '<span class="tw"><b class="nm">' + plink(x.p, "fifties") + '</b>' +
+            '<span class="rt">' + (x.ign ? 'as <b>' + esc(x.ign) + '</b> &middot; ' : '') + 'in ' + fullMatchLink(x.mk) +
+              (x.d ? ' &middot; ' + fmt(x.d) : '') + '</span></span></li>';
+      }).join("") + '</ol>'
+    : '<div class="mnone">No unbeaten 50+ yet. Mark a 50+ score <b>Not out</b> when logging a match and it lands here.</div>';
+  $("modalBody").innerHTML = html;
+  bindGoLinks($("modalBody"));
+  alignTlists($("modalBody"));
+  resetModalScroll();
+}
+
 function hundredsTile(){
   var rows = hundredsAll(), top = rows.length ? rows[0].list.length : 0;
   var leaders = rows.filter(function(r){ return r.list.length === top; });
@@ -3798,20 +3867,20 @@ function renderHundredsModal(){
   if(tw) sizeScrollWindow(tw, tw.querySelector(".tlist"), TOP_N);
   resetModalScroll();
 }
-function openHundreds(){
+function openHundreds(kind){
   S.backTo = null; S.resetScroll = true;
-  S.openHundreds = true; S.openPlayer = null; S.openHighs = null; S.openTop = null; S.topFromPlayer = null;
+  S.openHundreds = kind || "hundreds"; S.openPlayer = null; S.openHighs = null; S.openTop = null; S.topFromPlayer = null;
   renderModal(); $("modalX").focus();
 }
 
 function renderRecords(){
   var groups = recordGroups();
-  $("recordsAside").textContent = groups.length ? groups.length + " record" + (groups.length === 1 ? "" : "s") : "Kept by hand";
+  $("recordsAside").textContent = (groups.length + 2) + " records";
   if(!groups.length){
     $("records").innerHTML = '<div class="recempty">No league records yet.' +
-      (S.unlocked ? ' Add the first one above.' : ' Records are added by the admin as they fall.') + '</div>' + hundredsTile();
+      (S.unlocked ? ' Add the first one above.' : ' Records are added by the admin as they fall.') + '</div>' + unbeatenTile() + hundredsTile();
   } else {
-    $("records").innerHTML = groups.map(function(g){
+    var cards = groups.map(function(g){
       var r = g.cur;
       var tools = function(x){
         return S.unlocked ? '<span class="rtools"><button type="button" data-redit="' + esc(x.id) + '">Edit</button>' +
@@ -3828,14 +3897,18 @@ function renderRecords(){
             return '<li><b>' + esc(x.v) + '</b>' + recHolders(x) + '<span>' + recWhere(x) + '</span>' + tools(x) + '</li>';
           }).join("") + '</ul></details>' : '') +
       '</div>';
-    }).join("") + hundredsTile();
+    });
+    // slot the automatic tile in among the hand-kept ones, by title
+    var slot = groups.filter(function(g){ return g.title.localeCompare("Highest unbeaten score") < 0; }).length;
+    cards.splice(slot, 0, unbeatenTile());
+    $("records").innerHTML = cards.join("") + hundredsTile();
   }
   bindGoLinks($("records"));
-  var tile = $("hundredsTile");
-  if(tile){
-    tile.onclick = function(ev){ if(ev.target.closest(".plink, .golink")) return; openHundreds(); };
-    tile.onkeydown = function(ev){ if(ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); openHundreds(); } };
-  }
+  [["hundredsTile","hundreds"],["unbeatenTile","unbeaten"]].forEach(function(t){
+    var tile = $(t[0]); if(!tile) return;
+    tile.onclick = function(ev){ if(ev.target.closest(".plink, .golink")) return; openHundreds(t[1]); };
+    tile.onkeydown = function(ev){ if(ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); openHundreds(t[1]); } };
+  });
   Array.prototype.forEach.call($("records").querySelectorAll("[data-redit]"), function(b){
     b.onclick = function(){ startRecordEdit(b.dataset.redit); };
   });
