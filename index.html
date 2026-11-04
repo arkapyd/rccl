@@ -599,6 +599,7 @@ footer img{width:26px;height:auto;opacity:.7}
 .tlist li:first-child .tr,.tlist li:first-child .tv{color:var(--gold)}
 .tlist .tw{grid-column:3;grid-row:1;align-self:end;display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 14px}
 .tlist .tw .nm{font-size:13.5px;font-weight:700;color:var(--white)}
+.tlist .tw .nn{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--lilac-dim)}
 .tlist .tw .rt{margin-left:auto;font-size:12px;font-weight:500;color:var(--lilac-dim);text-align:right}
 .tlist .tw .rt b{color:var(--white);font-weight:700}
 .tlist .tc{grid-column:3;grid-row:2;align-self:start;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--lilac-dim)}
@@ -1884,7 +1885,7 @@ function highsBlock(key, d){
           false, null, f ? "fastFifty" : null);
       })() +
       statCard("Most 50+ scores",
-               topFif ? withUnit(topFif.v, "fifties") : null,
+               topFif ? topFif.disp : null,
                topFif ? whoLinks(topFif, "fifties") + " &middot; " + (topFif.subCard || topFif.sub) : "nothing on record",
                false, null, topFif ? "mostFifties" : null);
   }
@@ -2013,8 +2014,8 @@ var TOPS = {
       return out;
     } },
   mostFifties: { name:"Most 50+ scores", sec:"bat", dir:1, unit:"fifties",
-    note:"Per-player count &mdash; each 50+ score belongs to the batter who made it, not to the pair.",
-    tie:function(a,b){ return (b.highScore || 0) - (a.highScore || 0); },
+    note:"Per-player count &mdash; each 50+ score belongs to the batter who made it, not to the pair. Ranked on all 50+ scores together; hundreds are shown separately and break ties.",
+    tie:function(a,b){ return (b.hundreds - a.hundreds) || ((b.highScore || 0) - (a.highScore || 0)); },
     rows:function(d){
       return d.stats.map(function(s){
         var fs = (s.fifties || []).filter(function(f){ return f.counts; });
@@ -2023,7 +2024,9 @@ var TOPS = {
         var core = "highest " + top.r + "(" + top.b + ")" + (top.mk ? " in " + matchLink(top.mk) : "");
         var full = "highest " + top.r + "(" + top.b + ")" + (top.ign ? " as <b>" + esc(top.ign) + "</b>" : "") +
                    (top.mk ? " in " + matchLink(top.mk) : "");
-        return { v:fs.length, who:s.real, whoP:[s.name], sub:full, subCard:core, highScore:top.r };
+        var sp = fiftySplit(fs), played = s.m + s.fp;
+        return { v:sp.total, hundreds:sp.hundreds, disp:fiftyText(sp), who:s.real, whoP:[s.name],
+                 nameNote: matchesWord(played), sub:full, subCard:core, highScore:top.r };
       }).filter(Boolean);
     } }
 };
@@ -2037,7 +2040,20 @@ function topEntries(key, d){
     return x !== 0 ? x : (t.tie ? t.tie(a, b) : 0);
   }).slice(0, TOP_N);
 }
+// 50+ tally split into fifties (50-99) and hundreds (100+).
+function fiftySplit(fs){
+  var h = fs.filter(function(f){ return f.r >= 100; }).length;
+  return { total:fs.length, fifties:fs.length - h, hundreds:h };
+}
+function fiftyText(sp){
+  var bits = [];
+  if(sp.fifties) bits.push(sp.fifties + '<em class="sfx">' + (sp.fifties === 1 ? "fifty" : "fifties") + '</em>');
+  if(sp.hundreds) bits.push(sp.hundreds + '<em class="sfx">' + (sp.hundreds === 1 ? "hundred" : "hundreds") + '</em>');
+  return bits.join(" ");
+}
+
 function topVal(e, t){
+  if(e.disp) return e.disp;
   var v = (t.dp === undefined ? String(e.v) : e.v.toFixed(t.dp));
   if(e.tail) v += '<em class="sfx">' + e.tail + '</em>';
   if(t.unit) v += '<em class="sfx">' + t.unit + '</em>';
@@ -2092,7 +2108,8 @@ function renderTopModal(key){
         var match = e.mk ? matchLink(e.mk) : (e.d || '');
         return '<li><span class="tr">' + (i + 1) + '</span>' +
           '<span class="tv">' + topVal(e, t) + '</span>' +
-          '<span class="tw"><b class="nm">' + whoLinks(e, sec) + '</b>' + (right ? '<span class="rt">' + right + '</span>' : '') + '</span>' +
+          '<span class="tw"><b class="nm">' + whoLinks(e, sec) + '</b>' +
+            (e.nameNote ? '<span class="nn">' + e.nameNote + '</span>' : '') + (right ? '<span class="rt">' + right + '</span>' : '') + '</span>' +
           (match ? '<span class="tc">' + match + '</span>' : '') + '</li>';
       }).join("") + '</ol>'
     : '<div class="mnone">Nothing on record for this one yet.</div>';
@@ -2531,7 +2548,8 @@ function renderModal(){
              s.streak > 0 ? "unbeaten" : (s.streak < 0 ? "on the slide" : "no matches yet"), false) +
     statCard("Longest streak", s.bestStreak || null, "consecutive wins", false) +
     statCard("Titles", s.titles || null, s.fp ? "finals " + s.fw + "&ndash;" + (s.fp - s.fw) : "no final played", s.titles > 0) +
-    statCard("50+ scores", fifties.length || null, fifties.length ? "individual innings past fifty" : "none yet",
+    statCard("50+ scores", fifties.length ? fiftyText(fiftySplit(fifties)) : null,
+             fifties.length ? fifties.length + " individual innings past fifty" : "none yet",
              false, null, fifties.length ? "mostFifties" : null) +
     statCard("Highest score", highFifty ? highFifty.r : null,
              highFifty ? "off <b>" + highFifty.b + "</b> balls in " + matchLink(highFifty.mk) : "no fifty on record", false) +
