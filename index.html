@@ -596,7 +596,12 @@ footer img{width:26px;height:auto;opacity:.7}
 .stat .more{font-style:normal;display:block;margin-top:auto;padding-top:9px;font-size:8px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-dim)}
 .stat.go:hover .more,.stat.go:focus-visible .more{color:var(--gold)}
 .tlist{list-style:none;margin:0 0 22px;padding:0}
-.tlist li{display:grid;grid-template-columns:24px minmax(76px,auto) minmax(0,1fr);column-gap:14px;row-gap:2px;padding:13px 0;border-top:1px solid var(--hair-soft)}
+.tlwrap{overflow-y:auto;overscroll-behavior:contain;margin-bottom:22px;scrollbar-width:thin;scrollbar-color:rgba(240,200,120,.45) transparent}
+.tlwrap .tlist{margin-bottom:0}
+.tlwrap::-webkit-scrollbar{width:6px}
+.tlwrap::-webkit-scrollbar-track{background:transparent;border:0}
+.tlwrap::-webkit-scrollbar-thumb{background:rgba(240,200,120,.45);border:0;border-radius:99px}
+.tlist li{display:grid;grid-template-columns:24px var(--tvw, minmax(76px,auto)) minmax(0,1fr);column-gap:14px;row-gap:2px;padding:13px 0;border-top:1px solid var(--hair-soft)}
 .tlist li:first-child{border-top:0;padding-top:0}
 .tlist .tr{grid-column:1;grid-row:1/3;align-self:center;font-family:'Teko',sans-serif;font-size:15px;font-weight:700;line-height:1;color:var(--frame-lit)}
 .tlist .tv{grid-column:2;grid-row:1/3;align-self:center;font-family:'Teko',sans-serif;font-size:26px;font-weight:700;line-height:1;color:var(--steel-ink);white-space:nowrap}
@@ -2018,7 +2023,7 @@ var TOPS = {
       });
       return out;
     } },
-  mostFifties: { name:"Most 50+ scores", sec:"bat", dir:1, unit:"fifties",
+  mostFifties: { name:"Most 50+ scores", sec:"bat", dir:1, unit:"fifties", all:true,
     note:"Per-player count &mdash; each 50+ score belongs to the batter who made it, not to the pair. Ranked on all 50+ scores together; hundreds are shown separately and break ties.",
     tie:function(a,b){ return (b.hundreds - a.hundreds) || ((b.highScore || 0) - (a.highScore || 0)); },
     rows:function(d){
@@ -2043,7 +2048,7 @@ function topEntries(key, d){
   return arr.slice().sort(function(a,b){
     var x = t.dir > 0 ? b.v - a.v : a.v - b.v;
     return x !== 0 ? x : (t.tie ? t.tie(a, b) : 0);
-  }).slice(0, TOP_N);
+  }).slice(0, t.all ? undefined : TOP_N);
 }
 // 50+ tally split into fifties (50-99) and hundreds (100+).
 function fiftySplit(fs){
@@ -2052,9 +2057,23 @@ function fiftySplit(fs){
 }
 function fiftyText(sp){
   var bits = [];
-  if(sp.fifties) bits.push(sp.fifties + '<em class="sfx">' + (sp.fifties === 1 ? "fifty" : "fifties") + '</em>');
-  if(sp.hundreds) bits.push(sp.hundreds + '<em class="sfx">' + (sp.hundreds === 1 ? "hundred" : "hundreds") + '</em>');
+  if(sp.fifties) bits.push(sp.fifties + '<em class="sfx">' + (sp.fifties === 1 ? "50" : "50s") + '</em>');
+  if(sp.hundreds) bits.push(sp.hundreds + '<em class="sfx">' + (sp.hundreds === 1 ? "100" : "100s") + '</em>');
   return bits.join(" ");
+}
+
+function alignTlists(root){
+  Array.prototype.forEach.call((root || document).querySelectorAll(".tlist"), function(ol){
+    ol.style.removeProperty("--tvw");
+    var w = 0;
+    Array.prototype.forEach.call(ol.querySelectorAll(".tv"), function(v){ w = Math.max(w, v.getBoundingClientRect().width); });
+    if(w) ol.style.setProperty("--tvw", Math.ceil(w) + "px");
+  });
+  // widths change once the display font arrives, so measure again then
+  if(document.fonts && document.fonts.status !== "loaded" && !alignTlists.waiting){
+    alignTlists.waiting = true;
+    document.fonts.ready.then(function(){ alignTlists.waiting = false; alignTlists(root); });
+  }
 }
 
 function topVal(e, t){
@@ -2097,7 +2116,7 @@ function renderTopModal(key){
 
   var html = '<div class="mhead">' +
     '<div><h3 class="mhandle" id="mHandle">' + esc(t.name) + '</h3>' +
-    '<p class="mreal">' + esc(scopeName()) + ' &middot; ' + esc(secName) + ' &middot; top ' + TOP_N + '</p></div>' +
+    '<p class="mreal">' + esc(scopeName()) + ' &middot; ' + esc(secName) + ' &middot; ' + (t.all ? 'everyone' : 'top ' + TOP_N) + '</p></div>' +
     '<div class="mrec"><b>' + list.length + '</b><span>' + (list.length === 1 ? "entry ranked" : "entries ranked") + '</span></div>' +
   '</div>';
 
@@ -2107,7 +2126,7 @@ function renderTopModal(key){
     : 'Every figure here is a <b>duo figure</b> &mdash; not to either player alone.')) + '</p>';
 
   html += list.length
-    ? '<ol class="tlist">' + list.map(function(e, i){
+    ? '<div class="tlwrap"><ol class="tlist">' + list.map(function(e, i){
         var sec = TOP_SEC[key];
         var right = e.foe ? 'v <b>' + (e.foeP ? plinks(e.foeP, sec) : esc(e.foe)) + '</b>' + (e.sub ? ' &middot; ' + e.sub : '') : (e.sub || '');
         var match = e.mk ? matchLink(e.mk) : (e.d || '');
@@ -2116,7 +2135,7 @@ function renderTopModal(key){
           '<span class="tw"><b class="nm">' + whoLinks(e, sec) + '</b>' +
             (e.nameNote ? '<span class="nn">' + e.nameNote + '</span>' : '') + (right ? '<span class="rt">' + right + '</span>' : '') + '</span>' +
           (match ? '<span class="tc">' + match + '</span>' : '') + '</li>';
-      }).join("") + '</ol>'
+      }).join("") + '</ol></div>'
     : '<div class="mnone">Nothing on record for this one yet.</div>';
 
   var backChip = S.topFromPlayer
@@ -2130,6 +2149,9 @@ function renderTopModal(key){
   $("modalBody").innerHTML = html;
   bindGoLinks($("modalBody"));
   bindTopLinks($("modalBody"));
+  alignTlists($("modalBody"));
+  var tw = $("modalBody").querySelector(".tlwrap");    // long lists scroll, five rows in view
+  if(tw) sizeScrollWindow(tw, tw.querySelector(".tlist"), TOP_N);
   resetModalScroll();
 }
 
@@ -2394,7 +2416,7 @@ function statCard(label, value, sub, isBest, cls, top){
     '<s>' + label + '</s><b>' + value + '</b>' +
     (sub ? '<i>' + sub + '</i>' : '') +
     (isBest ? '<u>League best</u>' : '') +
-    (top ? '<em class="more">Top ' + TOP_N + ' &rsaquo;</em>' : '') + '</div>';
+    (top ? '<em class="more">' + (TOPS[top] && TOPS[top].all ? 'Full list' : 'Top ' + TOP_N) + ' &rsaquo;</em>' : '') + '</div>';
 }
 function gap(mine, league){
   if(mine === null || league === null) return "";
@@ -3749,7 +3771,7 @@ function renderHundredsModal(){
   html += rows.length
     ? '<ol class="tlist">' + rows.map(function(r, i){
         return '<li><span class="tr">' + (i + 1) + '</span>' +
-          '<span class="tv">' + r.list.length + '<em class="sfx">' + (r.list.length === 1 ? "hundred" : "hundreds") + '</em></span>' +
+          '<span class="tv">' + r.list.length + '<em class="sfx">' + (r.list.length === 1 ? "100" : "100s") + '</em></span>' +
           '<span class="tw"><b class="nm">' + plink(r.p, "fifties") + '</b>' +
             '<span class="rt">' + r.list.map(function(x){
               return '<b>' + tonText(x) + '</b>' + (x.ign ? ' as ' + esc(x.ign) : '') + ' in ' + fullMatchLink(x.mk);
@@ -3758,6 +3780,9 @@ function renderHundredsModal(){
     : '<div class="mnone">No hundreds yet. The first 100+ logged as a 50+ score lands here.</div>';
   $("modalBody").innerHTML = html;
   bindGoLinks($("modalBody"));
+  alignTlists($("modalBody"));
+  var tw = $("modalBody").querySelector(".tlwrap");    // long lists scroll, five rows in view
+  if(tw) sizeScrollWindow(tw, tw.querySelector(".tlist"), TOP_N);
   resetModalScroll();
 }
 function openHundreds(){
