@@ -404,9 +404,10 @@ select:disabled{opacity:.55}
 .fiftybox h3{margin:0;font-family:'Teko',sans-serif;font-weight:700;font-size:19px;letter-spacing:.08em;text-transform:uppercase;color:var(--bronze-lit);flex:1 1 auto}
 .fiftybox .fifty-sub{font-family:'Manrope',sans-serif;font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--lilac-dim);margin-left:6px}
 .fiftybox .why{font-size:12px;color:var(--lilac-dim);margin:0 0 12px;line-height:1.5;max-width:64ch}
-.fifty{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,0.7fr) minmax(0,0.7fr) 32px;gap:8px;align-items:end;margin-top:8px}
+.fifty{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,0.7fr) minmax(0,0.7fr) auto 32px;gap:8px;align-items:end;margin-top:8px}
 .fifty select.fp{width:100%;font-size:14px;padding:9px 10px}
 .fifty input.fi{width:100%;font-size:14px}
+.fifty .fno{flex:0 0 auto;align-self:end;margin-bottom:3px;padding:9px 10px;white-space:nowrap}
 .fifty .fx{background:none;border:0;color:var(--lilac-dim);font-size:22px;line-height:1;padding:4px 8px;cursor:pointer;border-radius:2px;align-self:end;margin-bottom:5px}
 .fifty .fx:hover{color:var(--gold)}
 #addFifty{padding:8px 12px;font-size:11px}
@@ -414,6 +415,7 @@ select:disabled{opacity:.55}
   .fifty{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 32px}
   .fifty select.fp{grid-column:1/-1}
   .fifty .ign-field{grid-column:1/-1}
+  .fifty .fno{grid-column:1/3}
 }
 
 /* ---------------- highs ---------------- */
@@ -457,7 +459,7 @@ select:disabled{opacity:.55}
 .fanc{position:absolute;top:0;bottom:0;width:var(--fw);z-index:var(--z,1);display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid rgba(201,162,39,.30);border-radius:2px;overflow:hidden;cursor:default;background:linear-gradient(158deg,var(--royal) 0%,var(--royal-panel) 48%,var(--royal-deep) 100%);box-shadow:7px 0 16px rgba(0,0,0,.5);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
 .fanc:hover,.fanc:focus-visible{z-index:30;transform:translateY(-3px);border-color:var(--gold);box-shadow:7px 0 22px rgba(0,0,0,.62),0 0 0 1px rgba(255,228,99,.22);outline:none}
 .fspine{flex:0 0 auto;width:40px;margin-left:auto;display:flex;flex-direction:column;gap:2px;text-align:right}
-.fr{font-family:'Teko',sans-serif;font-size:12px;font-weight:700;line-height:1;color:var(--frame-lit)}
+.fanc .fr{font-family:'Teko',sans-serif;font-size:12px;font-weight:700;line-height:1;color:var(--frame-lit)}
 .fm{font-family:'Teko',sans-serif;font-size:23px;font-weight:700;line-height:1;color:var(--white)}
 .fanc:hover .fm,.fanc:focus-visible .fm{color:var(--gold)}
 .fanc:first-child .fm{color:var(--gold)}
@@ -2018,21 +2020,21 @@ var TOPS = {
         (s.fifties || []).forEach(function(f){
           if(!f.counts || !(f.b > 0)) return;
           out.push({ v: f.r / f.b * 100, balls:f.b, who:s.real, whoP:[s.name], mk:f.mk,
-                     sub: f.r + "(" + f.b + ")" + (f.ign ? " as <b>" + esc(f.ign) + "</b>" : "") });
+                     sub: runsTxt(f) + "(" + f.b + ")" + (f.ign ? " as <b>" + esc(f.ign) + "</b>" : "") });
         });
       });
       return out;
     } },
   mostFifties: { name:"Most 50+ scores", sec:"bat", dir:1, unit:"fifties", all:true,
-    note:"Per-player count &mdash; each 50+ score belongs to the batter who made it, not to the pair. Ranked on all 50+ scores together; hundreds are shown separately and break ties.",
+    note:"Per-player count &mdash; each 50+ score belongs to the batter who made it, not to the pair. Ranked on all 50+ scores together; hundreds are shown separately and break ties. * = not out.",
     tie:function(a,b){ return (b.hundreds - a.hundreds) || ((b.highScore || 0) - (a.highScore || 0)); },
     rows:function(d){
       return d.stats.map(function(s){
         var fs = (s.fifties || []).filter(function(f){ return f.counts; });
         if(!fs.length) return null;
         var top = fs.reduce(function(m, f){ return f.r > m.r ? f : m; }, fs[0]);
-        var core = "highest " + top.r + "(" + top.b + ")" + (top.mk ? " in " + matchLink(top.mk) : "");
-        var full = "highest " + top.r + "(" + top.b + ")" + (top.ign ? " as <b>" + esc(top.ign) + "</b>" : "") +
+        var core = "highest " + runsTxt(top) + "(" + top.b + ")" + (top.mk ? " in " + matchLink(top.mk) : "");
+        var full = "highest " + runsTxt(top) + "(" + top.b + ")" + (top.ign ? " as <b>" + esc(top.ign) + "</b>" : "") +
                    (top.mk ? " in " + matchLink(top.mk) : "");
         var sp = fiftySplit(fs), played = s.m + s.fp;
         return { v:sp.total, hundreds:sp.hundreds, disp:fiftyText(sp), who:s.real, whoP:[s.name],
@@ -2050,6 +2052,9 @@ function topEntries(key, d){
     return x !== 0 ? x : (t.tie ? t.tie(a, b) : 0);
   }).slice(0, t.all ? undefined : TOP_N);
 }
+// A 50+ score as written on a scorecard: 107* when the batter was not out.
+function runsTxt(f){ return f.r + (f.no ? "*" : ""); }
+
 // 50+ tally split into fifties (50-99) and hundreds (100+).
 function fiftySplit(fs){
   var h = fs.filter(function(f){ return f.r >= 100; }).length;
@@ -2366,7 +2371,7 @@ function statsFor(name){
 
     (mt.fifties || []).forEach(function(f){
       if(f.p !== name) return;
-      s.fifties.push({ r:f.r, b:f.b, mate:mate || f.m || "", ign:f.ign || "", mk:mt.key, counts:mt.counts, foes:other.slice() });
+      s.fifties.push({ r:f.r, b:f.b, no: !!f.no, mate:mate || f.m || "", ign:f.ign || "", mk:mt.key, counts:mt.counts, foes:other.slice() });
     });
   });
 
@@ -2580,7 +2585,7 @@ function renderModal(){
     statCard("50+ scores", fifties.length ? fiftyText(fiftySplit(fifties)) : null,
              fifties.length ? fifties.length + " individual innings past fifty" : "none yet",
              false, null, fifties.length ? "mostFifties" : null) +
-    statCard("Highest score", highFifty ? highFifty.r : null,
+    statCard("Highest score", highFifty ? runsTxt(highFifty) : null,
              highFifty ? "off <b>" + highFifty.b + "</b> balls in " + matchLink(highFifty.mk) : "no fifty on record", false) +
     (function(){
       var ok = fifties.filter(function(f){ return f.b > 0; });
@@ -2589,7 +2594,7 @@ function renderModal(){
         return sf > sa || (sf === sa && f.b < a.b) ? f : a;
       }, ok[0]) : null;
       return statCard("Fastest 50+", q ? withUnit((q.r / q.b * 100).toFixed(1), "strike rate") : null,
-               q ? q.r + "(" + q.b + ") in " + matchLink(q.mk) : "no fifty on record", false, null, q ? "fastFifty" : null);
+               q ? runsTxt(q) + "(" + q.b + ") in " + matchLink(q.mk) : "no fifty on record", false, null, q ? "fastFifty" : null);
     })() +
   '</div>';
 
@@ -2598,7 +2603,8 @@ function renderModal(){
       fifties.slice().sort(function(a,b){ return b.r - a.r; }).map(function(f){
         var sr = f.b > 0 ? (f.r / f.b * 100).toFixed(1) : null;
         return '<li><span class="d">' + matchLink(f.mk) + '</span>' +
-          '<span class="res w">' + f.r + '</span>' +
+          '<span class="res w">' + runsTxt(f) + '</span>' +
+          (f.no ? '<span class="by">not out</span>' : '') +
           (f.ign ? '<span class="ign">as <b>' + esc(f.ign) + '</b></span>' : '') +
           '<span class="vs">off <b>' + f.b + '</b> balls' + (sr ? ' &middot; SR ' + sr : '') +
             ' &middot; with <b>' + plink(f.mate, "fifties") + '</b> v ' + plinks(f.foes, "fifties") + '</span></li>';
@@ -2961,7 +2967,7 @@ function renderEntry(){
       if(editing.dls.n1 !== undefined && editing.dls.n1 !== null) $("dlsN1").value = editing.dls.n1;
       if(editing.dls.n2 !== undefined && editing.dls.n2 !== null) $("dlsN2").value = editing.dls.n2;
     }
-    S.fifties = (editing.fifties || []).map(function(f){ return { p:f.p, r:f.r, b:f.b, ign:f.ign || "" }; });
+    S.fifties = (editing.fifties || []).map(function(f){ return { p:f.p, r:f.r, b:f.b, ign:f.ign || "", no: !!f.no }; });
   } else {
     S.formBF = null; S.formFF = null; S.dlsOpen = false; S.dlsMode = "chase"; S.fifties = [];
     ["a1","a2","b1","b2"].forEach(function(id,k){ $(id).selectedIndex = Math.min(k, PLAYERS.length - 1); });
@@ -3011,7 +3017,7 @@ function renderEntry(){
     var picks = ["a1","a2","b1","b2"].map(function(id){ return $(id).value; });
     var used = {}; S.fifties.forEach(function(f){ if(f.p) used[f.p] = true; });
     var p = picks.filter(function(x){ return !used[x]; })[0] || picks[0];
-    S.fifties.push({ p:p, r:null, b:null, ign:"" });
+    S.fifties.push({ p:p, r:null, b:null, ign:"", no:false });
     renderFiftyList();
     var last = $("fiftyList").querySelector(".fifty:last-child input.fr");
     if(last) last.focus();
@@ -3099,6 +3105,7 @@ function renderFiftyList(){
       '<label class="field ign-field"><span>Played as</span><input class="fi" type="text" placeholder="in-game name" value="' + esc(f.ign || "") + '"></label>' +
       '<label class="field"><span>Runs</span><input class="n fr" type="number" min="50" value="' + (f.r == null ? '' : f.r) + '"></label>' +
       '<label class="field"><span>Balls</span><input class="n fb" type="number" min="1" value="' + (f.b == null ? '' : f.b) + '"></label>' +
+      '<button class="tog fno' + (f.no ? ' on' : '') + '" type="button" aria-pressed="' + (f.no ? 'true' : 'false') + '">Not out</button>' +
       '<button class="fx" type="button" aria-label="Remove">&times;</button></div>';
   }).join("");
   Array.prototype.forEach.call(box.querySelectorAll("select.fp"), function(sel){
@@ -3112,6 +3119,11 @@ function renderFiftyList(){
     row.querySelector("input.fi").oninput   = function(e){ S.fifties[i].ign = e.target.value.trim(); };
     row.querySelector("input.fr").oninput   = function(e){ S.fifties[i].r = num(e.target.value); };
     row.querySelector("input.fb").oninput   = function(e){ S.fifties[i].b = num(e.target.value); };
+    row.querySelector(".fno").onclick       = function(e){
+      S.fifties[i].no = !S.fifties[i].no;
+      e.currentTarget.classList.toggle("on", S.fifties[i].no);
+      e.currentTarget.setAttribute("aria-pressed", S.fifties[i].no ? "true" : "false");
+    };
     row.querySelector(".fx").onclick        = function(){ S.fifties.splice(i, 1); renderFiftyList(); };
   });
 }
@@ -3406,6 +3418,7 @@ function commit(forced, dlsInfo){
     var pairSide = A.indexOf(f.p) >= 0 ? A : (B.indexOf(f.p) >= 0 ? B : null);
     if(!pairSide){ say("Each 50+ scorer must be one of the four players.", true); return; }
     var entry = { p:f.p, r:f.r, b:f.b, m: pairSide.filter(function(x){ return x !== f.p; })[0] };
+    if(f.no) entry.no = true;
     if(f.ign && f.ign.trim()) entry.ign = f.ign.trim();
     valid.push(entry);
   }
@@ -3728,7 +3741,7 @@ function hundredsAll(){
     ms.forEach(function(m){
       (m.fifties || []).forEach(function(f){
         if(!(f.r >= 100)) return;
-        (by[f.p] = by[f.p] || []).push({ r:f.r, b:f.b, mk:m.key, d:m.d || "", ign:f.ign || "" });
+        (by[f.p] = by[f.p] || []).push({ r:f.r, b:f.b, no: !!f.no, mk:m.key, d:m.d || "", ign:f.ign || "" });
       });
     });
   });
@@ -3737,7 +3750,7 @@ function hundredsAll(){
     return { p:p, list:list, best: list.reduce(function(m, x){ return x.r > m ? x.r : m; }, 0) };
   }).sort(function(a,b){ return b.list.length - a.list.length || b.best - a.best || a.p.localeCompare(b.p); });
 }
-function tonText(x){ return x.r + " (" + x.b + ")"; }
+function tonText(x){ return runsTxt(x) + " (" + x.b + ")"; }
 // an all-time list always names the cycle, whichever one is on screen
 function fullMatchLink(mk){
   var m = S.byKey[mk]; if(!m) return "";
@@ -3767,7 +3780,7 @@ function renderHundredsModal(){
     '<p class="mreal">All-time league &middot; League records</p></div>' +
     '<div class="mrec"><b>' + total + '</b><span>' + (total === 1 ? "hundred" : "hundreds") + ' scored</span></div>' +
   '</div>' +
-  '<p class="mnote">Every individual 100+ across every cycle, read from the 50+ scores logged with each match. Ranked by hundreds, then the highest of them. Scores read <b>runs (balls faced)</b>.</p>';
+  '<p class="mnote">Every individual 100+ across every cycle, read from the 50+ scores logged with each match. Ranked by hundreds, then the highest of them. Scores read <b>runs (balls faced)</b>; * = not out.</p>';
   html += rows.length
     ? '<ol class="tlist">' + rows.map(function(r, i){
         return '<li><span class="tr">' + (i + 1) + '</span>' +
@@ -3978,7 +3991,7 @@ function normalize(id, m){
     sw:m.sw || null, sl:m.sl || null, sow:m.sow || null, sol:m.sol || null,
     bf:m.bf || null, dls:m.dls || null, ff: !!m.ff,
     fifties: m.fifties ? m.fifties.map(function(f){
-      return { p:canon(f.p), r:f.r, b:f.b, m: f.m ? canon(f.m) : "", ign:f.ign || "" };
+      return { p:canon(f.p), r:f.r, b:f.b, m: f.m ? canon(f.m) : "", ign:f.ign || "", no: !!f.no };
     }) : null,
     seeds: m.seeds ? m.seeds.map(canon) : null
   };
