@@ -327,6 +327,11 @@ select:disabled{opacity:.55}
 .rcard .rh{font-size:14px;font-weight:700;color:var(--white)}
 .rcard .rh .kind{font-size:8.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-dim);margin-left:6px}
 .rcard .rm{font-size:11px;color:var(--lilac-dim)}
+.rcard.rauto{cursor:pointer;transition:transform .16s ease,border-color .16s ease}
+.rcard.rauto:hover,.rcard.rauto:focus-visible{border-color:var(--frame-lit);transform:translateY(-2px);outline:none}
+.rcard .rgo{margin-left:auto;padding-left:10px;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-dim)}
+.rcard.rauto:hover .rgo{color:var(--gold)}
+.rcard.rauto .rm{display:flex;flex-wrap:wrap;align-items:baseline}
 .rcard .rn{font-size:11.5px;color:var(--lilac);font-style:italic}
 .rcard details{margin-top:8px;border-top:1px solid var(--hair-soft);padding-top:7px}
 .rcard summary{cursor:pointer;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-dim)}
@@ -2447,6 +2452,7 @@ function cycleTable(name){
 }
 
 function renderModal(){
+  if(S.openHundreds){ renderHundredsModal(); return; }
   if(S.openTop){ renderTopModal(S.openTop); return; }
   if(S.openHighs){ renderHighsModal(S.openHighs); return; }
   if(!S.openPlayer){ $("modal").hidden = true; return; }
@@ -2466,7 +2472,8 @@ function renderModal(){
     '</div>';
 
   if(S.backTo){
-    var bk = S.backTo, bl = bk.type === "top" ? (TOPS[bk.key] || {}).name : (HIGHS.filter(function(h){ return h.key === bk.key; })[0] || {}).name;
+    var bk = S.backTo, bl = bk.type === "hundreds" ? "Most hundreds" :
+             bk.type === "top" ? (TOPS[bk.key] || {}).name : (HIGHS.filter(function(h){ return h.key === bk.key; })[0] || {}).name;
     if(bl) html += '<div class="backbar"><button class="chip" type="button" data-back="1">&lsaquo; ' + esc(bl) + '</button></div>';
   }
   html += scopeChips();
@@ -2639,25 +2646,27 @@ function bindCycleLinks(root, name){
 
 function openPlayer(name, sec){
   // remember the list we came from, so the dossier can offer a way back
-  S.backTo = S.openTop ? { type:"top", key:S.openTop } : (S.openHighs ? { type:"highs", key:S.openHighs } : null);
+  S.backTo = S.openHundreds ? { type:"hundreds" } :
+             S.openTop ? { type:"top", key:S.openTop } : (S.openHighs ? { type:"highs", key:S.openHighs } : null);
+  S.openHundreds = null;
   S.openPlayer = name; S.openHighs = null; S.openTop = null; S.topFromPlayer = null;
   S.openSec = sec || null;
   renderModal(); $("modalX").focus({ preventScroll:true });
 }
 function openHighs(key){
-  S.backTo = null; S.resetScroll = true;
+  S.backTo = null; S.resetScroll = true; S.openHundreds = null;
   S.openHighs = key; S.openPlayer = null; S.openTop = null; S.topFromPlayer = null;
   renderModal(); $("modalX").focus();
 }
 function openTop(key, fromPlayer){
-  S.backTo = null; S.resetScroll = true;
+  S.backTo = null; S.resetScroll = true; S.openHundreds = null;
   S.openTop = key;
   if(fromPlayer !== undefined) S.topFromPlayer = fromPlayer;
   S.openPlayer = null; S.openHighs = null;
   renderModal(); $("modalX").focus();
 }
 function closeModal(){
-  S.backTo = null;
+  S.backTo = null; S.openHundreds = null;
   S.openPlayer = null; S.openHighs = null; S.openTop = null; S.topFromPlayer = null;
   $("modal").hidden = true;
 }
@@ -2666,7 +2675,7 @@ document.addEventListener("click", function(ev){
   var back = t.closest("[data-back]");
   if(back && S.backTo){
     var b = S.backTo;
-    if(b.type === "top") openTop(b.key); else openHighs(b.key);
+    if(b.type === "hundreds") openHundreds(); else if(b.type === "top") openTop(b.key); else openHighs(b.key);
     return;
   }
   var pl = t.closest("[data-pl]");
@@ -2686,7 +2695,7 @@ $("modalBody").addEventListener("click", onScopeClick);
 $("highsScope").addEventListener("click", onScopeClick);
 $("scrim").onclick  = closeModal;
 document.addEventListener("keydown", function(e){
-  if(e.key === "Escape" && (S.openPlayer || S.openHighs || S.openTop)) closeModal();
+  if(e.key === "Escape" && (S.openPlayer || S.openHighs || S.openTop || S.openHundreds)) closeModal();
 });
 
 /* ───────── results log ───────── */
@@ -3687,12 +3696,82 @@ function recWhere(r){
     .filter(function(x){ return !!x; }).join(" &middot; ");
 }
 
+/* Most hundreds: worked out from the 50+ entries across every cycle, so it
+   updates itself and ignores whichever cycle is on screen. */
+function hundredsAll(){
+  var by = {};
+  S.cycles.forEach(function(c){
+    var ms = c.matches.filter(function(m){ return m.counts; });
+    if(c.final) ms.push(c.final);
+    ms.forEach(function(m){
+      (m.fifties || []).forEach(function(f){
+        if(!(f.r >= 100)) return;
+        (by[f.p] = by[f.p] || []).push({ r:f.r, b:f.b, mk:m.key, d:m.d || "", ign:f.ign || "" });
+      });
+    });
+  });
+  return Object.keys(by).map(function(p){
+    var list = by[p].sort(function(a,b){ return a.d.localeCompare(b.d); });   // in the order they came
+    return { p:p, list:list, best: list.reduce(function(m, x){ return x.r > m ? x.r : m; }, 0) };
+  }).sort(function(a,b){ return b.list.length - a.list.length || b.best - a.best || a.p.localeCompare(b.p); });
+}
+function tonText(x){ return x.r + " (" + x.b + ")"; }
+// an all-time list always names the cycle, whichever one is on screen
+function fullMatchLink(mk){
+  var m = S.byKey[mk]; if(!m) return "";
+  var c = cyc(m.c);
+  return '<button class="golink" type="button" data-go="' + esc(mk) + '">' + esc(c ? c.name : m.c) + ' &middot; ' +
+    (m.isFinal ? 'Final' : '#' + m.no) + '</button>';
+}
+
+function hundredsTile(){
+  var rows = hundredsAll(), top = rows.length ? rows[0].list.length : 0;
+  var leaders = rows.filter(function(r){ return r.list.length === top; });
+  return '<div class="rcard rauto" id="hundredsTile" role="button" tabindex="0" title="Open the full list">' +
+    '<span class="rt">Most hundreds</span>' +
+    '<span class="rv">' + (top || "&mdash;") + '</span>' +
+    '<span class="rh">' + (leaders.length
+      ? leaders.map(function(r){ return plink(r.p, "fifties"); }).join(", ") + '<span class="kind">Individual</span>'
+      : '<span class="kind" style="margin:0">No hundred yet</span>') + '</span>' +
+    '<span class="rm">All-time &middot; updates itself<span class="rgo">Open list &rsaquo;</span></span>' +
+  '</div>';
+}
+
+function renderHundredsModal(){
+  var rows = hundredsAll(), total = rows.reduce(function(n, r){ return n + r.list.length; }, 0);
+  $("modal").hidden = false;
+  var html = '<div class="mhead">' +
+    '<div><h3 class="mhandle" id="mHandle">Most hundreds</h3>' +
+    '<p class="mreal">All-time league &middot; League records</p></div>' +
+    '<div class="mrec"><b>' + total + '</b><span>' + (total === 1 ? "hundred" : "hundreds") + ' scored</span></div>' +
+  '</div>' +
+  '<p class="mnote">Every individual 100+ across every cycle, read from the 50+ scores logged with each match. Ranked by hundreds, then the highest of them. Scores read <b>runs (balls faced)</b>.</p>';
+  html += rows.length
+    ? '<ol class="tlist">' + rows.map(function(r, i){
+        return '<li><span class="tr">' + (i + 1) + '</span>' +
+          '<span class="tv">' + r.list.length + '<em class="sfx">' + (r.list.length === 1 ? "hundred" : "hundreds") + '</em></span>' +
+          '<span class="tw"><b class="nm">' + plink(r.p, "fifties") + '</b>' +
+            '<span class="rt">' + r.list.map(function(x){
+              return '<b>' + tonText(x) + '</b>' + (x.ign ? ' as ' + esc(x.ign) : '') + ' in ' + fullMatchLink(x.mk);
+            }).join(" &middot; ") + '</span></span></li>';
+      }).join("") + '</ol>'
+    : '<div class="mnone">No hundreds yet. The first 100+ logged as a 50+ score lands here.</div>';
+  $("modalBody").innerHTML = html;
+  bindGoLinks($("modalBody"));
+  resetModalScroll();
+}
+function openHundreds(){
+  S.backTo = null; S.resetScroll = true;
+  S.openHundreds = true; S.openPlayer = null; S.openHighs = null; S.openTop = null; S.topFromPlayer = null;
+  renderModal(); $("modalX").focus();
+}
+
 function renderRecords(){
   var groups = recordGroups();
   $("recordsAside").textContent = groups.length ? groups.length + " record" + (groups.length === 1 ? "" : "s") : "Kept by hand";
   if(!groups.length){
     $("records").innerHTML = '<div class="recempty">No league records yet.' +
-      (S.unlocked ? ' Add the first one above.' : ' Records are added by the admin as they fall.') + '</div>';
+      (S.unlocked ? ' Add the first one above.' : ' Records are added by the admin as they fall.') + '</div>' + hundredsTile();
   } else {
     $("records").innerHTML = groups.map(function(g){
       var r = g.cur;
@@ -3711,9 +3790,14 @@ function renderRecords(){
             return '<li><b>' + esc(x.v) + '</b>' + recHolders(x) + '<span>' + recWhere(x) + '</span>' + tools(x) + '</li>';
           }).join("") + '</ul></details>' : '') +
       '</div>';
-    }).join("");
+    }).join("") + hundredsTile();
   }
   bindGoLinks($("records"));
+  var tile = $("hundredsTile");
+  if(tile){
+    tile.onclick = function(ev){ if(ev.target.closest(".plink, .golink")) return; openHundreds(); };
+    tile.onkeydown = function(ev){ if(ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); openHundreds(); } };
+  }
   Array.prototype.forEach.call($("records").querySelectorAll("[data-redit]"), function(b){
     b.onclick = function(){ startRecordEdit(b.dataset.redit); };
   });
@@ -3858,7 +3942,7 @@ function render(){
   renderCycleBar(); renderCrest(); renderWire(); renderVerdict();
   renderTable(); renderFinal(); renderRoll(); renderHighs(); renderRecords();
   renderEntry(); renderCycleAdmin(); renderLog();
-  if(S.openPlayer || S.openHighs || S.openTop) renderModal();
+  if(S.openPlayer || S.openHighs || S.openTop || S.openHundreds) renderModal();
 }
 
 /* ───────── firebase ───────── */
