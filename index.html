@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="slate">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -660,6 +660,33 @@ footer img{width:26px;height:auto;opacity:.7}
 .mfoot{font-size:12px;color:var(--lilac-dim);margin:-12px 0 22px;line-height:1.5}
 .mnone{padding:22px 0;color:var(--lilac-dim);font-size:14px;border-top:1px solid var(--hair-soft)}
 @media (max-width:520px){.mlist .sc2{margin-left:0;flex-basis:100%}}
+
+/* ══════════ SLATE LOOK (trial) ══════════
+   Cards sit flat on the slate; the purple fills in on hover.
+   To go back to always-purple, delete class="slate" from the <html> tag. */
+html.slate .panel,html.slate .verdict,html.slate .hcard,html.slate .rcard,html.slate .hblank{
+  background:transparent;box-shadow:none;
+  transition:background-color .22s ease,box-shadow .22s ease,border-color .16s ease,transform .16s ease}
+html.slate .panel:hover,html.slate .verdict:hover,html.slate .hcard:hover,html.slate .hcard:focus-visible,
+html.slate .rcard:hover,html.slate .rcard:focus-visible,html.slate .hblank:hover{
+  background:
+    repeating-linear-gradient(112deg,rgba(255,255,255,.020) 0 1px,rgba(0,0,0,0) 1px 4px),
+    repeating-linear-gradient(68deg,rgba(0,0,0,.13) 0 1px,rgba(0,0,0,0) 1px 5px),
+    linear-gradient(158deg,var(--royal) 0%,var(--royal-panel) 46%,var(--royal-deep) 100%);
+  box-shadow:0 1px 0 rgba(255,255,255,.07) inset,0 8px 24px rgba(0,0,0,.42)}
+/* no frame at rest; the gold frame comes back with the purple, plus a slight lift */
+html.slate .panel,html.slate .verdict,html.slate .hcard,html.slate .rcard,html.slate .hblank{border-color:transparent}
+html.slate .panel:hover,html.slate .verdict:hover,html.slate .hcard:hover,html.slate .hcard:focus-visible,
+html.slate .rcard:hover,html.slate .rcard:focus-visible,html.slate .hblank:hover{
+  border-color:var(--frame);position:relative;z-index:2;transform:scale(1.03)}
+/* big panels (tables, forms, results) grow less so they don't jump */
+html.slate .panel:hover,html.slate .verdict:hover{transform:scale(1.01)}
+html.slate .verdict.crowned:hover{border-color:var(--gold)}
+@media (prefers-reduced-motion:reduce){html.slate .panel:hover,html.slate .verdict:hover,html.slate .hcard:hover,html.slate .rcard:hover,html.slate .hblank:hover{transform:none}}
+html.slate .verdict.crowned:hover{box-shadow:inset 0 0 90px rgba(255,228,99,.10),0 1px 0 rgba(255,255,255,.09) inset,0 10px 30px rgba(0,0,0,.5),0 0 0 1px rgba(255,228,99,.16)}
+/* ranking-strip cards overlap, so they keep a solid slate fill to stay readable */
+html.slate .fanc{background:var(--steel-deep);box-shadow:7px 0 16px rgba(0,0,0,.5)}
+html.slate .fanc:hover,html.slate .fanc:focus-visible{background:linear-gradient(158deg,var(--royal) 0%,var(--royal-panel) 48%,var(--royal-deep) 100%)}
 </style>
 </head>
 
