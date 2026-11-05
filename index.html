@@ -494,6 +494,11 @@ select:disabled{opacity:.55}
 .mlist .d .golink{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
 .log .won{font-weight:700;color:var(--gold)}
 .log .role{font-size:12.5px;font-style:italic;color:var(--lilac-dim);margin-left:-12px;white-space:nowrap}
+.log .mgn{font-size:12.5px;color:var(--lilac-dim)}
+.log .f50line{grid-column:3;font-size:12.5px;color:var(--lilac);display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px}
+.log .f50line b{font-family:'Teko',sans-serif;font-size:16px;font-weight:700;color:var(--gold)}
+.log .f50tag{font-size:8.5px;font-weight:800;letter-spacing:.14em;color:var(--royal-deep);background:var(--bronze-lit);padding:2px 6px;border-radius:2px;margin-right:2px}
+@media (max-width:560px){.log .f50line{margin-top:6px}}
 .log .verb{font-family:'Teko',sans-serif;font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--lilac-dim)}
 .log .lost{color:var(--lilac)}
 .log .tools{margin-left:auto;display:flex;gap:4px;align-items:center}
@@ -2298,7 +2303,7 @@ function marginOf(mt){
   if(!mt.bf || !has(mt.sw) || !has(mt.sl)) return "";
   if(mt.bf === "l"){
     var wk = 10 - (mt.sw.k === undefined || mt.sw.k === null ? 0 : mt.sw.k);
-    return wk + " wkt" + (wk === 1 ? "" : "s");
+    return wk + " wicket" + (wk === 1 ? "" : "s");
   }
   var d = mt.sw.r - mt.sl.r;
   return d + " run" + (d === 1 ? "" : "s");
@@ -2827,13 +2832,29 @@ function logRow(m){
       (m.bf ? '<span class="role">' + ', ' + (m.bf === "w" ? "batting first" : "chasing") + ',</span>' : '') +
       '<span class="verb">beat</span>' +
       '<span class="lost">' + plinks(m.l, "matches") + '</span>' +
+      // "by 32 runs" when the winners set the total, "by 7 wickets" when they chased
+      (marginPhrase(m) ? '<span class="mgn">' + esc(marginPhrase(m).trim()) + '</span>' : '') +
       (m.isFinal ? '<span class="sotag">Final</span>' : '') +
       (m.counts ? '' : '<span class="tag">Outside window</span>') +
       (S.unlocked
         ? '<span class="tools"><button class="tool go" data-k="' + esc(m.key) + '">Edit</button>' +
           '<button class="tool kill" data-k="' + esc(m.key) + '" aria-label="Remove this result">&times;</button></span>'
         : '') +
-    '</div>' + scoreCard(m) + '</li>';
+    '</div>' + scoreCard(m) + fiftyLine(m) + '</li>';
+}
+
+// "Neil 75* (40) and Adarsh 60 (31); Arka 55 (30)" — winners' 50+ scores first, then the losers'.
+function fiftyLine(m){
+  var fs = m.fifties || [];
+  if(!fs.length) return "";
+  var side = function(team){
+    return fs.filter(function(f){ return (team || []).indexOf(f.p) >= 0; })
+      .sort(function(a,b){ return b.r - a.r; })
+      .map(function(f){ return plink(f.p, "fifties") + ' <b>' + runsTxt(f) + '</b> (' + f.b + ')'; })
+      .join(" and ");
+  };
+  var parts = [side(m.w), side(m.l)].filter(function(x){ return !!x; });
+  return '<div class="f50line"><span class="f50tag">50+</span>' + parts.join("; ") + '</div>';
 }
 
 function renderLog(){
