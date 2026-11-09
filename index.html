@@ -296,6 +296,14 @@ select:disabled{opacity:.55}
 @media (max-width:640px){.sides{grid-template-columns:1fr}.sides .versus{padding:2px 0}}
 .xrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px}
 .xrow .chip{font-size:10px;padding:7px 11px}
+.xrow .pitchpick{display:inline-flex;align-items:center;gap:8px;margin-left:auto}
+.xrow .pitchpick .bflabel{margin:0}
+.xrow .pitchpick .seg button{padding:7px 11px;font-size:10px}
+.card .pico{width:19px;height:19px;flex:0 0 auto;align-self:center;cursor:help}
+.pico.hard{color:#C9C3B6}
+.pico.dry{color:var(--bronze-lit)}
+.pico.green{color:var(--live)}
+@media (max-width:520px){.xrow .pitchpick{margin-left:0}}
 .xrow .hint,.xhead .hint{font-size:11px;color:var(--lilac-dim);margin-left:4px;font-family:'Manrope',sans-serif;letter-spacing:0;text-transform:none}
 .xpanel{border:1px solid rgba(201,162,39,.22);border-left:2px solid var(--bronze-lit);background:rgba(0,0,0,.22);border-radius:2px;padding:10px 12px;margin-bottom:12px}
 .xpanel.gold{border-left-color:var(--gold)}
@@ -1008,7 +1016,7 @@ var S = {
   editing:null,     // key of the match being edited
   entryKey:null, adminKey:null,
   formType:"regular", formCycle:null, formCycleManual:false,
-  formBF:null, formFF:null, dlsOpen:false, dlsMode:"chase", fifties:[],
+  formBF:null, formFF:null, formPitch:null, dlsOpen:false, dlsMode:"chase", fifties:[],
   openPlayer:null, openHighs:null, openTop:null, topFromPlayer:null,
   sortAll:"pcw",
   statScope:"view"  // "view": stats follow the cycle on screen · "all": all-time league
@@ -2784,10 +2792,31 @@ function innings(sc){
   if(sc.o !== null && sc.o !== undefined) s += " (" + sc.o + ")";
   return s;
 }
+var PITCHES = [["hard","Hard"],["dry","Dry"],["green","Green"]];
+// Pitch icons for the results log, drawn as a pitch tile: solid for hard,
+// cracked for dry, grass for green. They sit on the existing score line.
+var PITCH_ICON = (function(){
+  var tile = '<rect x="1.5" y="3.5" width="15" height="11" rx="1.5"/>';
+  var svg = function(k, label, inner){
+    return '<svg class="pico ' + k + '" viewBox="0 0 18 18" role="img" aria-label="' + label + ' pitch"><title>' + label + ' pitch</title>' + inner + '</svg>';
+  };
+  var outline = '<g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round">' + tile + '</g>';
+  var marks = function(d, w){ return '<g fill="none" stroke="currentColor" stroke-width="' + (w || 1.3) + '" stroke-linecap="round" stroke-linejoin="round"><path d="' + d + '"/></g>'; };
+  return {
+    hard:  svg("hard", "Hard",
+             '<g fill="currentColor">' + tile + '</g>' +
+             '<g fill="none" stroke="var(--steel-black)" stroke-width="1.3" stroke-linecap="round"><path d="M4.6 5.5v7M13.4 5.5v7"/></g>'),
+    dry:   svg("dry", "Dry", outline + marks("M5 6.2l2.4 2.3-1.6 2 2.6 1.4M11.2 5.8l1 2-1.6 1.6 2.3 2.3")),
+    green: svg("green", "Green", outline + marks("M4.8 12.2V9.6M6.4 12.2V8M8 12.2V9.8M10.4 12.2V8.4M12 12.2V6.9M13.6 12.2V9.6", 1.25))
+  };
+})();
+function pitchName(k){ var p = PITCHES.filter(function(x){ return x[0] === k; })[0]; return p ? p[1] : ""; }
+
 function scoreCard(m){
   var bits = [];
   var main = innings(m.sw), lost = innings(m.sl);
   if(main && lost) bits.push('<span class="sc">' + main + ' <span class="dash">&mdash;</span> ' + lost + '</span>');
+  if(m.pitch && PITCH_ICON[m.pitch]) bits.push(PITCH_ICON[m.pitch]);
   if(m.dls){
     var lab;
     if(m.dls.mode === "first")     lab = "D/L &middot; 1st inns cut &middot; target " + m.dls.target;
@@ -2992,6 +3021,9 @@ function renderEntry(){
     '<div class="xrow">' +
       '<button class="chip" id="addFifty" type="button">+ 50+ score</button>' +
       '<button class="chip bronze" id="dlsToggle" type="button">D/L</button>' +
+      '<span class="pitchpick"><span class="bflabel">Pitch</span><span class="seg" role="group" aria-label="Pitch type">' +
+        PITCHES.map(function(x){ return '<button type="button" data-pitch="' + x[0] + '">' + x[1] + '</button>'; }).join("") +
+      '</span></span>' +
     '</div>' +
     '<div class="xpanel" id="fiftyBox" hidden>' +
       '<div class="xhead"><b>50+ scores</b><span class="hint">One per player &middot; partner taken from the pair</span></div>' +
@@ -3026,6 +3058,7 @@ function renderEntry(){
     $("played").value = editing.d || todayISO();
     $("fCycle").value = editing.c;
     S.formBF = editing.bf === "w" ? "A" : editing.bf === "l" ? "B" : null;
+    S.formPitch = editing.pitch || null;
     S.formFF = editing.ff ? "B" : null;
     S.dlsOpen = !!editing.dls;
     S.dlsMode = editing.dls ? (editing.dls.mode || "chase") : "chase";
@@ -3035,7 +3068,7 @@ function renderEntry(){
     }
     S.fifties = (editing.fifties || []).map(function(f){ return { p:f.p, r:f.r, b:f.b, ign:f.ign || "", no: !!f.no }; });
   } else {
-    S.formBF = null; S.formFF = null; S.dlsOpen = false; S.dlsMode = "chase"; S.fifties = [];
+    S.formBF = null; S.formFF = null; S.formPitch = null; S.dlsOpen = false; S.dlsMode = "chase"; S.fifties = [];
     ["a1","a2","b1","b2"].forEach(function(id,k){ $(id).selectedIndex = Math.min(k, PLAYERS.length - 1); });
     $("played").value = todayISO();
     $("fCycle").value = defaultFormCycle();
@@ -3074,6 +3107,11 @@ function renderEntry(){
     };
   });
   paintBF();
+  // pitch: tap to pick, tap the same one again to clear
+  Array.prototype.forEach.call(box.querySelectorAll("[data-pitch]"), function(b){
+    b.onclick = function(){ S.formPitch = (S.formPitch === b.dataset.pitch ? null : b.dataset.pitch); paintPitch(); };
+  });
+  paintPitch();
   $("dlsToggle").onclick = function(){ S.dlsOpen = !S.dlsOpen; if(S.dlsOpen) S.formFF = null; refresh(); };
   $("dlsMc").onclick = function(){ S.dlsMode = "chase"; refresh(); };
   $("dlsMf").onclick = function(){ S.dlsMode = "first"; refresh(); };
@@ -3145,11 +3183,19 @@ function refreshMeta(){
 
 function clearForm(){
   ["rA","kA","oA","rB","kB","oB","rSA","kSA","rSB","kSB"].forEach(function(id){ if($(id)) $(id).value = ""; });
-  S.formBF = null; S.formFF = null; S.dlsOpen = false; S.dlsMode = "chase"; S.fifties = [];
+  S.formBF = null; S.formFF = null; S.formPitch = null; S.dlsOpen = false; S.dlsMode = "chase"; S.fifties = [];
+  paintPitch();
   if($("soBox")) $("soBox").hidden = true;
   if($("dlsN1")) $("dlsN1").value = MATCH_OVERS;
   if($("dlsN2")) $("dlsN2").value = MATCH_OVERS;
   paintBF(); renderFiftyList(); refresh();
+}
+
+function paintPitch(){
+  Array.prototype.forEach.call(document.querySelectorAll("#entry [data-pitch]"), function(b){
+    b.classList.toggle("on", S.formPitch === b.dataset.pitch);
+    b.setAttribute("aria-pressed", S.formPitch === b.dataset.pitch ? "true" : "false");
+  });
 }
 
 function paintBF(){
@@ -3464,6 +3510,7 @@ function commit(forced, dlsInfo){
   var d = $("played").value || todayISO();
   var rec = { d:d, w: side === "A" ? A : B, l: side === "A" ? B : A, ts: Date.now() };
   if(S.formBF) rec.bf = (S.formBF === side) ? "w" : "l";
+  if(S.formPitch) rec.pitch = S.formPitch;
   if(S.formFF) rec.ff = true;
   else if(dlsInfo) rec.dls = dlsInfo;
   if(side === "A"){ if(scA) rec.sw = scA; if(scB) rec.sl = scB; }
@@ -4156,7 +4203,7 @@ function normalize(id, m){
     id:id, d:m.d || "", ts:m.ts || 0,
     w:(m.w || []).map(canon), l:(m.l || []).map(canon),
     sw:m.sw || null, sl:m.sl || null, sow:m.sow || null, sol:m.sol || null,
-    bf:m.bf || null, dls:m.dls || null, ff: !!m.ff,
+    bf:m.bf || null, dls:m.dls || null, ff: !!m.ff, pitch: m.pitch || null,
     fifties: m.fifties ? m.fifties.map(function(f){
       return { p:canon(f.p), r:f.r, b:f.b, m: f.m ? canon(f.m) : "", ign:f.ign || "", no: !!f.no };
     }) : null,
