@@ -322,7 +322,7 @@ body.admin-open #entrySection.drawer{transform:none;visibility:visible;transitio
 .xrow .pitchpick{display:inline-flex;align-items:center;gap:8px;margin-left:auto}
 .xrow .pitchpick .bflabel{margin:0}
 .xrow .pitchpick .seg button{padding:7px 11px;font-size:10px}
-.card .pico{height:22px;width:auto;flex:0 0 auto;align-self:center;cursor:help}
+.card .pico{height:20.5px;width:auto;flex:0 0 auto;align-self:center;margin-left:auto;cursor:help}
 .pico.hard{color:#C9C3B6}
 .pico.dry{color:var(--bronze-lit)}
 .pico.green{color:var(--live)}
@@ -2859,7 +2859,6 @@ function scoreCard(m){
   var bits = [];
   var main = innings(m.sw), lost = innings(m.sl);
   if(main && lost) bits.push('<span class="sc">' + main + ' <span class="dash">&mdash;</span> ' + lost + '</span>');
-  if(m.pitch && PITCH_ICON[m.pitch]) bits.push(PITCH_ICON[m.pitch]);
   if(m.dls){
     var lab;
     if(m.dls.mode === "first")     lab = "D/L &middot; 1st inns cut &middot; target " + m.dls.target;
@@ -2873,6 +2872,8 @@ function scoreCard(m){
     bits.push('<span class="sotag">Super Over</span>');
     if(sow && sol) bits.push('<span class="sc">' + sow + ' <span class="dash">&mdash;</span> ' + sol + '</span>');
   }
+  // pitch icon goes last so it can sit on the right margin
+  if(m.pitch && PITCH_ICON[m.pitch]) bits.push(PITCH_ICON[m.pitch]);
   return bits.length ? '<div class="card">' + bits.join("") + '</div>' : "";
 }
 
