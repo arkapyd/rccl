@@ -1213,7 +1213,8 @@ function onScopeClick(e){
 function mLabel(m){
   if(!m) return "";
   var c = cyc(m.c);
-  if(S.view === m.c) return m.isFinal ? "The Final" : "Match #" + m.no;
+  // short form only when the match's own cycle is on screen and stats aren't all-time
+  if(S.view === m.c && statId() !== "all") return m.isFinal ? "The Final" : "Match #" + m.no;
   return (c ? c.name : m.c) + (m.isFinal ? " · Final" : " · #" + m.no);
 }
 
@@ -1881,7 +1882,8 @@ function leagueRecords(ms){
         var beat = { who:W + " beat " + L, sub:scoreFull(mt.sw) + " v " + scoreFull(mt.sl) };
         if(mt.bf === "w"){
           R.all.runMargins.push({ v:mt.sw.r - mt.sl.r, who:beat.who, whoP:mt.w, beatP:mt.l, d:day, mk:mk, sub:beat.sub });
-          R.all.defended.push({ v:mt.sw.r, tail:scoreTail(mt.sw), who:W, foe:L, whoP:mt.w, foeP:mt.l, d:day, mk:mk });
+          R.all.defended.push({ v:mt.sw.r, tail:scoreTail(mt.sw), who:W, foe:L, whoP:mt.w, foeP:mt.l, d:day, mk:mk,
+                                sub:(mt.sl.k === 10 ? "bowled them out for " : "held them to ") + scoreFull(mt.sl) });
         } else {
           var wk = 10 - (mt.sw.k === undefined || mt.sw.k === null ? 0 : mt.sw.k);
           R.all.wktMargins.push({ v:wk, who:beat.who, whoP:mt.w, beatP:mt.l, d:day, mk:mk, sub:beat.sub });
@@ -2061,7 +2063,7 @@ function highsBlock(key, d){
   if(key === "ball"){
     return recCard("Best economy", R.econ, 2, "per over", "econ") +
       recCard("Best strike rate", R.srate, 1, "balls per wicket", "srate") +
-      recCard("Lowest defended", R.defended, undefined, null, "defended") +
+      recCard("Lowest successful defense", R.defended, undefined, null, "defended") +
       statCard("Overall economy", d.rr ? withUnit(d.rr.toFixed(2), "per over") : null,
                "every ball bowled in view", false, "ref");
   }
@@ -2129,7 +2131,7 @@ var TOPS = {
   chased:   { name:"Highest chased",           sec:"bat",     dir: 1 },
   econ:     { name:"Best economy",             sec:"ball",    dir:-1, dp:2, unit:"per over" },
   srate:    { name:"Best strike rate",         sec:"ball",    dir:-1, dp:1, unit:"balls per wicket" },
-  defended: { name:"Lowest defended",          sec:"ball",    dir:-1 },
+  defended: { name:"Lowest successful defense", sec:"ball",   dir:-1 },
   winRuns:  { name:"Biggest win by runs",      sec:"margins", dir: 1, unit:"runs",    from:"runMargins" },
   winWkts:  { name:"Biggest win by wickets",   sec:"margins", dir: 1, unit:"wickets", from:"wktMargins" },
   thinRuns: { name:"Narrowest win by runs",    sec:"margins", dir:-1, unit:"runs",    from:"runMargins" },
@@ -2708,7 +2710,7 @@ function renderModal(){
 
   html += sectionTitle("Batting first", "duo") + '<div class="stats">' +
     statCard("Record", bf.p ? bf.w + "&ndash;" + bf.l : null, bf.p ? ((bf.w / bf.p) * 100).toFixed(0) + "% won" : "none recorded", false) +
-    statCard("Lowest defended", citeVal(s.lowDefended), citeLine(s.lowDefended),
+    statCard("Lowest successful defense", citeVal(s.lowDefended), citeLine(s.lowDefended),
              s.lowDefended !== null && s.lowDefended.v === best.lowDefended, null, "defended") +
     statCard("Average set", withUnit(avgSet, "runs per innings"), s.innsFirstDone + " completed innings" + gap(avgSet, lg.first), false, null, "batFirstAvg") +
     statCard("League bats first", lg.first, lg.firstN ? "across " + lg.firstN + " completed first innings" : "none recorded", false, "ref") +
@@ -2777,7 +2779,7 @@ function renderModal(){
     var top = AUTO[k].rows()[0];
     if(!top || top.by.indexOf(s.name) < 0) return;
     var mate = top.by.filter(function(h){ return h !== s.name; })[0];
-    autoHeld.push('<li><span class="res w">HOLDS</span><span class="vs"><b>' + esc(AUTO[k].title) + '</b> &middot; ' + esc(top.val) +
+    autoHeld.push('<li><span class="res w">HOLDS</span><span class="vs"><button class="golink" type="button" data-auto-open="' + k + '"><b>' + esc(AUTO[k].title) + '</b></button> &middot; ' + esc(top.val) +
       (mate ? ' &middot; with ' + plink(mate, "records") : '') + '</span><span class="sc2">' + fullMatchLink(top.mk) + '</span></li>');
   });
   var hr = hundredsAll(), hTop = hr.length ? hr[0].list.length : 0;
@@ -2812,6 +2814,7 @@ function renderModal(){
   bindTopLinks($("modalBody"), s.name);
   bindCycleLinks($("modalBody"), s.name);
   enhanceTables($("modalBody"));
+  each($("modalBody"), "[data-auto-open]", function(b){ b.onclick = function(){ openAutoRecord(b.dataset.autoOpen); }; });
   sizeMatchWindow();
   var fw = $("modalBody").querySelector(".fiftywrap");   // five 50+ scores in view, the rest scroll
   if(fw) sizeScrollWindow(fw, fw.querySelector(".mlist"), 5);
@@ -2864,6 +2867,10 @@ function openTop(key, fromPlayer){
   renderModal(); $("modalX").focus();
 }
 function closeModal(){
+  if(S.scopeReturn !== undefined){                 // back from a League Records detour
+    var back = S.scopeReturn; S.scopeReturn = undefined;
+    if(back !== S.statScope){ S.statScope = back; setTimeout(render, 0); }
+  }
   S.backTo = null; S.openHundreds = null;
   S.openPlayer = null; S.openHighs = null; S.openTop = null; S.topFromPlayer = null;
   $("modal").hidden = true;
@@ -3118,7 +3125,7 @@ function renderEntry(){
   };
 
   box.innerHTML =
-    (editing ? '<div class="editbar"><span>Editing ' + esc(mLabel(editing)) + ' &middot; ' + esc(cyc(editing.c).name) + '</span>' +
+    (editing ? '<div class="editbar"><span>Editing ' + (editing.isFinal ? 'the Final' : 'Match #' + editing.no) + ' &middot; ' + esc(cyc(editing.c).name) + '</span>' +
        '<button class="btn quiet" id="cancel" style="margin-left:auto">Cancel</button></div>' : '') +
     '<div class="etop">' +
       '<select id="fCycle" aria-label="Cycle"' + (editing && isF ? ' disabled' : '') + '>' + copts + '</select>' +
@@ -3720,7 +3727,7 @@ function deleteMatches(keys){
   });
   return writeRoot(patch).then(function(){ render(); return ms.length; });
 }
-function matchWhat(m){ return m.isFinal ? "the " + cyc(m.c).name + " final" : mLabel(m) + " (" + cyc(m.c).name + ")"; }
+function matchWhat(m){ return m.isFinal ? "the " + cyc(m.c).name + " final" : "Match #" + m.no + " (" + cyc(m.c).name + ")"; }
 
 function removeMatch(mk){
   var m = S.byKey[mk]; if(!m) return;
@@ -4031,19 +4038,27 @@ var AUTO = {
     }
   },
   defense: {
-    title:"Lowest successful defense", kind:"Pair", sec:"first",
-    note:"The lowest first-innings total a pair went on to defend, across league history. Needs the innings order recorded; D/L results, forfeits and Super Overs are left out.",
-    none:"No defended totals yet — they need <b>Batted first</b> marked on the match.",
+    // Same record as "Lowest successful defense" in the highs: the tile reads the
+    // record book's list, and opens that list (all-time) rather than a copy of it.
+    title:"Lowest successful defense", kind:"Pair", sec:"first", top:"defended",
     rows:function(){
-      return allMatches().filter(function(m){ return m.bf === "w" && !m.dls && !m.ff && !(m.sow && m.sol) && has(m.sw); }).map(function(m){
-        return { by:m.w, vs:m.l, val: teamScore(m.sw), r:m.sw.r, mk:m.key, d:m.d || "",
-                 sub: has(m.sl) ? (m.sl.k === 10 ? "bowled them out for " : "held them to ") + teamScore(m.sl) : "" };
-      }).sort(function(a,b){ return a.r - b.r || a.d.localeCompare(b.d); });
+      return leagueRecords(allMatches()).all.defended.map(function(e){
+        var m = S.byKey[e.mk] || {};
+        return { by:e.whoP, vs:e.foeP, val: e.v + e.tail, r:e.v, mk:e.mk, d:m.d || "" };
+      }).sort(function(a,b){ return a.r - b.r; });
     }
   }
 };
 
 
+function openAutoRecord(kind){
+  var a = AUTO[kind];
+  if(a && a.top){
+    if(S.scopeReturn === undefined) S.scopeReturn = S.statScope;
+    S.statScope = "all"; openTop(a.top);
+  }
+  else openHundreds(kind);
+}
 function autoTile(key){
   var a = AUTO[key], top = a.rows()[0];
   return '<div class="rcard rauto" data-auto="' + key + '" role="button" tabindex="0" title="Open the top ' + TOP_N + '">' +
@@ -4160,8 +4175,8 @@ function renderRecords(){
   bindGoLinks($("records"));
   each($("records"), ".rauto", function(tile){
     var kind = tile.dataset.auto || "hundreds";
-    tile.onclick = function(ev){ if(ev.target.closest(".plink, .golink")) return; openHundreds(kind); };
-    tile.onkeydown = function(ev){ if(ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); openHundreds(kind); } };
+    tile.onclick = function(ev){ if(ev.target.closest(".plink, .golink")) return; openAutoRecord(kind); };
+    tile.onkeydown = function(ev){ if(ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); openAutoRecord(kind); } };
   });
   each($("records"), "[data-redit]", function(b){
     b.onclick = function(){ startRecordEdit(b.dataset.redit); };
