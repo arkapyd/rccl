@@ -716,6 +716,39 @@ html.slate .verdict.crowned:hover{border-color:var(--gold);
 /* ranking-strip cards overlap, so they keep a solid slate fill to stay readable */
 html.slate .fanc{background:var(--steel-deep);box-shadow:7px 0 16px rgba(0,0,0,.5)}
 html.slate .fanc:hover,html.slate .fanc:focus-visible{background:linear-gradient(158deg,var(--royal) 0%,var(--royal-panel) 48%,var(--royal-deep) 100%)}
+
+/* ══════════ TABS & BUTTONS: one behaviour everywhere ══════════
+   At rest: grey text, no box, no border. Hover: a slight lift and a gold glow.
+   Selected (and the moment you click): a solid gold box. Covers the cycle tabs,
+   every chip, the stats stepper, segmented pickers, form toggles, quiet buttons,
+   roster tags and the floating ADMIN button. Gold "Save"-type buttons keep their box. */
+.chip,.cchip,.tog,.rtag,.btn:not(.fill),.seg,.cstep{border-color:transparent;background:transparent;box-shadow:none}
+.chip,.cchip,.tog,.rtag,.btn:not(.fill),.seg button,.cstep button{
+  color:var(--lilac-dim);transition:transform .15s ease,color .15s ease,background-color .15s ease,text-shadow .15s ease}
+.seg button+button,.cstep .cs-name{border-left-color:transparent;border-right-color:transparent}
+.seg button:not(.on){background:transparent}
+.cchip b,.cchip span,.cchip.all b,.rtag b{color:inherit}
+.chip:hover:not(:disabled),.cchip:hover,.tog:hover,.rtag:hover,.btn:not(.fill):hover,
+.seg button:hover:not(:disabled),.cstep button:hover:not(:disabled){
+  border-color:transparent;background:transparent;color:var(--gold);transform:scale(1.06);text-shadow:0 0 10px rgba(255,228,99,.45)}
+.btn.danger:hover{color:var(--bad);text-shadow:0 0 10px rgba(255,157,166,.4)}
+/* selected, or being clicked: the gold box */
+.chip.on,.chip.bronze.on,.chip.ff.on,.cchip.on,.tog.on,.tog.ff.on,.seg button.on,.seg.bronze button.on,.cstep.on .cs-name,
+.chip:active:not(:disabled),.cchip:active,.tog:active,.rtag:active,.btn:not(.fill):active,.seg button:active:not(:disabled),.cstep button:active:not(:disabled){
+  background:var(--gold);border-color:var(--gold);color:var(--royal-deep);text-shadow:none}
+.cchip.on b,.cchip.on span{color:var(--royal-deep)}
+.cchip.on{box-shadow:none}
+.cstep.on{border-color:transparent}
+.cstep .cs-arrow:hover:not(:disabled){background:transparent}
+/* the floating ADMIN button: just its word, with a soft shadow so it reads over the page */
+.adminfab{background:transparent;border-color:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;
+  color:var(--lilac-dim);text-shadow:0 1px 8px rgba(0,0,0,.95),0 0 2px rgba(0,0,0,.9)}
+.adminfab:hover,.adminfab:focus-visible{background:transparent;border-color:transparent;color:var(--gold);transform:scale(1.1);
+  box-shadow:none;text-shadow:0 0 14px rgba(255,228,99,.6),0 1px 8px rgba(0,0,0,.95)}
+.adminfab:active{background:var(--gold);color:var(--royal-deep);text-shadow:none;transform:scale(1.04)}
+/* small inline tools (Edit, ×) follow suit */
+.log .tool:hover,.rtools button:hover{border-color:transparent;color:var(--gold);text-shadow:0 0 10px rgba(255,228,99,.45)}
+@media (prefers-reduced-motion:reduce){.chip:hover,.cchip:hover,.tog:hover,.rtag:hover,.btn:hover,.seg button:hover,.cstep button:hover,.adminfab:hover{transform:none}}
 </style>
 </head>
 
