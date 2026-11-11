@@ -411,7 +411,6 @@ footer img{width:26px;height:auto;opacity:.7}
 .mrec{margin-left:auto;text-align:right}
 .mrec b{display:block;font-family:'Teko',sans-serif;font-weight:700;font-size:clamp(26px,4.6vw,38px);line-height:1;color:var(--white)}
 .mrec span{font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--lilac-dim)}
-.mgate{margin-bottom:22px}
 .plink{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(255,255,255,.18);transition:color .14s ease,text-decoration-color .14s ease}
 .plink:hover,.plink:focus-visible{color:var(--gold);text-decoration-color:rgba(255,228,99,.7)}
 .v-name .plink,.fs-names .plink{text-decoration:none}
@@ -718,8 +717,26 @@ html.slate .panel:hover,html.slate .verdict:hover{transform:scale(1.01)}
 html.slate .verdict.crowned:hover{border-color:var(--gold);
   box-shadow:inset 0 0 90px rgba(255,228,99,.10),0 1px 0 rgba(255,255,255,.09) inset,0 10px 30px rgba(0,0,0,.5),0 0 0 1px rgba(255,228,99,.16)}
 @media (prefers-reduced-motion:reduce){html.slate .panel:hover,html.slate .verdict:hover,html.slate .hcard:hover,html.slate .rcard:hover,html.slate .hblank:hover{transform:none}}
+/* pop-ups wear the page's slate too: the window is slate, and the cards inside
+   sit flat with no box, filling purple with a slight lift on hover */
+html.slate .mbox{
+  background:
+    repeating-linear-gradient(112deg,rgba(255,255,255,.022) 0 1px,rgba(0,0,0,0) 1px 7px),
+    repeating-linear-gradient(68deg,rgba(0,0,0,.055) 0 1px,rgba(0,0,0,0) 1px 8px),
+    radial-gradient(150% 100% at 50% -25%,#3C434D 0%,var(--steel-hi) 20%,var(--steel) 48%,var(--steel-deep) 74%,var(--steel-black) 100%);
+  border-color:var(--hair);box-shadow:0 30px 90px rgba(0,0,0,.75)}
+html.slate .mbox .stat,html.slate .mbox .stat.lead,html.slate .mbox .stat.ref{
+  background:transparent;border-color:transparent;border-style:solid;
+  transition:background-color .22s ease,box-shadow .22s ease,border-color .16s ease,transform .16s ease}
+html.slate .mbox .stat:hover,html.slate .mbox .stat.go:focus-visible{
+  background:var(--surface);box-shadow:var(--surface-shadow);border-color:var(--frame);
+  position:relative;z-index:2;transform:scale(1.03)}
+html.slate .mbox .stat.lead:hover{border-color:var(--gold)}
+html.slate .h2hwrap thead th{background:var(--steel)}
+@media (prefers-reduced-motion:reduce){html.slate .mbox .stat:hover{transform:none}}
 /* ranking-strip cards overlap, so they keep a solid slate fill to stay readable */
-html.slate .fanc{background:var(--steel-deep);box-shadow:7px 0 16px rgba(0,0,0,.5)}
+html.slate .fanc{background:var(--steel-deep);box-shadow:7px 0 16px rgba(0,0,0,.5);border-color:transparent}
+html.slate .fanc:hover,html.slate .fanc:focus-visible{border-color:var(--frame)}
 html.slate .fanc:hover,html.slate .fanc:focus-visible{background:linear-gradient(158deg,var(--royal) 0%,var(--royal-panel) 48%,var(--royal-deep) 100%)}
 
 /* ══════════ TABS & BUTTONS: one behaviour everywhere ══════════
@@ -2799,12 +2816,6 @@ function renderModal(){
     return;
   }
 
-  if(!all) html += '<div class="mgate">' + plinth(s.w, c.minWins) + '</div>';
-
-  html += '<p class="mnote">Runs, wickets, totals and margins here are <b>duo figures</b> &mdash; ' +
-    'they belong to whichever pair ' + esc(s.name) + ' turned out in. ' +
-    'Only <em>50+ scores</em>, <em>Head to head</em> and the cycle record are personal. ' +
-    'Finals count toward titles and the scorebook, never toward PCW.</p>';
 
   if(all) html += cycleTable(s.name);
 
