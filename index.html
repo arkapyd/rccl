@@ -486,12 +486,17 @@ footer img{width:26px;height:auto;opacity:.7}
 .mtab .finish.gold{color:var(--gold)}
 .mlist{list-style:none;margin:0;padding:0}
 .mlist li{padding:11px 0;border-top:1px solid var(--hair-soft);display:flex;flex-wrap:wrap;gap:4px 11px;align-items:baseline;font-size:13.5px}
-/* scroll boxes inside pop-ups (top lists, 50+ list, every match): thin gold scrollbar */
-.tlwrap,.fiftywrap,.mlistwrap{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(240,200,120,.45) transparent}
-.tlwrap::-webkit-scrollbar,.fiftywrap::-webkit-scrollbar,.mlistwrap::-webkit-scrollbar{width:6px}
-.tlwrap::-webkit-scrollbar-track,.fiftywrap::-webkit-scrollbar-track,.mlistwrap::-webkit-scrollbar-track{background:transparent;border:0}
-.tlwrap::-webkit-scrollbar-thumb,.fiftywrap::-webkit-scrollbar-thumb,.mlistwrap::-webkit-scrollbar-thumb{background:rgba(240,200,120,.45);border:0;border-radius:99px}
-.tlwrap::-webkit-scrollbar-thumb:hover,.fiftywrap::-webkit-scrollbar-thumb:hover,.mlistwrap::-webkit-scrollbar-thumb:hover{background:var(--bronze-lit)}
+/* scroll boxes inside pop-ups (top lists, 50+ list, head to head, every match): thin gold scrollbar */
+.h2hwrap{margin-bottom:22px}
+.h2hwrap .mtab{margin-bottom:0}
+.h2hwrap thead th{position:sticky;top:0;z-index:1;background:var(--royal-deep);padding-top:6px;padding-bottom:8px}
+.mtab.h2h .h2h-split{padding-left:18px;border-left:1px solid rgba(201,162,39,.20)}
+.mtab.h2h td,.mtab.h2h th{padding-left:10px}
+.tlwrap,.fiftywrap,.mlistwrap,.h2hwrap{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(240,200,120,.45) transparent}
+.tlwrap::-webkit-scrollbar,.fiftywrap::-webkit-scrollbar,.mlistwrap::-webkit-scrollbar,.h2hwrap::-webkit-scrollbar{width:6px}
+.tlwrap::-webkit-scrollbar-track,.fiftywrap::-webkit-scrollbar-track,.mlistwrap::-webkit-scrollbar-track,.h2hwrap::-webkit-scrollbar-track{background:transparent;border:0}
+.tlwrap::-webkit-scrollbar-thumb,.fiftywrap::-webkit-scrollbar-thumb,.mlistwrap::-webkit-scrollbar-thumb,.h2hwrap::-webkit-scrollbar-thumb{background:rgba(240,200,120,.45);border:0;border-radius:99px}
+.tlwrap::-webkit-scrollbar-thumb:hover,.fiftywrap::-webkit-scrollbar-thumb:hover,.mlistwrap::-webkit-scrollbar-thumb:hover,.h2hwrap::-webkit-scrollbar-thumb:hover{background:var(--bronze-lit)}
 .tlwrap,.fiftywrap{margin-bottom:22px}
 .tlwrap .tlist{margin-bottom:0}
 .mlistwrap{scrollbar-gutter:stable;max-height:min(46vh, 240px)}
@@ -2090,8 +2095,8 @@ var TOP_SEC = {
   econ:"ball", srate:"ball", defended:"first",
   winRuns:"margins", winWkts:"margins", thinRuns:"margins", thinWkts:"margins",
   lossRuns:"margins", lossWkts:"margins", thinLossRuns:"margins", thinLossWkts:"margins",
-  pairPcw:"alongside", pairWins:"alongside", pairStreak:"alongside", pairPlayed:"alongside",
-  pairSetF:"alongside", pairChase:"alongside", pairConcF:"alongside", pairConcD:"alongside",
+  pairPcw:"h2h", pairWins:"h2h", pairStreak:"h2h", pairPlayed:"h2h",
+  pairSetF:"h2h", pairChase:"h2h", pairConcF:"h2h", pairConcD:"h2h",
   batFirstAvg:"first", chaseAvg:"chase", mostFifties:"fifties", fastFifty:"fifties"
 };
 function whoLinks(e, sec){
@@ -2165,20 +2170,20 @@ function highsBlock(key, d){
   }
   var b = d.best, m = d.most;
   return statCard("Best pairing", b ? b.pcw.toFixed(0) : null,
-           b ? plinks(b.hs, "alongside") + " &middot; " + b.w + "&ndash;" + b.l : "needs a pair with two games", false,
+           b ? plinks(b.hs, "h2h") + " &middot; " + b.w + "&ndash;" + b.l : "needs a pair with two games", false,
            null, b ? "pairPcw" : null) +
-    statCard("Most wins", d.wins ? d.wins.v : null, d.wins ? groupLinks(d.wins.hs, "alongside") : "nothing on record", false,
+    statCard("Most wins", d.wins ? d.wins.v : null, d.wins ? groupLinks(d.wins.hs, "h2h") : "nothing on record", false,
              null, d.wins ? "pairWins" : null) +
     statCard("Longest win streak", d.streak ? d.streak.v : null,
-             d.streak ? groupLinks(d.streak.hs, "alongside") : "no pair has strung two together", false,
+             d.streak ? groupLinks(d.streak.hs, "h2h") : "no pair has strung two together", false,
              null, d.streak ? "pairStreak" : null) +
     statCard("Most played pairing", m ? m.n : null,
-             m ? plinks(m.hs, "alongside") + " &middot; " + m.w + "&ndash;" + m.l : "nothing on record", false,
+             m ? plinks(m.hs, "h2h") + " &middot; " + m.w + "&ndash;" + m.l : "nothing on record", false,
              null, m ? "pairPlayed" : null) +
     ["pairSetF","pairChase","pairConcF","pairConcD"].map(function(k){
       var e = topEntries(k, d)[0];
       return statCard(TOPS[k].name, e ? withUnit(e.v.toFixed(1), "per innings") : null,
-        e ? plinks(e.whoP, "alongside") + " &middot; " + e.sub : "needs a completed innings with the order recorded",
+        e ? plinks(e.whoP, "h2h") + " &middot; " + e.sub : "needs a completed innings with the order recorded",
         false, null, e ? k : null);
     }).join("");
 }
@@ -2697,24 +2702,41 @@ function gap(mine, league){
 }
 var PSEC = {
   "With the bat":"bat", "With the ball":"ball", "Batting first":"first", "Chasing":"chase",
-  "Margins":"margins", "50+ scores":"fifties", "Alongside":"alongside",
-  "Against":"against", "Cycle by cycle":"cycles", "Every match on record":"matches", "League records":"records"
+  "Margins":"margins", "50+ scores":"fifties", "Head to head":"h2h",
+  "Cycle by cycle":"cycles", "Every match on record":"matches", "League records":"records"
 };
 function sectionTitle(text, scope, label){
   return '<h4 class="mtitle"' + (PSEC[text] ? ' id="ps-' + PSEC[text] + '"' : '') + '>' + text + '<span class="scope ' + scope + '">' +
     (label || (scope === "duo" ? "Duo stat" : "Personal")) + '</span></h4>';
 }
-function wlTable(map, heading){
-  var keys = Object.keys(map);
+// Head to head: one row per other player — the record with them as a partner,
+// then against them. Scrolls inside about four rows; the heading stays put.
+function h2hTable(s){
+  var keys = Object.keys(s.partners).concat(Object.keys(s.foes))
+    .filter(function(k, i, a){ return a.indexOf(k) === i; });
   if(!keys.length) return "";
-  keys.sort(function(a,b){ return (map[b].w + map[b].l) - (map[a].w + map[a].l) || map[b].w - map[a].w; });
-  return sectionTitle(heading, "solo") + '<table class="mtab" data-sort-key="' + heading.toLowerCase() + '" data-sort-default="Played"><thead><tr>' +
-    '<th class="tl">Name</th><th>Played</th><th>W</th><th>L</th><th>PCW</th></tr></thead><tbody>' +
+  var rec = function(r){ return r ? { n:r.w + r.l, w:r.w, l:r.l } : { n:0, w:0, l:0 }; };
+  keys.sort(function(a,b){
+    var A = rec(s.partners[a]).n + rec(s.foes[a]).n, B = rec(s.partners[b]).n + rec(s.foes[b]).n;
+    return B - A || realName(a).localeCompare(realName(b));
+  });
+  var cells = function(r, split){
+    var c = split ? ' h2h-split' : '';
+    if(!r.n) return '<td class="wl' + c + '">&mdash;</td><td class="wl">&mdash;</td><td class="wl">&mdash;</td>';
+    return '<td class="wl' + c + '">' + r.n + '</td>' +
+      '<td class="wl" data-v="' + r.w + '">' + r.w + '&ndash;' + r.l + '</td>' +
+      '<td class="wl">' + ((r.w / r.n) * 100).toFixed(0) + '</td>';
+  };
+  return sectionTitle("Head to head", "solo") +
+    '<div class="h2hwrap"><table class="mtab h2h" data-sort-key="h2h"><thead><tr>' +
+      '<th class="tl">Name</th>' +
+      '<th class="h2h-split" data-label="Together" title="Matches as partners">Together</th><th data-label="Together W–L">W&ndash;L</th><th data-label="Together PCW">PCW</th>' +
+      '<th class="h2h-split" data-label="Against" title="Matches as opponents">Against</th><th data-label="Against W–L">W&ndash;L</th><th data-label="Against PCW">PCW</th>' +
+    '</tr></thead><tbody>' +
     keys.map(function(k){
-      var r = map[k], n = r.w + r.l;
-      return '<tr><td class="tl" data-v="' + esc(realName(k).toLowerCase()) + '">' + plink(k, heading === "Alongside" ? "alongside" : "against") + '</td><td class="wl">' + n + '</td><td class="wl">' + r.w +
-        '</td><td class="wl">' + r.l + '</td><td class="wl">' + (n ? ((r.w / n) * 100).toFixed(0) : "0") + '</td></tr>';
-    }).join("") + '</tbody></table>';
+      return '<tr><td class="tl" data-v="' + esc(realName(k).toLowerCase()) + '">' + plink(k, "h2h") + '</td>' +
+        cells(rec(s.partners[k]), true) + cells(rec(s.foes[k]), true) + '</tr>';
+    }).join("") + '</tbody></table></div>';
 }
 
 // One row per cycle the player turned out in: position, record, and finish.
@@ -2781,7 +2803,7 @@ function renderModal(){
 
   html += '<p class="mnote">Runs, wickets, totals and margins here are <b>duo figures</b> &mdash; ' +
     'they belong to whichever pair ' + esc(s.name) + ' turned out in. ' +
-    'Only <em>50+ scores</em>, <em>Alongside</em>, <em>Against</em> and the cycle record are personal. ' +
+    'Only <em>50+ scores</em>, <em>Head to head</em> and the cycle record are personal. ' +
     'Finals count toward titles and the scorebook, never toward PCW.</p>';
 
   if(all) html += cycleTable(s.name);
@@ -2881,8 +2903,7 @@ function renderModal(){
     }).join("") + '</ul>';
   }
 
-  html += wlTable(s.partners, "Alongside");
-  html += wlTable(s.foes, "Against");
+  html += h2hTable(s);
 
   html += sectionTitle("Every match on record", "duo", "Duo scores") + '<div class="mlistwrap"><ul class="mlist">' +
     s.list.map(function(e){
@@ -2902,6 +2923,7 @@ function renderModal(){
   bindCycleLinks($("modalBody"), s.name);
   enhanceTables($("modalBody"));
   each($("modalBody"), "[data-auto-open]", function(b){ b.onclick = function(){ openAutoRecord(b.dataset.autoOpen); }; });
+  sizeH2H();
   sizeMatchWindow();
   var fw = $("modalBody").querySelector(".fiftywrap");   // five 50+ scores in view, the rest scroll
   if(fw) sizeScrollWindow(fw, fw.querySelector(".mlist"), 5);
@@ -2912,6 +2934,16 @@ function resetModalScroll(){
   if(!S.resetScroll) return;
   S.resetScroll = false;
   var box = document.querySelector(".mbox"); if(box) box.scrollTop = 0;
+}
+
+// Head-to-head window: the header plus four rows; the rest scroll.
+function sizeH2H(){
+  var w = $("modalBody").querySelector(".h2hwrap"); if(!w) return;
+  var t = w.querySelector("table"), rows = t.tBodies[0].rows;
+  if(rows.length <= 4){ w.style.maxHeight = ""; return; }
+  var h = t.tHead.getBoundingClientRect().height;
+  for(var i = 0; i < 4; i++) h += rows[i].getBoundingClientRect().height;
+  w.style.maxHeight = Math.round(h) + "px";
 }
 
 // Open the dossier at the section the click came from, or at the top.
