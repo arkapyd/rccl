@@ -138,6 +138,15 @@ section{margin-top:var(--stack)}
 table{width:100%;border-collapse:collapse}
 thead th{font-size:10px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--lilac-dim);text-align:right;padding:14px 0 10px;white-space:nowrap;}
 thead th.tl{text-align:left}
+th.sortable{cursor:pointer;user-select:none;transition:color .15s ease,text-shadow .15s ease}
+th.sortable:hover,th.sortable:focus-visible{color:var(--lilac);outline:none}
+th.sortable.sorted{color:var(--gold);text-shadow:0 0 10px rgba(255,228,99,.45)}
+/* the arrow floats beside the label so columns never shift: left of right-aligned
+   headings, right of left-aligned ones */
+th.sortable .thl{position:relative}
+th.sortable.sorted .thl::after{content:"\2193";position:absolute;top:50%;transform:translateY(-52%);right:100%;margin-right:4px;font-size:1.15em;letter-spacing:0}
+th.sortable.sorted.tl .thl::after{right:auto;left:100%;margin:0 0 0 2px}
+th.sortable.sorted[data-dir="asc"] .thl::after{content:"\2191"}
 tbody tr{border-top:1px solid var(--hair-soft)}
 tbody td{padding:14px 0;text-align:right;vertical-align:middle}
 tbody td.tl{text-align:left}
@@ -1471,35 +1480,111 @@ function renderVerdictCycle(box, c){
             : " The pairing locks when the window closes on " + fmt(c.end) + ".");
 }
 
+/* ───────── sortable tables ─────────
+   Every table header sorts its own table. Click once: biggest first for
+   numbers (Pos and names go A→Z / 1→n), click again to flip. The choice is
+   remembered per table, so live updates and re-opened pop-ups keep it. */
+S.sorts = {};
+var ASC_FIRST = { "Pos":1, "Name":1, "Player":1 };
+
+function thLabel(th){ return th.getAttribute("data-label") || th.textContent.replace(/[\u2191\u2193]/g, "").trim(); }
+// index of the body cell a header sits over (a 2-wide header points at its last cell)
+function thCellIndex(th){
+  var i = 0, ths = th.parentNode.children;
+  for(var k = 0; k < ths.length; k++){
+    var span = Number(ths[k].getAttribute("colspan") || 1);
+    if(ths[k] === th) return i + span - 1;
+    i += span;
+  }
+  return i;
+}
+function cellSortVal(td){
+  if(!td) return null;
+  var v = td.getAttribute("data-v");
+  if(v === null) v = td.textContent.trim();
+  if(v === "" || /^[\u2014\u2013-]$/.test(v)) return null;          // dashes sort last
+  var n = String(v).replace(/,/g, "").match(/^-?\d+(\.\d+)?/);
+  return n ? Number(n[0]) : String(v).toLowerCase();
+}
+function sortTable(table, label, dir){
+  var tb = table.tBodies[0]; if(!tb) return;
+  var th = Array.prototype.filter.call(table.tHead.rows[0].cells, function(h){ return thLabel(h) === label; })[0];
+  if(!th) return;
+  var idx = thCellIndex(th);
+  var rows = Array.prototype.filter.call(tb.rows, function(r){ return r.cells.length > 1; });
+  var keyed = rows.map(function(r, i){ return { r:r, i:i, v:cellSortVal(r.cells[idx]) }; });
+  keyed.sort(function(a, b){
+    if(a.v === null || b.v === null) return (a.v === null) - (b.v === null) || a.i - b.i;
+    var c = (typeof a.v === "number" && typeof b.v === "number") ? a.v - b.v : String(a.v).localeCompare(String(b.v));
+    return (dir === "asc" ? c : -c) || a.i - b.i;
+  });
+  keyed.forEach(function(k){ tb.appendChild(k.r); });
+}
+function paintHeads(table, label, dir){
+  Array.prototype.forEach.call(table.tHead.rows[0].cells, function(h){
+    var on = thLabel(h) === label;
+    h.classList.toggle("sorted", on);
+    h.setAttribute("aria-sort", on ? (dir === "asc" ? "ascending" : "descending") : "none");
+    h.setAttribute("data-dir", on ? dir : "");
+  });
+}
+function enhanceTables(root){
+  Array.prototype.forEach.call((root || document).querySelectorAll("table"), function(t){
+    if(!t.tHead || !t.tHead.rows.length) return;
+    var key = t.getAttribute("data-sort-key") ||
+      Array.prototype.map.call(t.tHead.rows[0].cells, thLabel).join("|");
+    t.setAttribute("data-sort-key", key);
+    Array.prototype.forEach.call(t.tHead.rows[0].cells, function(h){
+      if(!h.getAttribute("data-label")) h.setAttribute("data-label", thLabel(h));
+      if(!h.querySelector(".thl")) h.innerHTML = '<span class="thl">' + h.innerHTML + '</span>';
+      h.classList.add("sortable"); h.tabIndex = 0;
+      h.title = "Sort by " + thLabel(h);
+    });
+    var st = S.sorts[key];
+    if(st){ sortTable(t, st.col, st.dir); paintHeads(t, st.col, st.dir); }
+    else if(t.getAttribute("data-sort-default")) paintHeads(t, t.getAttribute("data-sort-default"), "desc");
+  });
+}
+function onHeadClick(th){
+  var t = th.closest("table"), key = t.getAttribute("data-sort-key"), label = thLabel(th);
+  var cur = S.sorts[key] || (t.getAttribute("data-sort-default") ? { col:t.getAttribute("data-sort-default"), dir:"desc" } : null);
+  var dir;
+  if(cur && cur.col === label) dir = cur.dir === "desc" ? "asc" : "desc";
+  else {
+    var idx = thCellIndex(th), first = null;
+    Array.prototype.some.call(t.tBodies[0].rows, function(r){ first = cellSortVal(r.cells[idx]); return first !== null; });
+    dir = (ASC_FIRST[label] || typeof first === "string") ? "asc" : "desc";
+  }
+  S.sorts[key] = { col:label, dir:dir };
+  sortTable(t, label, dir); paintHeads(t, label, dir);
+}
+document.addEventListener("click", function(e){
+  var th = e.target.closest && e.target.closest("th.sortable");
+  if(th) onHeadClick(th);
+});
+document.addEventListener("keydown", function(e){
+  if((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("th.sortable")){ e.preventDefault(); onHeadClick(e.target); }
+});
+
 /* ───────── render: tables, final, roll ───────── */
 function renderTable(){
   var all = S.view === "all";
   var c = all ? null : cyc(S.view);
   var rows = all ? buildTable(S.cycles) : buildTable([c]);
 
+  // rows arrive ranked by PCW; any header click re-sorts them in place
+  $("sortRow").hidden = true;
+  var tbl = $("table").closest("table");
+  tbl.setAttribute("data-sort-key", all ? "main-all" : "main-cycle");
+  tbl.setAttribute("data-sort-default", "PCW");
   if(all){
-    var k = S.sortAll;
-    rows.sort(function(a,b){
-      if(k === "titles") return b.titles - a.titles || b.fw - a.fw || b.pcw - a.pcw || a.name.localeCompare(b.name);
-      if(k === "wins")   return b.w - a.w || b.pcw - a.pcw || a.name.localeCompare(b.name);
-      return b.pcw - a.pcw || b.w - a.w || a.m - b.m || a.name.localeCompare(b.name);
-    });
     $("tableTitle").textContent = "The All-time Table";
-    $("tableAside").textContent = "Finals never count toward PCW";
-    $("sortRow").hidden = false;
-    $("sortRow").innerHTML = '<span class="bflabel">Sort by</span>' +
-      [["pcw","PCW"],["titles","Titles"],["wins","Wins"]].map(function(o){
-        return '<button class="chip' + (k === o[0] ? ' on' : '') + '" type="button" data-s="' + o[0] + '">' + o[1] + '</button>';
-      }).join("");
-    Array.prototype.forEach.call($("sortRow").querySelectorAll(".chip"), function(b){
-      b.onclick = function(){ S.sortAll = b.dataset.s; renderTable(); };
-    });
+    $("tableAside").textContent = "Finals never count toward PCW · click a heading to sort";
     $("thead").innerHTML = '<tr><th class="tl" colspan="2">Player</th><th class="tl tcell">Titles</th>' +
       '<th class="hide-sm">Cycles</th><th>M</th><th>W</th><th>L</th><th>PCW</th></tr>';
   } else {
     $("tableTitle").textContent = "League Table";
-    $("tableAside").textContent = "Ranked by PCW · ties by wins, then fewer played";
-    $("sortRow").hidden = true;
+    $("tableAside").textContent = "Ranked by PCW · click a heading to sort";
     $("thead").innerHTML = '<tr><th class="tl" colspan="2">Player</th><th class="tl plinth-cell">The Threshold</th>' +
       '<th>M</th><th>W</th><th>L</th><th>PCW</th></tr>';
   }
@@ -1515,6 +1600,7 @@ function renderTable(){
     if(!rows.length){
       $("table").innerHTML = '<tr><td class="tl blank" colspan="7">Nobody has played in ' + esc(c.name) +
         ' yet. Players appear here after their first match.</td></tr>';
+      enhanceTables($("tableSection"));
       return;
     }
   }
@@ -1524,11 +1610,11 @@ function renderTable(){
             : seeds.indexOf(r.name) >= 0 ? '<span class="seedtag">Seed ' + (seeds.indexOf(r.name) + 1) + '</span>' : '';
     return '<tr class="' + (r.m === 0 ? "dnp" : "") + '">' +
       '<td class="tl pos">' + (i+1) + '</td>' +
-      '<td class="tl who"><button class="namebtn" data-p="' + esc(r.name) + '">' + esc(r.name) + '</button>' + tag +
+      '<td class="tl who" data-v="' + esc(r.name.toLowerCase()) + '"><button class="namebtn" data-p="' + esc(r.name) + '">' + esc(r.name) + '</button>' + tag +
         (r.stray ? '<span class="stray">Unknown name in results</span>' : '') + '</td>' +
       (all
-        ? '<td class="tl tcell">' + trophies(r) + '</td><td class="num hide-sm">' + r.cycles + '</td>'
-        : '<td class="tl plinth-cell">' + plinth(r.w, c.minWins) + '</td>') +
+        ? '<td class="tl tcell" data-v="' + (r.titles * 1000 + r.fw) + '">' + trophies(r) + '</td><td class="num hide-sm">' + r.cycles + '</td>'
+        : '<td class="tl plinth-cell" data-v="' + r.w + '">' + plinth(r.w, c.minWins) + '</td>') +
       '<td class="num">' + r.m + '</td>' +
       '<td class="num">' + r.w + '</td>' +
       '<td class="num">' + r.l + '</td>' +
@@ -1542,6 +1628,7 @@ function renderTable(){
   Array.prototype.forEach.call($("table").querySelectorAll(".namebtn"), function(b){
     b.onclick = function(ev){ ev.stopPropagation(); openPlayer(b.dataset.p); };
   });
+  enhanceTables($("tableSection"));
 }
 
 function finalSide(list, label, sc, champ){
@@ -2516,11 +2603,11 @@ function wlTable(map, heading){
   var keys = Object.keys(map);
   if(!keys.length) return "";
   keys.sort(function(a,b){ return (map[b].w + map[b].l) - (map[a].w + map[a].l) || map[b].w - map[a].w; });
-  return sectionTitle(heading, "solo") + '<table class="mtab"><thead><tr>' +
+  return sectionTitle(heading, "solo") + '<table class="mtab" data-sort-key="' + heading.toLowerCase() + '" data-sort-default="Played"><thead><tr>' +
     '<th class="tl">Name</th><th>Played</th><th>W</th><th>L</th><th>PCW</th></tr></thead><tbody>' +
     keys.map(function(k){
       var r = map[k], n = r.w + r.l;
-      return '<tr><td class="tl">' + plink(k, heading === "Alongside" ? "alongside" : "against") + '</td><td class="wl">' + n + '</td><td class="wl">' + r.w +
+      return '<tr><td class="tl" data-v="' + esc(realName(k).toLowerCase()) + '">' + plink(k, heading === "Alongside" ? "alongside" : "against") + '</td><td class="wl">' + n + '</td><td class="wl">' + r.w +
         '</td><td class="wl">' + r.l + '</td><td class="wl">' + (n ? ((r.w / n) * 100).toFixed(0) : "0") + '</td></tr>';
     }).join("") + '</tbody></table>';
 }
@@ -2539,16 +2626,17 @@ function cycleTable(name){
     else if(seed) out = "Seed " + seed;
     else if(r && r.w >= c.minWins) out = "Past the gate";
     else out = "&mdash;";
-    return { c:c, pos: r && r.m ? pos : "&mdash;", r:r || { m:0, w:0, l:0, pcw:0 }, out:out, gold:gold };
+    var rank = out === "Champion" ? 10 : out === "Runner-up" ? 9 : seed ? 8 - seed : out === "Past the gate" ? 2 : 0;
+    return { c:c, pos: r && r.m ? pos : "&mdash;", r:r || { m:0, w:0, l:0, pcw:0 }, out:out, gold:gold, rank:rank };
   }).filter(Boolean);
   if(!rows.length) return "";
-  return sectionTitle("Cycle by cycle", "solo") + '<table class="mtab"><thead><tr><th class="tl">Cycle</th>' +
+  return sectionTitle("Cycle by cycle", "solo") + '<table class="mtab" data-sort-key="cycles" data-sort-default="Cycle"><thead><tr><th class="tl">Cycle</th>' +
     '<th>Pos</th><th>M</th><th>W</th><th>L</th><th>PCW</th><th>Finish</th></tr></thead><tbody>' +
     rows.slice().reverse().map(function(x){
-      return '<tr><td class="tl"><button class="golink" type="button" data-cv="' + esc(x.c.id) + '">' + esc(x.c.name) + '</button></td>' +
+      return '<tr><td class="tl" data-v="' + x.c.idx + '"><button class="golink" type="button" data-cv="' + esc(x.c.id) + '">' + esc(x.c.name) + '</button></td>' +
         '<td class="wl">' + x.pos + '</td><td class="wl">' + x.r.m + '</td><td class="wl">' + x.r.w + '</td>' +
         '<td class="wl">' + x.r.l + '</td><td class="wl">' + x.r.pcw.toFixed(0) + '</td>' +
-        '<td class="finish' + (x.gold ? ' gold' : '') + '">' + x.out + '</td></tr>';
+        '<td class="finish' + (x.gold ? ' gold' : '') + '" data-v="' + x.rank + '">' + x.out + '</td></tr>';
     }).join("") + '</tbody></table>';
 }
 
@@ -2727,6 +2815,7 @@ function renderModal(){
   bindGoLinks($("modalBody"));
   bindTopLinks($("modalBody"), s.name);
   bindCycleLinks($("modalBody"), s.name);
+  enhanceTables($("modalBody"));
   sizeMatchWindow();
   var fw = $("modalBody").querySelector(".fiftywrap");   // five 50+ scores in view, the rest scroll
   if(fw) sizeScrollWindow(fw, fw.querySelector(".mlist"), 5);
