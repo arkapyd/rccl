@@ -1493,8 +1493,8 @@ function renderVerdictCycle(box, c){
     box.classList.add("crowned");
     $("vName").classList.add("chase");
     $("vKicker").textContent = "Champions of " + c.name;
-    $("vName").innerHTML = plinks(f.w, "form", true);
-    $("vNote").innerHTML = "Took the closing 2v2 against <b>" + plinks(f.l, "form", true) + "</b>" + esc(marginPhrase(f)) + "." +
+    $("vName").innerHTML = plinks(f.w, "", true);
+    $("vNote").innerHTML = "Took the closing 2v2 against <b>" + plinks(f.l, "", true) + "</b>" + esc(marginPhrase(f)) + "." +
       (ws.indexOf(0) < 0 && ls.indexOf(0) < 0
         ? " Seeds <b>" + ws.sort().join(" &amp; ") + "</b> beat seeds <b>" + ls.sort().join(" &amp; ") + "</b>."
         : "");
@@ -1520,7 +1520,7 @@ function renderVerdictCycle(box, c){
       $("vNote").innerHTML = "The first result gets the cycle moving. <b>" + gate + " wins</b> opens the gate.";
     } else {
       $("vName").classList.add("chase");
-      $("vName").innerHTML = '<span class="chaser">' + plink(chase.name, "form", chase.name) + '</span> leads the chase';
+      $("vName").innerHTML = '<span class="chaser">' + plink(chase.name, "", chase.name) + '</span> leads the chase';
       $("vNote").innerHTML = "On <b>" + chase.w + " wins</b> at <b>" + chase.pcw.toFixed(2) +
         " PCW</b>, with <b>" + (gate - chase.w) + " more</b> to reach the gate. Nobody is in contention until someone does.";
     }
@@ -1538,7 +1538,7 @@ function renderVerdictCycle(box, c){
       var need = 4 - through.length;
       $("vName").classList.add("chase");
       $("vKicker").textContent = through.length + " in contention";
-      $("vName").innerHTML = through.map(function(r){ return '<span class="chaser">' + plink(r.name, "form", r.name) + '</span>'; }).join(" &middot; ");
+      $("vName").innerHTML = through.map(function(r){ return '<span class="chaser">' + plink(r.name, "", r.name) + '</span>'; }).join(" &middot; ");
       $("vNote").innerHTML = "The closing 2v2 needs four contenders &mdash; <b>" + need + " more</b> " +
         (need === 1 ? "player" : "players") + " past the gate before the pairing is set.";
     }
@@ -1547,9 +1547,9 @@ function renderVerdictCycle(box, c){
 
   $("vName").classList.add("chase");
   $("vKicker").textContent = closed ? c.name + " · final pending" : "Top four as of now";
-  $("vName").innerHTML = '<span class="chaser">' + plinks([fp.a[0].name, fp.a[1].name], "form", true) + '</span> v ' +
-    plinks([fp.b[0].name, fp.b[1].name], "form", true);
-  $("vNote").innerHTML = "<b>" + fp.ranks.map(function(r,i){ return (i+1) + ". " + plink(r.name, "form", r.name); }).join(" &middot; ") +
+  $("vName").innerHTML = '<span class="chaser">' + plinks([fp.a[0].name, fp.a[1].name], "", true) + '</span> v ' +
+    plinks([fp.b[0].name, fp.b[1].name], "", true);
+  $("vNote").innerHTML = "<b>" + fp.ranks.map(function(r,i){ return (i+1) + ". " + plink(r.name, "", r.name); }).join(" &middot; ") +
     "</b>. 1st and 4th team up against 2nd and 3rd." +
     (closed ? " The window has shut &mdash; log the final to crown the champions."
             : " The pairing locks when the window closes on " + fmt(c.end) + ".");
@@ -1708,8 +1708,8 @@ function renderTable(){
 function finalSide(list, label, sc, champ){
   return '<div class="fside' + (champ ? ' champ' : '') + '">' +
     '<div class="fs-seed">' + label + '</div>' +
-    '<div class="fs-names">' + plinks(list, "form", true) + '</div>' +
-    '<div class="fs-real">' + plinks(list, "form") + '</div>' +
+    '<div class="fs-names">' + plinks(list, "", true) + '</div>' +
+    '<div class="fs-real">' + plinks(list, "") + '</div>' +
     (sc ? '<div class="fs-score">' + innings(sc) + '</div>' : '') +
   '</div>';
 }
@@ -1769,7 +1769,7 @@ function renderFinal(){
     html += '<ul class="seeds">' + rows.filter(function(r){ return r.m > 0; }).slice(0, 6).map(function(r, i){
       var inn = r.w >= c.minWins;
       return '<li class="' + (inn ? '' : 'out') + '"><span class="sn">' + (i+1) + '</span>' +
-        '<span class="snm">' + plink(r.name, "form", r.name) + '</span>' +
+        '<span class="snm">' + plink(r.name, "", r.name) + '</span>' +
         '<span class="sp">' + r.w + '/' + c.minWins + ' W &middot; ' + r.pcw.toFixed(1) + '</span></li>';
     }).join("") + '</ul>';
   }
@@ -1834,6 +1834,15 @@ function scoreTail(sc){
   return t;
 }
 function scoreFull(sc){ return has(sc) ? sc.r + scoreTail(sc) : ""; }
+// Did this innings run its course? In a normal finished match, yes — a first
+// innings can't end any other way, and a chase that lost without being bowled
+// out used its overs. Only a forfeit or a D/L result can cut one short, and for
+// D/L we fall back to the scorecard (all out, the full overs, or a won chase).
+function inningsDone(mt, sc, chasedAndWon){
+  if(!sc || mt.ff) return false;
+  if(!mt.dls) return true;
+  return battingComplete(sc, chasedAndWon);
+}
 function inningsComplete(sc){
   if(!sc) return false;
   return sc.k === 10 || toBalls(sc.o) >= MATCH_OVERS * 6;
@@ -1880,7 +1889,7 @@ function leagueRecords(ms){
     n: ms.length, runs:0, wkts:0, balls:0, so:0, dls:0, ff:0,
     firstWins:0, chaseWins:0, ordered:0, pairs:{},
     all:{ high:[], lowDone:[], rate:[], econ:[], srate:[], agg:[],
-          runMargins:[], wktMargins:[], defended:[], chased:[] }
+          runMargins:[], wktMargins:[], lossRuns:[], lossWkts:[], defended:[], chased:[] }
   };
   function pair(key, side){
     if(!R.pairs[key]) R.pairs[key] = {
@@ -1902,8 +1911,8 @@ function leagueRecords(ms){
     if(wKey) pair(wKey, mt.w);
     if(lKey) pair(lKey, mt.l);
 
-    [{ sc:mt.sw, bat:W, bowl:L, batP:mt.w, bowlP:mt.l, batKey:wKey, bowlKey:lKey },
-     { sc:mt.sl, bat:L, bowl:W, batP:mt.l, bowlP:mt.w, batKey:lKey, bowlKey:wKey }].forEach(function(i){
+    [{ sc:mt.sw, bat:W, bowl:L, batP:mt.w, bowlP:mt.l, batKey:wKey, bowlKey:lKey, wonChase: mt.bf === "l" },
+     { sc:mt.sl, bat:L, bowl:W, batP:mt.l, bowlP:mt.w, batKey:lKey, bowlKey:wKey, wonChase: false }].forEach(function(i){
       var sc = i.sc;
       if(!has(sc)){ wholeMatch = false; return; }
       var b = toBalls(sc.o);
@@ -1918,7 +1927,7 @@ function leagueRecords(ms){
       }
       var ent = { v:sc.r, tail:tail, who:i.bat, foe:i.bowl, whoP:i.batP, foeP:i.bowlP, d:day, mk:mk };
       R.all.high.push(ent);
-      if(inningsComplete(sc) && !mt.ff) R.all.lowDone.push(ent);
+      if(inningsDone(mt, sc, i.wonChase)) R.all.lowDone.push(ent);
       if(b >= MIN_ECON_BALLS){
         var rr = sc.r / (b / 6);
         R.all.rate.push({ v:rr, who:i.bat,  foe:i.bowl, whoP:i.batP,  foeP:i.bowlP, d:day, sub:full, mk:mk });
@@ -1938,8 +1947,8 @@ function leagueRecords(ms){
     if(mt.bf && has(mt.sw) && has(mt.sl)){
       var firstSc = mt.bf === "w" ? mt.sw : mt.sl, chaseSc = mt.bf === "w" ? mt.sl : mt.sw;
       var firstKey = mt.bf === "w" ? wKey : lKey, chaseKey = mt.bf === "w" ? lKey : wKey;
-      var firstDone = !mt.ff && battingComplete(firstSc, false);
-      var chaseDone = !mt.ff && battingComplete(chaseSc, mt.bf === "l");
+      var firstDone = inningsDone(mt, firstSc, false);
+      var chaseDone = inningsDone(mt, chaseSc, mt.bf === "l");
       var add = function(key, slot, sc, done){
         if(!key) return;
         var b = R.pairs[key][slot]; b.r += sc.r; if(done) b.n++;
@@ -1959,11 +1968,13 @@ function leagueRecords(ms){
         var beat = { who:W + " beat " + L, sub:scoreFull(mt.sw) + " v " + scoreFull(mt.sl) };
         if(mt.bf === "w"){
           R.all.runMargins.push({ v:mt.sw.r - mt.sl.r, who:beat.who, whoP:mt.w, beatP:mt.l, d:day, mk:mk, sub:beat.sub });
+          R.all.lossRuns.push({ v:mt.sw.r - mt.sl.r, who:L + " lost to " + W, whoP:mt.l, lostToP:mt.w, d:day, mk:mk, sub:beat.sub });
           R.all.defended.push({ v:mt.sw.r, tail:scoreTail(mt.sw), who:W, foe:L, whoP:mt.w, foeP:mt.l, d:day, mk:mk,
                                 sub:(mt.sl.k === 10 ? "bowled them out for " : "held them to ") + scoreFull(mt.sl) });
         } else {
           var wk = 10 - (mt.sw.k === undefined || mt.sw.k === null ? 0 : mt.sw.k);
           R.all.wktMargins.push({ v:wk, who:beat.who, whoP:mt.w, beatP:mt.l, d:day, mk:mk, sub:beat.sub });
+          R.all.lossWkts.push({ v:wk, who:L + " lost to " + W, whoP:mt.l, lostToP:mt.w, d:day, mk:mk, sub:beat.sub });
           R.all.chased.push({ v:mt.sl.r, tail:scoreTail(mt.sl), who:W, foe:L, whoP:mt.w, foeP:mt.l, d:day, mk:mk });
         }
       }
@@ -2078,6 +2089,7 @@ var TOP_SEC = {
   agg:"matches", high:"bat", lowDone:"bat", rate:"bat", chased:"chase",
   econ:"ball", srate:"ball", defended:"first",
   winRuns:"margins", winWkts:"margins", thinRuns:"margins", thinWkts:"margins",
+  lossRuns:"margins", lossWkts:"margins", thinLossRuns:"margins", thinLossWkts:"margins",
   pairPcw:"alongside", pairWins:"alongside", pairStreak:"alongside", pairPlayed:"alongside",
   pairSetF:"alongside", pairChase:"alongside", pairConcF:"alongside", pairConcD:"alongside",
   batFirstAvg:"first", chaseAvg:"chase", mostFifties:"fifties", fastFifty:"fifties"
@@ -2086,6 +2098,7 @@ function whoLinks(e, sec){
   if(!e.whoP) return esc(e.who || "");
   return plinks(e.whoP, sec) +
     (e.beatP ? " beat " + plinks(e.beatP, sec) : "") +
+    (e.lostToP ? " lost to " + plinks(e.lostToP, sec) : "") +
     (e.vsP ? " v " + plinks(e.vsP, sec) : "");
 }
 function groupLinks(hs, sec){
@@ -2213,6 +2226,10 @@ var TOPS = {
   winWkts:  { name:"Biggest win by wickets",   sec:"margins", dir: 1, unit:"wickets", from:"wktMargins" },
   thinRuns: { name:"Narrowest win by runs",    sec:"margins", dir:-1, unit:"runs",    from:"runMargins" },
   thinWkts: { name:"Narrowest win by wickets", sec:"margins", dir:-1, unit:"wickets", from:"wktMargins" },
+  lossRuns:     { name:"Biggest loss by runs",      sec:"margins", dir: 1, unit:"runs",    from:"lossRuns" },
+  lossWkts:     { name:"Biggest loss by wickets",   sec:"margins", dir: 1, unit:"wickets", from:"lossWkts" },
+  thinLossRuns: { name:"Narrowest loss by runs",    sec:"margins", dir:-1, unit:"runs",    from:"lossRuns" },
+  thinLossWkts: { name:"Narrowest loss by wickets", sec:"margins", dir:-1, unit:"wickets", from:"lossWkts" },
   pairPcw:  { name:"Best pairing", sec:"pairs", dir:1, dp:2, unit:"PCW",
               rows:function(d){ return d.ranked.map(function(p){ return pairRow(p, p.pcw); }); } },
   pairWins: { name:"Most wins", sec:"pairs", dir:1, unit:"wins",
@@ -2222,10 +2239,10 @@ var TOPS = {
   pairPlayed:{ name:"Most played pairing", sec:"pairs", dir:1, unit:"matches",
               rows:function(d){ return d.pairs.filter(function(p){ return p.n > 0; }).map(function(p){ return pairRow(p, p.n); }); } },
   pairSetF:  { name:"Average batting first", sec:"pairs", dir: 1, dp:1, tie:function(a,b){ return b.n - a.n; }, unit:"runs per innings",
-               note:"Runs the pair scored when batting first, divided by their completed first innings (all out, or the full overs).",
+               note:"Runs the pair scored when batting first, divided by their completed first innings (every innings except ones cut short by D/L or a forfeit).",
                rows:function(d){ return pairSplit(d, "setF", "batting first"); } },
   pairChase: { name:"Average chasing", sec:"pairs", dir: 1, dp:1, tie:function(a,b){ return b.n - a.n; }, unit:"runs per innings",
-               note:"Runs the pair scored when chasing, divided by their completed chases (won, all out, or the full overs).",
+               note:"Runs the pair scored when chasing, divided by their completed chases (every chase except ones cut short by D/L or a forfeit).",
                rows:function(d){ return pairSplit(d, "chase", "chasing"); } },
   pairConcF: { name:"Fewest conceded bowling first", sec:"pairs", dir:-1, dp:1, tie:function(a,b){ return b.n - a.n; }, unit:"runs per innings",
                note:"Runs the pair gave away when they bowled first, divided by the completed innings they bowled at. Lower is better.",
@@ -2321,8 +2338,13 @@ function topVal(e, t){
   if(e.disp) return e.disp;
   var v = (t.dp === undefined ? String(e.v) : e.v.toFixed(t.dp));
   if(e.tail) v += '<em class="sfx">' + e.tail + '</em>';
-  if(t.unit) v += '<em class="sfx">' + t.unit + '</em>';
+  if(t.unit) v += '<em class="sfx">' + unitFor(e.v, t.unit) + '</em>';
   return v;
+}
+// "1 wicket", "1 run", "1 match" — counted units drop the s at exactly one
+function unitFor(n, unit){
+  return Number(n) === 1 && /^(runs|wickets|matches|wins|fifties)$/.test(unit)
+    ? (unit === "matches" ? "match" : unit === "fifties" ? "fifty" : unit.slice(0, -1)) : unit;
 }
 
 function bindTopLinks(root, fromPlayer){
@@ -2516,6 +2538,7 @@ function statsFor(name){
     batFirst:{p:0,w:0,l:0}, chasing:{p:0,w:0,l:0},
     runsFirst:0, innsFirst:0, innsFirstDone:0, runsChase:0, innsChase:0, innsChaseDone:0,
     soPlayed:0, soWon:0, dlsPlayed:0, dlsWon:0, ffWon:0, ffLost:0, winByRuns:null, winByWkts:null,
+    thinWinRuns:null, thinWinWkts:null, lossByRuns:null, lossByWkts:null, thinLossRuns:null, thinLossWkts:null,
     streak:0, bestStreak:0, partners:{}, foes:{}, list:[], fifties:[],
     fp:0, fw:0, titles:0
   };
@@ -2560,11 +2583,11 @@ function statsFor(name){
 
     if(has(mine)){
       s.runs += mine.r; s.inns++;
-      if(!mt.ff && battingComplete(mine, first === false && won)) s.innsDone++;
+      if(inningsDone(mt, mine, first === false && won)) s.innsDone++;
       s.ballsFaced += toBalls(mine.o);
       if(mine.k !== undefined && mine.k !== null) s.wktsLost += mine.k;
       if(s.high === null || mine.r > s.high){ s.high = mine.r; s.highTail = scoreTail(mine); s.highMk = mt.key; }
-      if(!mt.ff && inningsComplete(mine) && (s.lowDone === null || mine.r < s.lowDone)){
+      if(inningsDone(mt, mine, first === false && won) && (s.lowDone === null || mine.r < s.lowDone)){
         s.lowDone = mine.r; s.lowDoneTail = scoreTail(mine); s.lowDoneMk = mt.key;
       }
     }
@@ -2581,27 +2604,34 @@ function statsFor(name){
 
     if(first === true){
       if(reg){ s.batFirst.p++; s.batFirst[won ? "w" : "l"]++; }
-      if(has(mine)){ s.runsFirst += mine.r; s.innsFirst++; if(!mt.ff && battingComplete(mine, false)) s.innsFirstDone++; }
+      if(has(mine)){ s.runsFirst += mine.r; s.innsFirst++; if(inningsDone(mt, mine, false)) s.innsFirstDone++; }
     }
     if(first === false){
       if(reg){ s.chasing.p++; s.chasing[won ? "w" : "l"]++; }
-      if(has(mine)){ s.runsChase += mine.r; s.innsChase++; if(!mt.ff && battingComplete(mine, won)) s.innsChaseDone++; }
+      if(has(mine)){ s.runsChase += mine.r; s.innsChase++; if(inningsDone(mt, mine, won)) s.innsChaseDone++; }
     }
     if(!mt.ff && won && first === true && has(mine) && (s.lowDefended === null || mine.r < s.lowDefended.v))
       s.lowDefended = { v:mine.r, tail:scoreTail(mine), mk:mt.key };
     if(!mt.ff && won && first === false && has(theirs) && (s.highChased === null || theirs.r > s.highChased.v))
       s.highChased = { v:theirs.r, tail:scoreTail(theirs), mk:mt.key };
 
+    // Margins need a clear finish and a known innings order. Runs margins belong
+    // to matches won by the side batting first, wickets margins to won chases.
     var noMargin = !!(mt.sow && mt.sol) || !!mt.dls || !!mt.ff;
-    if(!noMargin && first !== null && won){
+    if(!noMargin && first !== null && has(mine) && has(theirs)){
       var card = scoreFull(mine) + " v " + scoreFull(theirs);
-      if(first === true && has(mine) && has(theirs)){
-        var dw = mine.r - theirs.r;
-        if(s.winByRuns === null || dw > s.winByRuns.v) s.winByRuns = { v:dw, mk:mt.key, sub:card };
-      }
-      if(first === false && mine && mine.k !== undefined && mine.k !== null){
-        var wkw = 10 - mine.k;
-        if(s.winByWkts === null || wkw > s.winByWkts.v) s.winByWkts = { v:wkw, mk:mt.key, sub:card };
+      var keep = function(slot, v, bigger){
+        var cur = s[slot];
+        if(cur === null || (bigger ? v > cur.v : v < cur.v)) s[slot] = { v:v, mk:mt.key, sub:card };
+      };
+      if(won && first){                         // defended: won by runs
+        keep("winByRuns", mine.r - theirs.r, true); keep("thinWinRuns", mine.r - theirs.r, false);
+      } else if(won && !first && mine.k !== undefined && mine.k !== null){   // chased: won by wickets
+        keep("winByWkts", 10 - mine.k, true); keep("thinWinWkts", 10 - mine.k, false);
+      } else if(!won && !first){                // our chase fell short: lost by runs
+        keep("lossByRuns", theirs.r - mine.r, true); keep("thinLossRuns", theirs.r - mine.r, false);
+      } else if(!won && first && theirs.k !== undefined && theirs.k !== null){   // they chased us down: lost by wickets
+        keep("lossByWkts", 10 - theirs.k, true); keep("thinLossWkts", 10 - theirs.k, false);
       }
     }
 
@@ -2626,8 +2656,8 @@ function leagueAverages(ms){
     var one = mt.bf === "w" ? mt.sw : mt.sl;
     var two = mt.bf === "w" ? mt.sl : mt.sw;
     var chaseWon = mt.bf === "l";
-    if(has(one)){ f.r += one.r; if(!ffm && battingComplete(one, false)) f.n++; }
-    if(has(two)){ c.r += two.r; if(!ffm && battingComplete(two, chaseWon)) c.n++; }
+    if(has(one)){ f.r += one.r; if(inningsDone(mt, one, false)) f.n++; }
+    if(has(two)){ c.r += two.r; if(inningsDone(mt, two, chaseWon)) c.n++; }
   });
   return { first: f.n ? Math.round(f.r / f.n) : null, firstN:f.n,
            second: c.n ? Math.round(c.r / c.n) : null, secondN:c.n };
@@ -2667,7 +2697,7 @@ function gap(mine, league){
 }
 var PSEC = {
   "With the bat":"bat", "With the ball":"ball", "Batting first":"first", "Chasing":"chase",
-  "Margins":"margins", "Form":"form", "50+ scores":"fifties", "Alongside":"alongside",
+  "Margins":"margins", "50+ scores":"fifties", "Alongside":"alongside",
   "Against":"against", "Cycle by cycle":"cycles", "Every match on record":"matches", "League records":"records"
 };
 function sectionTitle(text, scope, label){
@@ -2751,7 +2781,7 @@ function renderModal(){
 
   html += '<p class="mnote">Runs, wickets, totals and margins here are <b>duo figures</b> &mdash; ' +
     'they belong to whichever pair ' + esc(s.name) + ' turned out in. ' +
-    'Only <em>Form</em>, <em>Alongside</em>, <em>Against</em> and the cycle record are personal. ' +
+    'Only <em>50+ scores</em>, <em>Alongside</em>, <em>Against</em> and the cycle record are personal. ' +
     'Finals count toward titles and the scorebook, never toward PCW.</p>';
 
   if(all) html += cycleTable(s.name);
@@ -2805,35 +2835,15 @@ function renderModal(){
   sectionTitle("Margins", "duo") + '<div class="stats">' +
     statCard("Biggest win by runs", citeVal(s.winByRuns), citeLine(s.winByRuns), false, null, "winRuns") +
     statCard("Biggest win by wickets", citeVal(s.winByWkts), citeLine(s.winByWkts), false, null, "winWkts") +
-    statCard("Super overs", s.soPlayed ? s.soWon + "/" + s.soPlayed : null, "won of played", false) +
-    statCard("DLS results", s.dlsPlayed ? s.dlsWon + "/" + s.dlsPlayed : null, "won of settled", false) +
-    statCard("Forfeits", (s.ffWon + s.ffLost) ? s.ffWon + "&ndash;" + s.ffLost : null,
-             (s.ffWon + s.ffLost) ? "won by forfeit &ndash; conceded" : "none", false) +
+    statCard("Narrowest win by runs", citeVal(s.thinWinRuns), citeLine(s.thinWinRuns), false, null, "thinRuns") +
+    statCard("Narrowest win by wickets", citeVal(s.thinWinWkts), citeLine(s.thinWinWkts), false, null, "thinWkts") +
+    statCard("Biggest loss by runs", citeVal(s.lossByRuns), citeLine(s.lossByRuns), false, null, "lossRuns") +
+    statCard("Biggest loss by wickets", citeVal(s.lossByWkts), citeLine(s.lossByWkts), false, null, "lossWkts") +
+    statCard("Narrowest loss by runs", citeVal(s.thinLossRuns), citeLine(s.thinLossRuns), false, null, "thinLossRuns") +
+    statCard("Narrowest loss by wickets", citeVal(s.thinLossWkts), citeLine(s.thinLossWkts), false, null, "thinLossWkts") +
   '</div>';
 
   var fifties = s.fifties.filter(function(f){ return f.counts; });
-  var highFifty = fifties.length ? fifties.reduce(function(a, f){ return f.r > a.r ? f : a; }, fifties[0]) : null;
-
-  html += sectionTitle("Form", "solo") + '<div class="stats">' +
-    statCard("Current streak", s.streak > 0 ? s.streak + "W" : (s.streak < 0 ? (-s.streak) + "L" : null),
-             s.streak > 0 ? "unbeaten" : (s.streak < 0 ? "on the slide" : "no matches yet"), false) +
-    statCard("Longest streak", s.bestStreak || null, "consecutive wins", false) +
-    statCard("Titles", s.titles || null, s.fp ? "finals " + s.fw + "&ndash;" + (s.fp - s.fw) : "no final played", s.titles > 0) +
-    statCard("50+ scores", fifties.length ? fiftyText(fiftySplit(fifties)) : null,
-             fifties.length ? fifties.length + " individual innings past fifty" : "none yet",
-             false, null, fifties.length ? "mostFifties" : null) +
-    statCard("Highest score", highFifty ? runsTxt(highFifty) : null,
-             highFifty ? "off <b>" + highFifty.b + "</b> balls in " + matchLink(highFifty.mk) : "no fifty on record", false) +
-    (function(){
-      var ok = fifties.filter(function(f){ return f.b > 0; });
-      var q = ok.length ? ok.reduce(function(a, f){
-        var sa = a.r / a.b, sf = f.r / f.b;
-        return sf > sa || (sf === sa && f.b < a.b) ? f : a;
-      }, ok[0]) : null;
-      return statCard("Fastest 50+", q ? withUnit((q.r / q.b * 100).toFixed(1), "strike rate") : null,
-               q ? runsTxt(q) + "(" + q.b + ") in " + matchLink(q.mk) : "no fifty on record", false, null, q ? "fastFifty" : null);
-    })() +
-  '</div>';
 
   if(fifties.length){
     html += sectionTitle("50+ scores", "solo") + '<div class="fiftywrap"><ul class="mlist">' +
