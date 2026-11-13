@@ -647,7 +647,10 @@ select:disabled{opacity:.55}
 .xrow .pitchpick{display:inline-flex;align-items:center;gap:8px;margin-left:auto}
 .xrow .pitchpick .bflabel{margin:0}
 .xrow .pitchpick .seg button{padding:7px 11px;font-size:10px}
-.card .pico{height:20.5px;width:auto;flex:0 0 auto;align-self:center;margin-left:auto;margin-right:38px;cursor:help}
+.card .pgo{display:contents}
+.card .pgo .pico{cursor:pointer;transition:transform .16s ease,filter .16s ease}
+.card .pgo:hover .pico,.card .pgo:focus-visible .pico{transform:scale(1.12);filter:drop-shadow(0 0 6px rgba(255,228,99,.55))}
+.card .pico{height:20.5px;width:auto;flex:0 0 auto;align-self:center;margin-left:auto;margin-right:38px;cursor:pointer}
 .pico.hard{color:#C9C3B6}
 .pico.dry{color:var(--bronze-lit)}
 .pico.green{color:var(--live)}
@@ -2527,7 +2530,7 @@ function renderHighs(){
     var f = highsFace(h.key, d);
     return '<button class="hcard" type="button" data-h="' + esc(h.key) + '">' +
       '<span class="ht">' + esc(highsName(h)) + '</span>' +
-      '<span class="hv">' + (f.v === null || f.v === undefined ? "&mdash;" : f.v) + '</span>' +
+      (f.v === false ? '' : '<span class="hv">' + (f.v === null || f.v === undefined ? "&mdash;" : f.v) + '</span>') +
       '<span class="hs">' + f.s + '</span>' +
       '<span class="hgo">Open &rsaquo;</span></button>';
   }).join("");
@@ -2593,7 +2596,7 @@ function pitchCols(ms){
   return S.cycles.filter(function(c){ return ids[c.id]; }).map(function(c){ return { id:c.id, name:c.name }; })
     .concat([{ id:"all", name:"All-time" }]);
 }
-function pitchBucket(){ return { m:0, inns:0, runs:0, done:0, balls:0, wkts:0, high:null, fifty:null }; }
+function pitchBucket(){ return { m:0, f50:0, inns:0, runs:0, done:0, balls:0, wkts:0, high:null, fifty:null }; }
 // T[colId][pitch] → bucket; each match lands in its cycle's column and in All-time
 function pitchGrid(ms, feed){
   var T = {};
@@ -2617,6 +2620,8 @@ var PITCH_METRICS = {
   m:     { name:"Matches", head:"M",  v:function(b){ return b.m || null; }, f:function(v){ return v; } },
   avg:   { name:"Batting average", head:"Avg", unit:"runs per completed innings", v:function(b){ return b.done ? b.runs / b.done : null; }, f:function(v){ return Math.round(v); },
            sub:function(b){ return b.runs + " runs in " + b.done + " completed innings"; } },
+  f50:   { name:"50+ scores", head:"50+", v:function(b){ return b.m ? b.f50 : null; }, f:function(v){ return v; },
+           sub:function(b){ return b.f50 + " in " + b.m + " matches"; } },
   high:  { name:"High score", head:"High", v:function(b){ return b.high ? b.high.r : null; },
            f:function(v, b){ return v + '<em class="sfx">' + esc(b.high.tail.split(" (")[0]) + '</em>'; },
            sub:function(b){ return b.high.r + b.high.tail; } },
@@ -2662,19 +2667,10 @@ function pitchTable(T, cols, metrics, title, sortKey){
 }
 // The Highs card: the pitch that has scored heaviest in the scope on show.
 function pitchFace(){
-  var id = statId();
-  var ms = pitchMatches().filter(function(m){ return id === "all" || m.c === id; });
-  if(!ms.length) return { v:null, s:"no pitch recorded yet" };
-  var T = pitchGrid(ms, function(b, m){ b.m++; addInnings(b, m, m.sw, m.bf === "l"); addInnings(b, m, m.sl, false); }).all;
-  var best = null;
-  PITCHES.forEach(function(px){
-    var b = T[px[0]]; if(!b || !b.done) return;
-    var a = b.runs / b.done;
-    if(!best || a > best.a) best = { a:a, name:px[1], m:b.m };
-  });
-  if(!best) return { v:null, s:matchesWord(ms.length) + " with a pitch recorded" };
-  return { v: best.name + '<em class="sfx">' + Math.round(best.a) + ' avg</em>',
-           s: "Heaviest-scoring pitch &middot; " + matchesWord(best.m) + " &middot; " + matchesWord(ms.length) + " with a pitch recorded" };
+  var first = pitchMatches()[0];
+  return { v:false, s: first
+    ? "For a pitch-by-pitch look into things, tracking from Match #" + first.no + " of " + esc((cyc(first.c) || {}).name || first.c)
+    : "For a pitch-by-pitch look into things, once a pitch is recorded" };
 }
 function pitchNone(msg){ return '<div class="mnone">' + msg + '</div>'; }
 function pitchLeague(tab){
@@ -2682,11 +2678,11 @@ function pitchLeague(tab){
   if(!ms.length) return pitchNone("No match has a pitch recorded yet. Add one from the result form.");
   var cols = pitchCols(ms);
   var T = pitchGrid(ms, function(b, m){
-    b.m++;
+    b.m++; b.f50 += (m.fifties || []).length;
     addInnings(b, m, m.sw, m.bf === "l");
     addInnings(b, m, m.sl, false);
   });
-  return tab === "batting" ? pitchTable(T, cols, ["m", "avg", "high", "bsr"], "", "pt-bat")
+  return tab === "batting" ? pitchTable(T, cols, ["m", "avg", "high", "bsr", "f50"], "", "pt-bat")
                           : pitchTable(T, cols, ["m", "econ", "wsr", "wkts"], "", "pt-bowl");
 }
 function pitchPlayers(){
@@ -2708,6 +2704,7 @@ function pitchPlayers(){
     addInnings(b, m, won ? m.sw : m.sl, won && m.bf === "l", { mate:mate, foes:other.slice() });
     (m.fifties || []).forEach(function(f){
       if(f.p !== me) return;
+      b.f50++;
       if(!b.fifty || f.r > b.fifty.r || (f.r === b.fifty.r && (f.b || 999) < (b.fifty.b || 999)))
         b.fifty = { r:f.r, b:f.b, no:!!f.no, mk:m.key, mate:mate || f.m || "", foes:other.slice() };
     });
@@ -2734,7 +2731,7 @@ function pitchPlayers(){
     }).join("") + '</tbody></table></div>';
   return picker +
     '<p class="pwho">' + plink(me, "") + ' &middot; ' + matchesWord(mine.length) + ' with a pitch recorded &middot; duo figures, as everywhere else</p>' +
-    pitchTable(bat,  cols, ["m", "avg", "high", "bsr"],  "Batting", "pt-p-bat") +
+    pitchTable(bat,  cols, ["m", "avg", "high", "bsr", "f50"], "Batting", "pt-p-bat") +
     pitchTable(ball, cols, ["m", "econ", "wsr", "wkts"], "Bowling", "pt-p-bowl") +
     bests;
 }
@@ -3225,6 +3222,7 @@ document.addEventListener("click", function(ev){
     if(b.type === "hundreds") openHundreds(b.kind); else if(b.type === "top") openTop(b.key); else openHighs(b.key);
     return;
   }
+  if(t.closest("[data-pitchgo]")){ ev.preventDefault(); ev.stopPropagation(); openHighs("pitch"); return; }
   var pl = t.closest("[data-pl]");
   if(pl){ ev.preventDefault(); openPlayer(pl.dataset.pl, pl.dataset.sec); return; }
   var j = t.closest("[data-jump]");
@@ -3306,7 +3304,7 @@ function scoreCard(m){
     if(sow && sol) bits.push('<span class="sc">' + sow + ' <span class="dash">&mdash;</span> ' + sol + '</span>');
   }
   // pitch icon goes last so it can sit on the right margin
-  if(m.pitch && PITCH_ICON[m.pitch]) bits.push(PITCH_ICON[m.pitch]);
+  if(m.pitch && PITCH_ICON[m.pitch]) bits.push('<button class="pgo" type="button" data-pitchgo title="' + esc(m.pitch.charAt(0).toUpperCase() + m.pitch.slice(1)) + ' pitch · open Into the pitch" aria-label="Open Into the pitch">' + PITCH_ICON[m.pitch] + '</button>');
   return bits.length ? '<div class="card">' + bits.join("") + '</div>' : "";
 }
 
