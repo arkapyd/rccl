@@ -226,12 +226,11 @@ tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
 @media (max-width:560px){.rollbtn{grid-template-columns:1fr auto}.rc-main{grid-column:1/-1;grid-row:2}}
 
 /* ---------------- highs ---------------- */
-.hcards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:stretch}
-.hcard[data-h="cycle"]{grid-column:span 1;grid-row:span 2}
-.hcard[data-h="bat"]{grid-column:span 2}
-.hcard[data-h="ball"]{grid-column:span 1}
-.hcard[data-h="margins"]{grid-column:span 1}
-.hcard[data-h="pairs"]{grid-column:span 2}
+/* 8 tracks: cycle takes 2 (both rows); right side row 1 = three tiles of 2, row 2 = two tiles of 3 */
+.hcards{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:12px;align-items:stretch}
+.hcard[data-h="cycle"]{grid-column:span 2;grid-row:span 2}
+.hcard[data-h="bat"],.hcard[data-h="ball"],.hcard[data-h="margins"]{grid-column:span 2}
+.hcard[data-h="pairs"],.hcard[data-h="pitch"]{grid-column:span 3}
 .hcard{font-family:'Manrope',sans-serif;text-align:left;display:flex;flex-direction:column;gap:4px;border-radius:2px;padding:15px 16px 14px;cursor:pointer;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;}
 .hcard:hover,.hcard:focus-visible{border-color:var(--frame-lit);transform:translateY(-2px);box-shadow:0 1px 0 rgba(255,255,255,.11) inset,0 14px 32px rgba(0,0,0,.55),0 0 0 1px rgba(255,228,99,.20);}
 .hcard .ht{font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--frame-lit)}
@@ -255,13 +254,31 @@ tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
 .cstep.on{border-color:var(--gold)}
 .cstep.on .cs-name{background:var(--gold);color:var(--royal-deep)}
 #highsScope .scopebar{margin:6px 0 14px}
+.ptabs{display:flex;flex-wrap:wrap;gap:7px;margin:4px 0 16px}
+.ptabs .chip{font-size:11px;padding:8px 14px}
+.ppick{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 12px}
+.ppick .chip{font-size:10px;padding:6px 10px}
+.pwho{font-size:12px;color:var(--lilac-dim);margin:0 0 18px}
+.pgroup{font-family:'Teko',sans-serif;font-size:22px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--gold);margin:26px 0 6px}
+.ptitle{display:flex;align-items:baseline;gap:10px}
+.ptitle .punit{font-family:'Manrope',sans-serif;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:none;color:var(--lilac-dim)}
+.pwrap{overflow-x:auto}
+.ptab td.tl .pico{height:16px;width:auto;vertical-align:-3px;margin-right:9px}
+.ptab th:not(.tl),.ptab td:not(.tl){padding-left:14px;white-space:nowrap}
+.mbox .ptab th.cur,.mbox .ptab td.cur{color:var(--gold)}
+.ptab td.wl .golink{color:inherit;text-decoration:none}
+.ptab td.wl .golink:hover,.ptab td.wl .golink:focus-visible{color:var(--gold);text-decoration:underline;text-decoration-color:rgba(255,228,99,.65)}
+.ptab .sfx{font-family:'Teko',sans-serif;font-style:normal;font-size:.7em;color:var(--lilac-dim);margin-left:2px}
+.ptab td.pbest{font-size:12px;color:var(--lilac-dim);line-height:1.5;padding-left:14px}
+.ptab td.pbest b{font-family:'Teko',sans-serif;font-size:18px;font-weight:600;color:var(--white);margin-right:4px}
 .hnav{display:flex;flex-wrap:wrap;gap:7px;border-top:1px solid rgba(201,162,39,.22);padding-top:16px}
 .hnav .chip{font-size:10px;padding:7px 11px}
 .hnav .chip:not(.on){background:transparent}
 @media (max-width:860px){
   .hcards{grid-template-columns:repeat(2,minmax(0,1fr))}
   .hcard[data-h="cycle"]{grid-column:span 2;grid-row:span 1}
-  .hcard[data-h="bat"],.hcard[data-h="pairs"]{grid-column:span 2}
+  .hcard[data-h="bat"],.hcard[data-h="ball"],.hcard[data-h="margins"],.hcard[data-h="pairs"]{grid-column:span 1}
+  .hcard[data-h="pitch"]{grid-column:span 2}
   .hcard[data-h="cycle"] .hv{font-size:clamp(34px,7vw,44px)}
 }
 @media (max-width:520px){
@@ -1116,6 +1133,8 @@ var S = {
   formType:"regular", formCycle:null, formCycleManual:false,
   formBF:null, formFF:null, formPitch:null, dlsOpen:false, dlsMode:"chase", fifties:[],
   openPlayer:null, openHighs:null, openTop:null, topFromPlayer:null,
+  pitchTab:"batting",  // the open tab inside Into the pitch
+  pitchPlayer:null,    // whose figures the Players tab shows
   statScope:"view"  // "view": follow the cycle on screen · "all": all-time · or a cycle id picked in the stepper
 };
 
@@ -2083,7 +2102,8 @@ var HIGHS = [
   { key:"bat",     name:"With the bat" },
   { key:"ball",    name:"With the ball" },
   { key:"margins", name:"Margins" },
-  { key:"pairs",   name:"Pairings" }
+  { key:"pairs",   name:"Pairings" },
+  { key:"pitch",   name:"Into the pitch" }
 ];
 function highsName(h){ return h.key === "cycle" && statId() === "all" ? "The league so far" : h.name; }
 
@@ -2143,6 +2163,7 @@ function recCard(label, e, dp, unit, top){
 
 function highsBlock(key, d){
   var R = d.R, lg = d.lg;
+  if(key === "pitch") return "";
   if(key === "cycle"){
     return statCard("Matches", R.n, [R.so ? R.so + " to a Super Over" : "none to a Super Over", R.ff ? R.ff + " by forfeit" : ""]
              .filter(Boolean).join(" &middot; "), false) +
@@ -2207,6 +2228,7 @@ function highsBlock(key, d){
 
 function highsFace(key, d){
   var R = d.R;
+  if(key === "pitch") return { v:null, s:"coming soon" };
   var sfx = function(t){ return t ? '<em class="sfx">' + t + '</em>' : ""; };
   if(key === "cycle") return { v:R.n, s: R.n === 1 ? "match on record" : "matches on record" };
   if(key === "bat") return R.high
@@ -2521,8 +2543,9 @@ function renderHighsModal(key){
     $("modalBody").innerHTML = html;
     return;
   }
-  var fan = highsFan(key, d);
-  html += '<p class="mnote">Every figure in the cards below is a <b>duo figure</b> — not to either player alone.' +
+  var fan = key === "pitch" ? "" : highsFan(key, d);
+  if(key === "pitch") html += pitchBody();
+  else html += '<p class="mnote">Every figure in the cards below is a <b>duo figure</b> — not to either player alone.' +
     (fan ? ' The ranking strip is the one exception: it takes those same duo totals and divides them by <em>that player\u2019s own</em> innings and overs.'
          : ' ') + '</p>';
   html += '<div class="stats stats-' + esc(key) + '">' + highsBlock(key, d) + '</div>' + fan;
@@ -2533,7 +2556,174 @@ function renderHighsModal(key){
   $("modalBody").innerHTML = html;
   bindGoLinks($("modalBody"));
   bindTopLinks($("modalBody"), null);
+  each($("modalBody"), "[data-ptab]", function(b){
+    b.onclick = function(){ S.pitchTab = b.dataset.ptab; renderModal(); };
+  });
+  each($("modalBody"), "[data-pp]", function(b){
+    b.onclick = function(){ S.pitchPlayer = b.dataset.pp; renderModal(); };
+  });
+  if(key === "pitch") enhanceTables($("modalBody"));
   resetModalScroll();
+}
+
+/* ───────── Into the pitch: pitch-by-pitch data, in three tabs ─────────
+   Every table is a time series: one row per pitch, one column per cycle with
+   pitch-tagged matches, then All-time. The cycle picked in "Stats for" is lit.
+   Only counted matches with a pitch recorded feed it; finals included.
+   Batting average = runs per completed innings; strike rate = runs per 100
+   balls. Bowling economy = runs per over; strike rate = balls per wicket. */
+var PITCH_TABS = [
+  { key:"batting", name:"Batting" },
+  { key:"bowling", name:"Bowling" },
+  { key:"players", name:"Players" }
+];
+function pitchMatches(){
+  return scopeCounted("all").filter(function(m){ return m.pitch && PITCH_IMG[m.pitch]; });
+}
+function pitchCols(ms){
+  var ids = {}; ms.forEach(function(m){ ids[m.c] = true; });
+  return S.cycles.filter(function(c){ return ids[c.id]; }).map(function(c){ return { id:c.id, name:c.name }; })
+    .concat([{ id:"all", name:"All-time" }]);
+}
+function pitchBucket(){ return { m:0, inns:0, runs:0, done:0, balls:0, wkts:0, high:null, fifty:null }; }
+// T[colId][pitch] → bucket; each match lands in its cycle's column and in All-time
+function pitchGrid(ms, feed){
+  var T = {};
+  ms.forEach(function(m){
+    [m.c, "all"].forEach(function(col){
+      if(!T[col]) T[col] = {};
+      if(!T[col][m.pitch]) T[col][m.pitch] = pitchBucket();
+      feed(T[col][m.pitch], m);
+    });
+  });
+  return T;
+}
+function addInnings(b, m, sc, chasedAndWon, extra){
+  if(!has(sc)) return;
+  b.inns++; b.runs += sc.r; b.balls += toBalls(sc.o);
+  if(inningsDone(m, sc, chasedAndWon)) b.done++;
+  if(sc.k !== undefined && sc.k !== null) b.wkts += sc.k;
+  if(!b.high || sc.r > b.high.r) b.high = { r:sc.r, tail:scoreTail(sc), mk:m.key, x:extra || null };
+}
+var PITCH_METRICS = {
+  m:     { name:"Matches",        v:function(b){ return b.m || null; }, f:function(v){ return v; } },
+  avg:   { name:"Batting average", v:function(b){ return b.done ? b.runs / b.done : null; }, f:function(v){ return Math.round(v); },
+           sub:function(b){ return b.runs + " runs in " + b.done + " completed innings"; } },
+  high:  { name:"High score",     v:function(b){ return b.high ? b.high.r : null; },
+           f:function(v, b){ return v + '<em class="sfx">' + esc(b.high.tail.split(" (")[0]) + '</em>'; },
+           sub:function(b){ return b.high.r + b.high.tail; } },
+  bsr:   { name:"Strike rate",    v:function(b){ return b.balls ? b.runs / b.balls * 100 : null; }, f:function(v){ return v.toFixed(1); },
+           sub:function(b){ return b.runs + " runs off " + b.balls + " balls"; } },
+  econ:  { name:"Economy",        v:function(b){ return b.balls ? b.runs / (b.balls / 6) : null; }, f:function(v){ return v.toFixed(2); },
+           sub:function(b){ return b.runs + " conceded in " + oversText(b.balls) + " overs"; } },
+  wsr:   { name:"Strike rate",    v:function(b){ return b.wkts ? b.balls / b.wkts : null; }, f:function(v){ return v.toFixed(1); },
+           sub:function(b){ return b.balls + " balls for " + b.wkts + " wickets"; } },
+  wkts:  { name:"Wickets",        v:function(b){ return b.inns ? b.wkts : null; }, f:function(v){ return v; },
+           sub:function(b){ return "in " + b.inns + " innings"; } }
+};
+function pitchTable(T, cols, metric, title, unit, sortKey){
+  var M = PITCH_METRICS[metric], cur = statId();
+  var lit = function(c){ return c.id === cur ? " cur" : ""; };
+  return '<h4 class="mtitle ptitle">' + title + (unit ? '<span class="punit">' + unit + '</span>' : '') + '</h4>' +
+    '<div class="pwrap"><table class="mtab ptab" data-sort-key="' + sortKey + '"><thead><tr><th class="tl">Pitch</th>' +
+    cols.map(function(c){ return '<th class="' + lit(c).trim() + '" data-label="' + esc(c.name) + '">' + esc(c.name) + '</th>'; }).join("") +
+    '</tr></thead><tbody>' +
+    PITCHES.map(function(px, i){
+      return '<tr><td class="tl" data-v="' + i + '">' + PITCH_ICON[px[0]] + px[1] + '</td>' +
+        cols.map(function(c){
+          var b = T[c.id] && T[c.id][px[0]], v = b ? M.v(b) : null;
+          if(v === null) return '<td class="wl' + lit(c) + '">&mdash;</td>';
+          var t = M.sub ? ' title="' + esc(M.sub(b).replace(/&[a-z]+;/g, "")) + '"' : "";
+          var inner = M.f(v, b);
+          if(metric === "high") inner = '<button class="golink" type="button" data-go="' + esc(b.high.mk) + '">' + inner + '</button>';
+          return '<td class="wl' + lit(c) + '" data-v="' + v + '"' + t + '>' + inner + '</td>';
+        }).join("") + '</tr>';
+    }).join("") + '</tbody></table></div>';
+}
+function pitchNone(msg){ return '<div class="mnone">' + msg + '</div>'; }
+function pitchLeague(tab){
+  var ms = pitchMatches();
+  if(!ms.length) return pitchNone("No match has a pitch recorded yet. Add one from the result form.");
+  var cols = pitchCols(ms);
+  var T = pitchGrid(ms, function(b, m){
+    b.m++;
+    addInnings(b, m, m.sw, m.bf === "l");
+    addInnings(b, m, m.sl, false);
+  });
+  var html = pitchTable(T, cols, "m", "Matches", "", "pt-m");
+  if(tab === "batting"){
+    html += pitchTable(T, cols, "avg",  "Batting average", "runs per completed innings", "pt-avg") +
+            pitchTable(T, cols, "high", "High score",      "highest total",              "pt-high") +
+            pitchTable(T, cols, "bsr",  "Strike rate",     "runs per 100 balls",         "pt-bsr");
+  } else {
+    html += pitchTable(T, cols, "econ", "Economy",     "runs per over",    "pt-econ") +
+            pitchTable(T, cols, "wsr",  "Strike rate", "balls per wicket", "pt-wsr") +
+            pitchTable(T, cols, "wkts", "Wickets",     "",                 "pt-wkts");
+  }
+  return html;
+}
+function pitchPlayers(){
+  var ms = pitchMatches();
+  if(!ms.length) return pitchNone("No match has a pitch recorded yet. Add one from the result form.");
+  var who = {};
+  ms.forEach(function(m){ (m.w || []).concat(m.l || []).forEach(function(p){ who[p] = true; }); });
+  var list = Object.keys(who).sort(function(a,b){ return realName(a).localeCompare(realName(b)); });
+  var me = list.indexOf(S.pitchPlayer) >= 0 ? S.pitchPlayer : list[0];
+  var picker = '<div class="ppick">' + list.map(function(p){
+    return '<button class="chip' + (p === me ? " on" : "") + '" type="button" data-pp="' + esc(p) + '" aria-pressed="' + (p === me) + '">' + esc(realName(p)) + '</button>';
+  }).join("") + '</div>';
+  var mine = ms.filter(function(m){ return (m.w || []).indexOf(me) >= 0 || (m.l || []).indexOf(me) >= 0; });
+  var cols = pitchCols(ms);
+  var bat = pitchGrid(mine, function(b, m){
+    var won = (m.w || []).indexOf(me) >= 0, side = won ? m.w : m.l, other = won ? m.l : m.w;
+    var mate = side.filter(function(p){ return p !== me; })[0] || "";
+    b.m++;
+    addInnings(b, m, won ? m.sw : m.sl, won && m.bf === "l", { mate:mate, foes:other.slice() });
+    (m.fifties || []).forEach(function(f){
+      if(f.p !== me) return;
+      if(!b.fifty || f.r > b.fifty.r || (f.r === b.fifty.r && (f.b || 999) < (b.fifty.b || 999)))
+        b.fifty = { r:f.r, b:f.b, no:!!f.no, mk:m.key, mate:mate || f.m || "", foes:other.slice() };
+    });
+  });
+  var ball = pitchGrid(mine, function(b, m){
+    var won = (m.w || []).indexOf(me) >= 0;
+    b.m++;
+    addInnings(b, m, won ? m.sl : m.sw, !won && m.bf === "l");
+  });
+  var all = bat.all || {};
+  var bests = '<h4 class="mtitle ptitle">Bests by pitch<span class="punit">all-time</span></h4>' +
+    '<div class="pwrap"><table class="mtab ptab" data-sort-key="pt-p-best"><thead><tr><th class="tl">Pitch</th>' +
+    '<th class="tl" data-label="Best 50+">Best 50+</th><th class="tl" data-label="Highest duo total">Highest duo total</th></tr></thead><tbody>' +
+    PITCHES.map(function(px, i){
+      var b = all[px[0]], f = b && b.fifty, h = b && b.high;
+      return '<tr><td class="tl" data-v="' + i + '">' + PITCH_ICON[px[0]] + px[1] + '</td>' +
+        (f ? '<td class="tl pbest" data-v="' + f.r + '"><b>' + runsTxt(f) + (f.b ? ' (' + f.b + ')' : '') + '</b>' +
+               (f.mate ? ' with ' + plink(f.mate, "fifties") : '') + ' v ' + plinks(f.foes, "fifties") + ' &middot; ' + fullMatchLink(f.mk) + '</td>'
+           : '<td class="tl pbest">&mdash;</td>') +
+        (h ? '<td class="tl pbest" data-v="' + h.r + '"><b>' + h.r + esc(h.tail) + '</b>' +
+               (h.x && h.x.mate ? ' with ' + plink(h.x.mate, "bat") : '') + ' v ' + plinks(h.x ? h.x.foes : [], "bat") + ' &middot; ' + fullMatchLink(h.mk) + '</td>'
+           : '<td class="tl pbest">&mdash;</td>') + '</tr>';
+    }).join("") + '</tbody></table></div>';
+  return picker +
+    '<p class="pwho">' + plink(me, "") + ' &middot; ' + matchesWord(mine.length) + ' with a pitch recorded &middot; duo figures, as everywhere else</p>' +
+    pitchTable(bat, cols, "m", "Matches", "", "pt-p-m") +
+    '<h4 class="pgroup">Batting</h4>' +
+    pitchTable(bat, cols, "avg",  "Batting average", "runs per completed innings", "pt-p-avg") +
+    pitchTable(bat, cols, "high", "High score",      "highest duo total",          "pt-p-high") +
+    pitchTable(bat, cols, "bsr",  "Strike rate",     "runs per 100 balls",         "pt-p-bsr") +
+    '<h4 class="pgroup">Bowling</h4>' +
+    pitchTable(ball, cols, "econ", "Economy",     "runs per over",    "pt-p-econ") +
+    pitchTable(ball, cols, "wsr",  "Strike rate", "balls per wicket", "pt-p-wsr") +
+    pitchTable(ball, cols, "wkts", "Wickets",     "",                 "pt-p-wkts") +
+    bests;
+}
+function pitchBody(){
+  var tab = PITCH_TABS.filter(function(t){ return t.key === S.pitchTab; })[0] || PITCH_TABS[0];
+  return '<div class="ptabs" role="tablist" aria-label="Into the pitch">' + PITCH_TABS.map(function(t){
+      var on = t.key === tab.key;
+      return '<button class="chip' + (on ? " on" : "") + '" type="button" role="tab" aria-selected="' + on + '" data-ptab="' + t.key + '">' + t.name + '</button>';
+    }).join("") + '</div>' +
+    '<div class="ppanel" data-panel="' + tab.key + '">' + (tab.key === "players" ? pitchPlayers() : pitchLeague(tab.key)) + '</div>';
 }
 
 /* ───────── per-player record book ───────── */
@@ -2987,6 +3177,7 @@ function openPlayer(name, sec){
 function openHighs(key){
   S.backTo = null; S.resetScroll = true; S.openHundreds = null;
   S.openHighs = key; S.openPlayer = null; S.openTop = null; S.topFromPlayer = null;
+  if(key === "pitch") S.pitchTab = "batting";
   renderModal(); $("modalX").focus();
 }
 function openTop(key, fromPlayer){
