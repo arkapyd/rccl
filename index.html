@@ -1906,6 +1906,12 @@ function inningsDone(mt, sc, chasedAndWon){
   if(!mt.dls) return true;
   return battingComplete(sc, chasedAndWon);
 }
+// Lowest-completed lists are stricter: only innings that ran their natural
+// course — never a won chase (it stopped at the target), a D/L or a forfeit.
+function inningsPlayedOut(mt, sc, chasedAndWon){
+  if(!sc || !has(sc) || mt.ff || mt.dls || chasedAndWon) return false;
+  return sc.k === 10 || toBalls(sc.o) >= MATCH_OVERS * 6;   // bowled out, or batted the full overs
+}
 function inningsComplete(sc){
   if(!sc) return false;
   return sc.k === 10 || toBalls(sc.o) >= MATCH_OVERS * 6;
@@ -1991,7 +1997,8 @@ function leagueRecords(ms){
       }
       var ent = { v:sc.r, tail:tail, who:i.bat, foe:i.bowl, whoP:i.batP, foeP:i.bowlP, d:day, mk:mk };
       R.all.high.push(ent);
-      if(inningsDone(mt, sc, i.wonChase)) R.all.lowDone.push(ent);
+      // a winner with no batting order recorded might have been chasing: leave it out
+      if(inningsPlayedOut(mt, sc, i.wonChase || (i.batP === mt.w && !mt.bf))) R.all.lowDone.push(ent);
       if(b >= MIN_ECON_BALLS){
         var rr = sc.r / (b / 6);
         R.all.rate.push({ v:rr, who:i.bat,  foe:i.bowl, whoP:i.batP,  foeP:i.bowlP, d:day, sub:full, mk:mk });
@@ -2302,7 +2309,8 @@ function pairRow(p, v){
 var TOPS = {
   agg:      { name:"Biggest match",            sec:"cycle",   dir: 1, unit:"runs" },
   high:     { name:"Highest total",            sec:"bat",     dir: 1 },
-  lowDone:  { name:"Lowest completed innings", sec:"bat",     dir:-1 },
+  lowDone:  { name:"Lowest completed innings", sec:"bat",     dir:-1,
+              note:"Only innings that ran their course: all out, the full overs, or a lost chase. Won chases, D/L results and forfeits are left out." },
   rate:     { name:"Fastest innings",          sec:"bat",     dir: 1, dp:2, unit:"per over" },
   chased:   { name:"Highest chased",           sec:"bat",     dir: 1 },
   econ:     { name:"Best economy",             sec:"ball",    dir:-1, dp:2, unit:"per over" },
@@ -2885,7 +2893,7 @@ function statsFor(name){
       if(mine.k !== undefined && mine.k !== null) s.wktsLost += mine.k;
       add20(s.bat20, mine);
       if(s.high === null || mine.r > s.high){ s.high = mine.r; s.highTail = scoreTail(mine); s.highMk = mt.key; }
-      if(inningsDone(mt, mine, first === false && won) && (s.lowDone === null || mine.r < s.lowDone)){
+      if(inningsPlayedOut(mt, mine, won && first !== true) && (s.lowDone === null || mine.r < s.lowDone)){
         s.lowDone = mine.r; s.lowDoneTail = scoreTail(mine); s.lowDoneMk = mt.key;
       }
     }
