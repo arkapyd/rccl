@@ -462,8 +462,10 @@ footer img{width:26px;height:auto;opacity:.7}
 .mnote b{color:var(--white);font-weight:700}
 .mnote em{font-style:normal;color:var(--gold);font-weight:700}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(142px,1fr));gap:9px;margin-bottom:22px}
+.stats.stats5{grid-template-columns:repeat(auto-fit,minmax(122px,1fr))}
 @media (min-width:640px){
-  .stats-bat{grid-template-columns:repeat(3, minmax(0, 1fr))}   /* six cards: two even rows of three */
+  .stats-bat{grid-template-columns:repeat(4, minmax(0, 1fr))}   /* eight cards: two even rows of four */
+  .stats-ball{grid-template-columns:repeat(3, minmax(0, 1fr))}  /* six cards: two even rows of three */
 }
 .stat{border:1px solid var(--hair-soft);border-radius:2px;padding:11px 13px;display:flex;flex-direction:column}
 .stat.lead{border-color:var(--gold);background:rgba(255,228,99,.07)}
@@ -1951,9 +1953,9 @@ function leagueRecords(ms){
   function pair(key, side){
     if(!R.pairs[key]) R.pairs[key] = {
       names: side.map(realName).join(" & "), hs: side.slice(), w:0, l:0, run:0, best:0, lastDay:"",
-      batRuns:0, batBalls:0, batInns:0, bowlRuns:0, bowlBalls:0, bowlWkts:0, bowlInns:0,
-      // innings splits: r = runs, n = completed innings (the divisor, as in a batting average)
-      setF:{ r:0, n:0 }, chase:{ r:0, n:0 }, concF:{ r:0, n:0 }, concD:{ r:0, n:0 }
+      batRuns:0, batBalls:0, batInns:0, batWkts:0, bowlRuns:0, bowlBalls:0, bowlWkts:0, bowlInns:0,
+      // innings splits: r = runs, k = wickets (the average's divisor), n = completed innings
+      setF:{ r:0, k:0, n:0 }, chase:{ r:0, k:0, n:0 }, concF:{ r:0, k:0, n:0 }, concD:{ r:0, k:0, n:0 }
     };
     return R.pairs[key];
   }
@@ -1976,7 +1978,7 @@ function leagueRecords(ms){
       R.runs += sc.r; R.balls += b; total += sc.r;
       if(sc.k !== undefined && sc.k !== null) R.wkts += sc.k;
       var tail = scoreTail(sc), full = scoreFull(sc);
-      if(i.batKey){ var bp = R.pairs[i.batKey]; bp.batRuns += sc.r; bp.batBalls += b; bp.batInns++; }
+      if(i.batKey){ var bp = R.pairs[i.batKey]; bp.batRuns += sc.r; bp.batBalls += b; bp.batInns++; bp.batWkts += sc.k || 0; }
       if(i.bowlKey){
         var wp = R.pairs[i.bowlKey];
         wp.bowlRuns += sc.r; wp.bowlBalls += b; wp.bowlInns++;
@@ -1999,8 +2001,7 @@ function leagueRecords(ms){
     if(mt.sow && mt.sol) R.so++;
     if(mt.ff) R.ff++;
 
-    // Pair averages by innings order. A forfeited innings adds its runs but
-    // never counts as completed, exactly like the per-player averages.
+    // Pair averages by innings order: runs per wicket, plus completed innings for Avg score.
     if(mt.bf && has(mt.sw) && has(mt.sl)){
       var firstSc = mt.bf === "w" ? mt.sw : mt.sl, chaseSc = mt.bf === "w" ? mt.sl : mt.sw;
       var firstKey = mt.bf === "w" ? wKey : lKey, chaseKey = mt.bf === "w" ? lKey : wKey;
@@ -2008,7 +2009,7 @@ function leagueRecords(ms){
       var chaseDone = inningsDone(mt, chaseSc, mt.bf === "l");
       var add = function(key, slot, sc, done){
         if(!key) return;
-        var b = R.pairs[key][slot]; b.r += sc.r; if(done) b.n++;
+        var b = R.pairs[key][slot]; b.r += sc.r; b.k += sc.k || 0; if(done) b.n++;
       };
       add(firstKey, "setF",  firstSc, firstDone);   // batting first
       add(chaseKey, "chase", chaseSc, chaseDone);   // chasing
@@ -2149,7 +2150,8 @@ var TOP_SEC = {
   winRuns:"margins", winWkts:"margins", thinRuns:"margins", thinWkts:"margins",
   lossRuns:"margins", lossWkts:"margins", thinLossRuns:"margins", thinLossWkts:"margins",
   pairPcw:"h2h", pairWins:"h2h", pairStreak:"h2h", pairPlayed:"h2h",
-  pairSetF:"h2h", pairChase:"h2h", pairConcF:"h2h", pairConcD:"h2h",
+  pairSetF:"h2h", pairChase:"h2h", pairConcF:"h2h", pairConcD:"h2h", pairBat:"h2h", pairBowl:"h2h",
+  batAvg:"bat", bowlAvg:"ball",
   batFirstAvg:"first", chaseAvg:"chase", mostFifties:"fifties", fastFifty:"fifties"
 };
 function whoLinks(e, sec){
@@ -2188,13 +2190,14 @@ function highsBlock(key, d){
       statCard("Bat first", R.ordered ? R.firstWins + "&ndash;" + R.chaseWins : null,
                R.ordered ? Math.round(R.firstWins / R.ordered * 100) + "% of " + R.ordered + " with order known"
                          : "no innings order recorded", false) +
-      statCard("Average 1st innings", lg.first, lg.firstN ? "over " + lg.firstN + " completed innings" : "none recorded", false, "ref") +
-      statCard("Average chase", lg.second, lg.secondN ? "over " + lg.secondN + " completed innings" : "none recorded", false, "ref") +
+      statCard("Batting average", withUnit(lg.avg, "per wkt"), lg.avg === null ? "no wicket yet" : "every innings &middot; " + lg.wkts + " wickets", false, "ref") +
+      statCard("Batting first", withUnit(lg.firstAvg, "per wkt"), lg.firstN ? "avg score " + lg.first + " over " + lg.firstN + " completed innings" : "none recorded", false, "ref") +
+      statCard("Chasing", withUnit(lg.secondAvg, "per wkt"), lg.secondN ? "avg score " + lg.second + " over " + lg.secondN + " completed innings" : "none recorded", false, "ref") +
       recCard("Biggest match", R.agg, undefined, null, "agg");
   }
   if(key === "bat"){
     var topFif = topEntries("mostFifties", d)[0];
-    return recCard("Highest total", R.high, undefined, null, "high") +
+    return avgCard("batAvg", d) + recCard("Highest total", R.high, undefined, null, "high") +
       recCard("Lowest completed innings", R.lowDone, undefined, null, "lowDone") +
       recCard("Fastest innings", R.rate, 2, null, "rate") +
       recCard("Highest chased", R.chased, undefined, null, "chased") +
@@ -2207,14 +2210,18 @@ function highsBlock(key, d){
       statCard("Most 50+ scores",
                topFif ? topFif.disp : null,
                topFif ? whoLinks(topFif, "fifties") + " &middot; " + (topFif.subCard || topFif.sub) : "nothing on record",
-               false, null, topFif ? "mostFifties" : null);
+               false, null, topFif ? "mostFifties" : null) +
+      statCard("League batting average", withUnit(lg.avg, "per wkt"),
+               lg.avg === null ? "no wicket yet" : lg.runs.toLocaleString() + " runs for " + nWkts(lg.wkts), false, "ref");
   }
   if(key === "ball"){
-    return recCard("Best economy", R.econ, 2, "per over", "econ") +
+    return avgCard("bowlAvg", d) + recCard("Best economy", R.econ, 2, "per over", "econ") +
       recCard("Best strike rate", R.srate, 1, "balls per wicket", "srate") +
       recCard("Lowest successful defense", R.defended, undefined, null, "defended") +
       statCard("Overall economy", d.rr ? withUnit(d.rr.toFixed(2), "per over") : null,
-               "every ball bowled in view", false, "ref");
+               "every ball bowled in view", false, "ref") +
+      statCard("League bowling average", withUnit(lg.avg, "per wkt"),
+               lg.avg === null ? "no wicket yet" : lg.runs.toLocaleString() + " conceded for " + nWkts(lg.wkts), false, "ref");
   }
   if(key === "margins"){
     return recCard("Biggest win by runs", R.winRuns, undefined, null, "winRuns") +
@@ -2234,10 +2241,10 @@ function highsBlock(key, d){
     statCard("Most played pairing", m ? m.n : null,
              m ? plinks(m.hs, "h2h") + " &middot; " + m.w + "&ndash;" + m.l : "nothing on record", false,
              null, m ? "pairPlayed" : null) +
-    ["pairSetF","pairChase","pairConcF","pairConcD"].map(function(k){
+    ["pairBat","pairBowl","pairSetF","pairChase","pairConcF","pairConcD"].map(function(k){
       var e = topEntries(k, d)[0];
-      return statCard(TOPS[k].name, e ? withUnit(e.v.toFixed(1), "per innings") : null,
-        e ? plinks(e.whoP, "h2h") + " &middot; " + e.sub : "needs a completed innings with the order recorded",
+      return statCard(TOPS[k].name, e ? withUnit(e.v.toFixed(1), "per wkt") : null,
+        e ? plinks(e.whoP, "h2h") + " &middot; " + e.sub : "needs a wicket to fall with the order recorded",
         false, null, e ? k : null);
     }).join("");
 }
@@ -2263,11 +2270,24 @@ function highsFace(key, d){
 }
 
 /* ───────── the list behind each record ───────── */
+function avgCard(k, d){
+  var e = topEntries(k, d)[0];
+  return statCard(TOPS[k].name, e ? withUnit(e.v.toFixed(1), "per wkt") : null,
+    e ? whoLinks(e, TOP_SEC[k]) + " &middot; " + e.sub : "needs a wicket on record", false, null, e ? k : null);
+}
 function pairSplit(d, slot, what){
-  return d.pairs.filter(function(p){ return p[slot] && p[slot].n > 0; }).map(function(p){
+  return d.pairs.filter(function(p){ return p[slot] && p[slot].k > 0; }).map(function(p){
     var b = p[slot];
-    return { v: b.r / b.n, who:p.names, whoP:p.hs,
-             sub: b.r + " in " + b.n + " completed innings " + what, n:b.n };
+    return { v: b.r / b.k, who:p.names, whoP:p.hs, n:b.k,
+             sub: b.r + " runs for " + nWkts(b.k) + " " + what +
+                  (b.n ? " &middot; avg score " + Math.round(b.r / b.n) : "") };
+  });
+}
+function pairWhole(d, bat){
+  return d.pairs.filter(function(p){ return bat ? p.batWkts > 0 : p.bowlWkts > 0; }).map(function(p){
+    var r = bat ? p.batRuns : p.bowlRuns, k = bat ? p.batWkts : p.bowlWkts;
+    return { v: r / k, who:p.names, whoP:p.hs, n:k,
+             sub: r + (bat ? " runs for " : " conceded for ") + nWkts(k) };
   });
 }
 function pairRow(p, v){
@@ -2298,30 +2318,50 @@ var TOPS = {
               rows:function(d){ return d.pairs.filter(function(p){ return p.best > 0; }).map(function(p){ return pairRow(p, p.best); }); } },
   pairPlayed:{ name:"Most played pairing", sec:"pairs", dir:1, unit:"matches",
               rows:function(d){ return d.pairs.filter(function(p){ return p.n > 0; }).map(function(p){ return pairRow(p, p.n); }); } },
-  pairSetF:  { name:"Average batting first", sec:"pairs", dir: 1, dp:1, tie:function(a,b){ return b.n - a.n; }, unit:"runs per innings",
-               note:"Runs the pair scored when batting first, divided by their completed first innings (every innings except ones cut short by D/L or a forfeit).",
+  pairBat:   { name:"Best batting average", sec:"pairs", dir: 1, dp:1, tie:function(a,b){ return b.n - a.n; }, unit:AVG_DEF,
+               note:"Batting average = runs scored per wicket lost, as in cricket: a won chase or an innings that ends with wickets in hand costs nothing. Every innings the pair batted together.",
+               rows:function(d){ return pairWhole(d, true); } },
+  pairBowl:  { name:"Best bowling average", sec:"pairs", dir:-1, dp:1, tie:function(a,b){ return b.n - a.n; }, unit:AVG_DEF,
+               note:"Bowling average = runs conceded per wicket taken. Lower is better. Every innings the pair bowled together.",
+               rows:function(d){ return pairWhole(d, false); } },
+  pairSetF:  { name:"Batting average batting first", sec:"pairs", dir: 1, dp:1, tie:function(a,b){ return b.n - a.n; }, unit:AVG_DEF,
+               note:"Batting average = runs scored per wicket lost, as in cricket: a won chase or an innings that ends with wickets in hand costs nothing. Only innings where the pair batted first.",
                rows:function(d){ return pairSplit(d, "setF", "batting first"); } },
-  pairChase: { name:"Average chasing", sec:"pairs", dir: 1, dp:1, tie:function(a,b){ return b.n - a.n; }, unit:"runs per innings",
-               note:"Runs the pair scored when chasing, divided by their completed chases (every chase except ones cut short by D/L or a forfeit).",
+  pairChase: { name:"Batting average chasing", sec:"pairs", dir: 1, dp:1, tie:function(a,b){ return b.n - a.n; }, unit:AVG_DEF,
+               note:"Batting average = runs scored per wicket lost, as in cricket: a won chase or an innings that ends with wickets in hand costs nothing. Only innings where the pair chased.",
                rows:function(d){ return pairSplit(d, "chase", "chasing"); } },
-  pairConcF: { name:"Fewest conceded bowling first", sec:"pairs", dir:-1, dp:1, tie:function(a,b){ return b.n - a.n; }, unit:"runs per innings",
-               note:"Runs the pair gave away when they bowled first, divided by the completed innings they bowled at. Lower is better.",
+  pairConcF: { name:"Bowling average bowling first", sec:"pairs", dir:-1, dp:1, tie:function(a,b){ return b.n - a.n; }, unit:AVG_DEF,
+               note:"Bowling average = runs conceded per wicket taken. Lower is better. Only innings the pair bowled first.",
                rows:function(d){ return pairSplit(d, "concF", "bowling first"); } },
-  pairConcD: { name:"Fewest conceded defending", sec:"pairs", dir:-1, dp:1, tie:function(a,b){ return b.n - a.n; }, unit:"runs per innings",
-               note:"Runs the pair gave away while defending a total, divided by the completed chases against them. Lower is better.",
+  pairConcD: { name:"Bowling average defending", sec:"pairs", dir:-1, dp:1, tie:function(a,b){ return b.n - a.n; }, unit:AVG_DEF,
+               note:"Bowling average = runs conceded per wicket taken. Lower is better. Only innings the pair bowled while defending a total.",
                rows:function(d){ return pairSplit(d, "concD", "defending"); } },
-  batFirstAvg: { name:"Batting-first average", sec:"bat", dir:1, unit:"runs per innings",
-    note:"Per-player figure &mdash; duo totals from every innings this player batted first in, divided by that player&rsquo;s own completed innings.",
+  batAvg: { name:"Batting average", sec:"bat", dir:1, dp:1, unit:AVG_DEF,
+    note:"Batting average = runs scored per wicket lost, as in cricket: a won chase or an innings that ends with wickets in hand costs nothing. Per-player figure from the duo totals of every innings the player batted in.",
     rows:function(d){
-      return d.stats.filter(function(s){ return s.innsFirstDone > 0; }).map(function(s){
-        return { v:Math.round(s.runsFirst / s.innsFirstDone), who:s.real, whoP:[s.name], sub:s.innsFirstDone + " completed innings batting first" };
+      return d.stats.filter(function(s){ return s.wktsLost > 0; }).map(function(s){
+        return { v:s.runs / s.wktsLost, who:s.real, whoP:[s.name], sub:s.runs + " runs for " + nWkts(s.wktsLost) };
       });
     } },
-  chaseAvg: { name:"Chasing average", sec:"bat", dir:1, unit:"runs per innings",
-    note:"Per-player figure &mdash; duo totals from every innings this player chased in, divided by that player&rsquo;s own completed innings.",
+  bowlAvg: { name:"Bowling average", sec:"ball", dir:-1, dp:1, unit:AVG_DEF,
+    note:"Bowling average = runs conceded per wicket taken. Lower is better. Per-player figure from the duo totals of every innings the player bowled in.",
     rows:function(d){
-      return d.stats.filter(function(s){ return s.innsChaseDone > 0; }).map(function(s){
-        return { v:Math.round(s.runsChase / s.innsChaseDone), who:s.real, whoP:[s.name], sub:s.innsChaseDone + " completed innings chasing" };
+      return d.stats.filter(function(s){ return s.wkts > 0; }).map(function(s){
+        return { v:s.conceded / s.wkts, who:s.real, whoP:[s.name], sub:s.conceded + " conceded for " + nWkts(s.wkts) };
+      });
+    } },
+  batFirstAvg: { name:"Batting average batting first", sec:"bat", dir:1, dp:1, unit:AVG_DEF,
+    note:"Batting average = runs scored per wicket lost, as in cricket: a won chase or an innings that ends with wickets in hand costs nothing. Per-player figure from the duo totals of every innings the player batted first in.",
+    rows:function(d){
+      return d.stats.filter(function(s){ return s.wktsFirst > 0; }).map(function(s){
+        return { v:s.runsFirst / s.wktsFirst, who:s.real, whoP:[s.name], sub:s.runsFirst + " runs for " + nWkts(s.wktsFirst) + " batting first" };
+      });
+    } },
+  chaseAvg: { name:"Batting average chasing", sec:"bat", dir:1, dp:1, unit:AVG_DEF,
+    note:"Batting average = runs scored per wicket lost, as in cricket: a won chase or an innings that ends with wickets in hand costs nothing. Per-player figure from the duo totals of every innings the player chased in.",
+    rows:function(d){
+      return d.stats.filter(function(s){ return s.wktsChase > 0; }).map(function(s){
+        return { v:s.runsChase / s.wktsChase, who:s.real, whoP:[s.name], sub:s.runsChase + " runs for " + nWkts(s.wktsChase) + " chasing" };
       });
     } },
   fastFifty: { name:"Fastest 50+", sec:"bat", dir:1, dp:1, unit:"strike rate",
@@ -2482,13 +2522,13 @@ function highsFan(key, d){
   var W = 34, list, label, val, detail;
   var stats = d.stats;
   if(key === "bat"){
-    list = stats.filter(function(x){ return x.innsDone >= FAN_MIN_INNS; })
-      .map(function(x){ return { s:x, v:x.runs / x.innsDone }; })
+    list = stats.filter(function(x){ return x.inns >= FAN_MIN_INNS && x.wktsLost > 0; })
+      .map(function(x){ return { s:x, v:x.runs / x.wktsLost }; })
       .sort(function(a,b){ return b.v - a.v; });
-    label = "Batting average by player &middot; highest first";
-    val = function(x){ return Math.round(x.v); };
+    label = "Batting average by player &middot; runs per wicket &middot; highest first";
+    val = function(x){ return x.v.toFixed(1); };
     detail = function(x){
-      return x.s.runs + " in " + x.s.innsDone + " completed inns" +
+      return x.s.runs + " for " + x.s.wktsLost + " wkts" +
         (x.s.ballsFaced ? " &middot; " + (x.s.runs / (x.s.ballsFaced / 6)).toFixed(2) + " an over" : "");
     };
   } else if(key === "ball"){
@@ -2562,7 +2602,7 @@ function renderHighsModal(key){
   var fan = key === "pitch" ? "" : highsFan(key, d);
   if(key === "pitch") html += pitchBody();
   else html += '<p class="mnote">Every figure in the cards below is a <b>duo figure</b> — not to either player alone.' +
-    (fan ? ' The ranking strip is the one exception: it takes those same duo totals and divides them by <em>that player\u2019s own</em> innings and overs.'
+    (fan ? ' The ranking strip is the one exception: it takes those same duo totals and divides them by <em>that player\u2019s own</em> wickets and overs.'
          : ' ') + '</p>';
   html += '<div class="stats stats-' + esc(key) + '">' + highsBlock(key, d) + '</div>' + fan;
   S.resetScroll = true;
@@ -2586,7 +2626,7 @@ function renderHighsModal(key){
    Every table is a time series: one row per pitch, one column per cycle with
    pitch-tagged matches, then All-time. The cycle picked in "Stats for" is lit.
    Only counted matches with a pitch recorded feed it; finals included.
-   Batting average = runs per completed innings; strike rate = runs per 100
+   Averages follow the page-wide definitions (see perWkt); strike rate = runs per 100
    balls. Bowling economy = runs per over; strike rate = balls per wicket. */
 var PITCH_TABS = [
   { key:"batting", name:"Batting" },
@@ -2624,8 +2664,12 @@ function addInnings(b, m, sc, chasedAndWon, extra){
 }
 var PITCH_METRICS = {
   m:     { name:"Matches", head:"M",  v:function(b){ return b.m || null; }, f:function(v){ return v; } },
-  avg:   { name:"Batting average", head:"Avg", unit:"runs per completed innings", v:function(b){ return b.done ? b.runs / b.done : null; }, f:function(v){ return Math.round(v); },
+  avg:   { name:"Batting average", head:"Avg", unit:"runs per wicket", v:function(b){ return b.wkts ? b.runs / b.wkts : null; }, f:function(v){ return v.toFixed(1); },
+           sub:function(b){ return b.runs + " runs for " + b.wkts + " wickets"; } },
+  score: { name:"Avg score", head:"Score", unit:"runs per completed innings", v:function(b){ return b.done ? b.runs / b.done : null; }, f:function(v){ return Math.round(v); },
            sub:function(b){ return b.runs + " runs in " + b.done + " completed innings"; } },
+  bavg:  { name:"Bowling average", head:"Avg", unit:"runs conceded per wicket", v:function(b){ return b.wkts ? b.runs / b.wkts : null; }, f:function(v){ return v.toFixed(1); },
+           sub:function(b){ return b.runs + " conceded for " + b.wkts + " wickets"; } },
   f50:   { name:"50+ scores", head:"50+", v:function(b){ return b.m ? b.f50 : null; }, f:function(v){ return v; },
            sub:function(b){ return b.f50 + " in " + b.m + " matches"; } },
   high:  { name:"High score", head:"High", v:function(b){ return b.high ? b.high.r : null; },
@@ -2697,8 +2741,8 @@ function pitchLeague(tab){
   var ms = pitchMatches();
   if(!ms.length) return pitchNone("No match has a pitch recorded yet. Add one from the result form.");
   var cols = pitchCols(ms), T = leagueGrid(ms);
-  return tab === "batting" ? pitchTable(T, cols, ["m", "avg", "high", "bsr", "f50"], "", "pt-bat")
-                          : pitchTable(T, cols, ["m", "econ", "wsr", "wkts"], "", "pt-bowl");
+  return tab === "batting" ? pitchTable(T, cols, ["m", "avg", "score", "high", "bsr", "f50"], "", "pt-bat")
+                          : pitchTable(T, cols, ["m", "bavg", "econ", "wsr", "wkts"], "", "pt-bowl");
 }
 function pitchPlayers(){
   var ms = pitchMatches();
@@ -2746,8 +2790,8 @@ function pitchPlayers(){
     }).join("") + '</tbody></table></div>';
   return picker +
     '<p class="pwho">' + plink(me, "") + ' &middot; ' + matchesWord(mine.length) + ' with a pitch recorded &middot; duo figures, as everywhere else</p>' +
-    pitchTable(bat,  cols, ["m", "avg", "high", "bsr", "f50"], "Batting", "pt-p-bat", LG) +
-    pitchTable(ball, cols, ["m", "econ", "wsr", "wkts"], "Bowling", "pt-p-bowl", LG) +
+    pitchTable(bat,  cols, ["m", "avg", "score", "high", "bsr", "f50"], "Batting", "pt-p-bat", LG) +
+    pitchTable(ball, cols, ["m", "bavg", "econ", "wsr", "wkts"], "Bowling", "pt-p-bowl", LG) +
     bests;
 }
 function pitchBody(){
@@ -2781,7 +2825,7 @@ function statsFor(name){
     conceded:0, ballsBowled:0, wkts:0, bestEcon:null, bestEconMk:"", bestEconSc:"",
     lowDefended:null, highChased:null,
     batFirst:{p:0,w:0,l:0}, chasing:{p:0,w:0,l:0},
-    runsFirst:0, innsFirst:0, innsFirstDone:0, runsChase:0, innsChase:0, innsChaseDone:0,
+    runsFirst:0, innsFirst:0, innsFirstDone:0, wktsFirst:0, runsChase:0, innsChase:0, innsChaseDone:0, wktsChase:0,
     soPlayed:0, soWon:0, dlsPlayed:0, dlsWon:0, ffWon:0, ffLost:0, winByRuns:null, winByWkts:null,
     thinWinRuns:null, thinWinWkts:null, lossByRuns:null, lossByWkts:null, thinLossRuns:null, thinLossWkts:null,
     streak:0, bestStreak:0, partners:{}, foes:{}, list:[], fifties:[],
@@ -2849,11 +2893,11 @@ function statsFor(name){
 
     if(first === true){
       if(reg){ s.batFirst.p++; s.batFirst[won ? "w" : "l"]++; }
-      if(has(mine)){ s.runsFirst += mine.r; s.innsFirst++; if(inningsDone(mt, mine, false)) s.innsFirstDone++; }
+      if(has(mine)){ s.runsFirst += mine.r; s.wktsFirst += mine.k || 0; s.innsFirst++; if(inningsDone(mt, mine, false)) s.innsFirstDone++; }
     }
     if(first === false){
       if(reg){ s.chasing.p++; s.chasing[won ? "w" : "l"]++; }
-      if(has(mine)){ s.runsChase += mine.r; s.innsChase++; if(inningsDone(mt, mine, won)) s.innsChaseDone++; }
+      if(has(mine)){ s.runsChase += mine.r; s.wktsChase += mine.k || 0; s.innsChase++; if(inningsDone(mt, mine, won)) s.innsChaseDone++; }
     }
     if(!mt.ff && won && first === true && has(mine) && (s.lowDefended === null || mine.r < s.lowDefended.v))
       s.lowDefended = { v:mine.r, tail:scoreTail(mine), mk:mt.key };
@@ -2894,18 +2938,23 @@ function statsFor(name){
 }
 
 function leagueAverages(ms){
-  var f = { r:0, n:0 }, c = { r:0, n:0 };
+  var f = { r:0, k:0, n:0 }, c = { r:0, k:0, n:0 }, all = { r:0, k:0 };
+  ms.forEach(function(mt){
+    [mt.sw, mt.sl].forEach(function(sc){ if(has(sc)){ all.r += sc.r; all.k += sc.k || 0; } });
+  });
   ms.forEach(function(mt){
     if(!mt.bf) return;
     var ffm = !!mt.ff;
     var one = mt.bf === "w" ? mt.sw : mt.sl;
     var two = mt.bf === "w" ? mt.sl : mt.sw;
     var chaseWon = mt.bf === "l";
-    if(has(one)){ f.r += one.r; if(inningsDone(mt, one, false)) f.n++; }
-    if(has(two)){ c.r += two.r; if(inningsDone(mt, two, chaseWon)) c.n++; }
+    if(has(one)){ f.r += one.r; f.k += one.k || 0; if(inningsDone(mt, one, false)) f.n++; }
+    if(has(two)){ c.r += two.r; c.k += two.k || 0; if(inningsDone(mt, two, chaseWon)) c.n++; }
   });
-  return { first: f.n ? Math.round(f.r / f.n) : null, firstN:f.n,
-           second: c.n ? Math.round(c.r / c.n) : null, secondN:c.n };
+  return { first: f.n ? Math.round(f.r / f.n) : null, firstN:f.n,          // avg score
+           second: c.n ? Math.round(c.r / c.n) : null, secondN:c.n,
+           firstAvg: perWkt(f.r, f.k), secondAvg: perWkt(c.r, c.k),           // runs per wicket
+           avg: perWkt(all.r, all.k), runs: all.r, wkts: all.k };
 }
 
 function leagueBests(){
@@ -2936,10 +2985,20 @@ function statCard(label, value, sub, isBest, cls, top){
 }
 function gap(mine, league){
   if(mine === null || league === null) return "";
-  var d = mine - league;
+  var d = Math.round((mine - league) * 10) / 10;
   if(d === 0) return " &middot; level with league";
   return " &middot; " + Math.abs(d) + (d > 0 ? " above" : " below") + " league";
 }
+/* ───────── Averages: one set of definitions for the whole page ─────────
+   Batting average  = runs scored ÷ wickets lost   (runs per wicket; not-outs and
+                      won chases cost nothing, exactly as in cricket)
+   Bowling average  = runs conceded ÷ wickets taken
+   Avg score        = runs ÷ completed innings (an innings cut short by D/L or a
+                      forfeit adds its runs but is not counted as completed)
+   All three are duo figures: only pair totals and 50+ scores are recorded. */
+function nWkts(k){ return k + (k === 1 ? " wicket" : " wickets"); }
+function perWkt(r, k){ return k ? Math.round(r / k * 10) / 10 : null; }
+var AVG_DEF = "runs per wicket";
 var PSEC = {
   "With the bat":"bat", "With the ball":"ball", "Batting first":"first", "Chasing":"chase",
   "Margins":"margins", "50+ scores":"fifties", "Head to head":"h2h",
@@ -3017,7 +3076,8 @@ function renderModal(){
   $("modal").hidden = false;
 
   var rate = s.ballsBowled ? (s.conceded / (s.ballsBowled / 6)).toFixed(2) : null;
-  var avg  = s.innsDone ? Math.round(s.runs / s.innsDone) : null;
+  var avg  = perWkt(s.runs, s.wktsLost), bowlAvg = perWkt(s.conceded, s.wkts);
+  var lgAll = leagueAverages(scopeCounted(statId()));
 
   var html =
     '<div class="mhead">' +
@@ -3048,18 +3108,24 @@ function renderModal(){
              matchLink(s.highMk) || null, s.high !== null && s.high === best.high, null, "high") +
     statCard("Lowest duo total", s.lowDone === null ? null : s.lowDone + '<em class="sfx">' + s.lowDoneTail + '</em>',
              s.lowDone === null ? "no innings played out" : (matchLink(s.lowDoneMk) || null), false, null, "lowDone") +
-    statCard("Average total", withUnit(avg, "runs per innings"), null, false) +
+    statCard("Batting average", withUnit(avg, "per wkt"),
+             avg === null ? "no wicket lost yet" : s.runs + " for " + nWkts(s.wktsLost) +
+               (s.innsDone ? " &middot; avg score " + Math.round(s.runs / s.innsDone) : "") + gap(avg, lgAll.avg),
+             false, null, avg === null ? null : "batAvg") +
   '</div>';
 
-  html += sectionTitle("With the ball", "duo") + '<div class="stats">' +
+  html += sectionTitle("With the ball", "duo") + '<div class="stats stats5">' +
     statCard("Wickets taken in a duo", s.wkts, oversText(s.ballsBowled) + " overs bowled", s.wkts > 0 && s.wkts === best.wkts) +
     statCard("Best duo economy", s.bestEcon === null ? null : withUnit(s.bestEcon.toFixed(2), "per over"),
              s.bestEcon === null ? "no innings past " + (MIN_ECON_BALLS / 6) + " overs"
                : [matchLink(s.bestEconMk), s.bestEconSc].filter(function(x){ return !!x; }).join(" &middot; "),
              s.bestEcon !== null && best.econ !== null && Math.abs(s.bestEcon - best.econ) < 1e-9, null, "econ") +
-    statCard("Duo strike rate", s.strikeRate === null ? null : withUnit(s.strikeRate.toFixed(1), "balls per wicket"),
+    statCard("Duo strike rate", s.strikeRate === null ? null : withUnit(s.strikeRate.toFixed(1), "balls/wkt"),
              s.strikeRate === null ? "no wickets yet" : null,
              s.strikeRate !== null && best.sr !== null && Math.abs(s.strikeRate - best.sr) < 1e-9, null, "srate") +
+    statCard("Bowling average", withUnit(bowlAvg, "per wkt"),
+             bowlAvg === null ? "no wickets yet" : s.conceded + " conceded for " + nWkts(s.wkts) + gap(bowlAvg, lgAll.avg),
+             false, null, bowlAvg === null ? null : "bowlAvg") +
     statCard("Duo economy", rate === null ? null : withUnit(rate, "per over"),
              s.ballsBowled ? s.conceded + " conceded in " + oversText(s.ballsBowled) + " ov" : "nothing bowled yet",
              s.econOverall !== null && best.econOverall !== null && Math.abs(s.econOverall - best.econOverall) < 1e-9) +
@@ -3068,23 +3134,24 @@ function renderModal(){
   var bf = s.batFirst, ch = s.chasing;
   var unset = s.m - bf.p - ch.p;
   var lg = leagueAverages(scopeCounted(statId()));
-  var avgSet   = s.innsFirstDone ? Math.round(s.runsFirst / s.innsFirstDone) : null;
-  var avgChase = s.innsChaseDone ? Math.round(s.runsChase / s.innsChaseDone) : null;
+  var avgSet   = perWkt(s.runsFirst, s.wktsFirst), avgChase = perWkt(s.runsChase, s.wktsChase);
+  var scoreSet = s.innsFirstDone ? " &middot; avg score " + Math.round(s.runsFirst / s.innsFirstDone) : "";
+  var scoreCh  = s.innsChaseDone ? " &middot; avg score " + Math.round(s.runsChase / s.innsChaseDone) : "";
 
   html += sectionTitle("Batting first", "duo") + '<div class="stats">' +
     statCard("Record", bf.p ? bf.w + "&ndash;" + bf.l : null, bf.p ? ((bf.w / bf.p) * 100).toFixed(0) + "% won" : "none recorded", false) +
     statCard("Lowest successful defense", citeVal(s.lowDefended), citeLine(s.lowDefended),
              s.lowDefended !== null && s.lowDefended.v === best.lowDefended, null, "defended") +
-    statCard("Average set", withUnit(avgSet, "runs per innings"), s.innsFirstDone + " completed innings" + gap(avgSet, lg.first), false, null, "batFirstAvg") +
-    statCard("League bats first", lg.first, lg.firstN ? "across " + lg.firstN + " completed first innings" : "none recorded", false, "ref") +
+    statCard("Batting average", withUnit(avgSet, "per wkt"), avgSet === null ? "no wicket lost batting first" : nWkts(s.wktsFirst) + scoreSet + gap(avgSet, lg.firstAvg), false, null, avgSet === null ? null : "batFirstAvg") +
+    statCard("League bats first", withUnit(lg.firstAvg, "per wkt"), lg.firstN ? "avg score " + lg.first + " over " + lg.firstN + " completed innings" : "none recorded", false, "ref") +
   '</div>';
 
   html += sectionTitle("Chasing", "duo") + '<div class="stats">' +
     statCard("Record", ch.p ? ch.w + "&ndash;" + ch.l : null, ch.p ? ((ch.w / ch.p) * 100).toFixed(0) + "% won" : "none recorded", false) +
     statCard("Highest chased", citeVal(s.highChased), citeLine(s.highChased),
              s.highChased !== null && s.highChased.v === best.highChased, null, "chased") +
-    statCard("Average scored", withUnit(avgChase, "runs per innings"), s.innsChaseDone + " completed innings" + gap(avgChase, lg.second), false, null, "chaseAvg") +
-    statCard("League chasing", lg.second, lg.secondN ? "across " + lg.secondN + " completed second innings" : "none recorded", false, "ref") +
+    statCard("Batting average", withUnit(avgChase, "per wkt"), avgChase === null ? "no wicket lost chasing" : nWkts(s.wktsChase) + scoreCh + gap(avgChase, lg.secondAvg), false, null, avgChase === null ? null : "chaseAvg") +
+    statCard("League chasing", withUnit(lg.secondAvg, "per wkt"), lg.secondN ? "avg score " + lg.second + " over " + lg.secondN + " completed innings" : "none recorded", false, "ref") +
   '</div>' +
   (unset > 0 ? '<p class="mfoot">' + matchesWord(unset) + ' have no innings order recorded, so they sit outside these two sections. Edit them to fill it in.</p>' : '') +
 
