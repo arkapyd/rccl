@@ -132,6 +132,21 @@ body{margin:0;
 .verdict.crowned .v-name{color:var(--gold)}
 .v-note{position:relative;font-size:15px;color:var(--lilac);max-width:58ch}
 .v-note b{color:var(--white);font-weight:700}
+/* from the scorer's box — a ruled strip of talking points under the verdict */
+.scorebox{margin-top:18px;padding:16px clamp(22px,4.5vw,40px) 14px;border-left:2px solid var(--gold)}
+.sb-head{font-size:10.5px;font-weight:800;letter-spacing:.28em;text-transform:uppercase;color:var(--bronze-lit);margin-bottom:8px}
+.scorebox li i{font-style:italic;color:var(--white)}
+.scorebox ul{list-style:none;margin:0;padding:0}
+.scorebox li{font-size:13.5px;color:var(--lilac);line-height:1.5;padding:6px 0;border-top:1px dashed rgba(255,255,255,.07)}
+.scorebox li:first-child{border-top:0}
+.scorebox li > b:first-child{display:inline-block;min-width:9.5em;font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+@media (max-width:560px){ .scorebox li > b:first-child{display:block;min-width:0} }
+.dbline > span:not(.f50tag){margin-right:6px}
+.dbline .capi{font-style:italic;font-size:.82em;color:var(--lilac-dim)}
+.f50line .maiden{font-style:italic;font-size:.82em;color:var(--gold);margin-left:5px;letter-spacing:.02em}
+.mreal .capno{color:var(--gold)}
+footer .odo{flex-basis:100%;text-transform:none;letter-spacing:.04em;font-weight:500;font-size:11.5px}
+footer .odo b{color:var(--white);font-weight:700}
 .verdict.crowned .v-note b{color:var(--gold)}
 section{margin-top:var(--stack)}
 .head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:8px}
@@ -332,6 +347,7 @@ tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
 .rcard .rgo{margin-left:auto;padding-left:10px;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-dim)}
 .rcard.rauto:hover .rgo{color:var(--gold)}
 .rcard.rauto .rm{display:flex;flex-wrap:wrap;align-items:baseline}
+.rcard .era{align-self:flex-start;margin-top:6px;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--bronze-lit);border:1px solid rgba(201,162,39,.4);padding:3px 7px 2px;border-radius:2px;transform:rotate(-1.5deg)}
 .rcard .rn{font-size:11.5px;color:var(--lilac);font-style:italic}
 .rcard details{margin-top:8px;border-top:1px solid var(--hair-soft);padding-top:7px}
 .rcard summary{cursor:pointer;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--lilac-dim)}
@@ -378,6 +394,7 @@ tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
 .log .won{font-weight:700;color:var(--gold)}
 .log .role{font-size:12.5px;font-style:italic;color:var(--lilac-dim);margin-left:-12px;white-space:nowrap}
 .log .mgn{font-size:12.5px;font-style:italic;color:var(--lilac-dim)}
+.log .hl{grid-column:3;font-family:'Teko',sans-serif;font-weight:600;font-size:19px;line-height:1;letter-spacing:.03em;text-transform:uppercase;color:var(--white);margin-bottom:-1px}
 .log .f50line{grid-column:3;font-size:12.5px;color:var(--lilac);display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px}
 .log .f50line b{font-family:'Teko',sans-serif;font-size:16px;font-weight:700;color:var(--gold)}
 .log .f50tag{font-size:8.5px;font-weight:800;letter-spacing:.14em;color:var(--royal-deep);background:var(--bronze-lit);padding:2px 6px;border-radius:2px;margin-right:2px}
@@ -844,6 +861,8 @@ html.slate .fanc:hover,html.slate .fanc:focus-visible{background:linear-gradient
     <div class="v-note" id="vNote"></div>
   </div>
 
+  <aside class="scorebox" id="scorebox" aria-label="From the scorer's box" hidden></aside>
+
   <section id="tableSection">
     <div class="head">
       <h2 id="tableTitle">The Table</h2>
@@ -939,6 +958,7 @@ html.slate .fanc:hover,html.slate .fanc:focus-visible{background:linear-gradient
     <img src="RCCL.png" alt="" onerror="this.remove()">
     <span>Real Cricket Champions' League</span>
     <span id="footWindow"></span>
+    <span class="odo" id="odometer"></span>
   </footer>
 </main>
 
@@ -1277,9 +1297,117 @@ function rebuild(){
     }
   });
 
+  buildLedger();
   var ok = function(v){ return v === "all" || !!cyc(v); };
   S.view = (S.want && ok(S.want)) ? S.want : defaultView();
 }
+
+/* ───────── from the scorer's box ─────────
+   A few lines a scorer would read out between overs, all worked out from
+   the results in view: the latest result, live streaks, the gate race,
+   and the latest milestone. Nothing here is typed in by hand. */
+function renderScorebox(){
+  var box = $("scorebox"), all = S.view === "all";
+  var ms = scopeCounted(S.view).filter(function(m){ return !m.isFinal; });
+  if(!ms.length){ box.hidden = true; box.innerHTML = ""; return; }
+  var lines = [], last = ms[ms.length - 1];
+  var pitch = last.pitch ? " on a " + last.pitch + " pitch" : "";
+  var hl = headline(last);
+  lines.push('<b>Last up</b> ' + (hl ? '<i>' + hl + '</i> &middot; ' + plinks(last.w, "matches") + ' won'
+                                     : plinks(last.w, "matches") + ' beat ' + plinks(last.l, "matches")) +
+    esc(marginPhrase(last)) + pitch + ' &middot; ' + fullMatchLink(last.key));
+  var tb = !all && throwback(cyc(S.view));
+  if(tb) lines.push(tb);
+
+  // live streaks: how each player's run of results currently stands
+  var runs = {};
+  ms.forEach(function(m){
+    (m.w || []).forEach(function(p){ var x = runs[p]; runs[p] = x && x.won ? { won:true, n:x.n + 1 } : { won:true, n:1 }; });
+    (m.l || []).forEach(function(p){ var x = runs[p]; runs[p] = x && !x.won ? { won:false, n:x.n + 1 } : { won:false, n:1 }; });
+  });
+  var hot = Object.keys(runs).filter(function(p){ return runs[p].won && runs[p].n >= 3; }).sort(function(a,b){ return runs[b].n - runs[a].n; });
+  var cold = Object.keys(runs).filter(function(p){ return !runs[p].won && runs[p].n >= 3; }).sort(function(a,b){ return runs[b].n - runs[a].n; });
+  if(hot.length) lines.push('<b>Hot streak</b> ' + hot.slice(0, 3).map(function(p){ return plink(p, "matches") + ' has won ' + runs[p].n + ' straight'; }).join(" &middot; "));
+  if(cold.length) lines.push('<b>Cold spell</b> ' + cold.slice(0, 3).map(function(p){ return plink(p, "matches") + ' has lost ' + runs[p].n + ' in a row'; }).join(" &middot; "));
+
+  // the gate race, cycle view only
+  if(!all){
+    var c = cyc(S.view), gate = c.minWins, wins = {};
+    ms.forEach(function(m){ (m.w || []).forEach(function(p){ wins[p] = (wins[p] || 0) + 1; }); });
+    var near = Object.keys(wins).filter(function(p){ return wins[p] < gate && gate - wins[p] <= 2; })
+      .sort(function(a,b){ return wins[b] - wins[a]; });
+    if(near.length) lines.push('<b>At the gate</b> ' + near.slice(0, 4).map(function(p){
+      var k = gate - wins[p]; return plink(p, "matches") + ' needs ' + (k === 1 ? "one more win" : "two more wins"); }).join(" &middot; "));
+  }
+
+  // the most recent milestone 50+
+  for(var i = ms.length - 1; i >= 0; i--){
+    var mf = (ms[i].fifties || []).filter(function(f){ return f.maiden; });
+    if(mf.length){
+      var f = mf[mf.length - 1];
+      lines.push('<b>Milestone</b> ' + plink(f.p, "fifties") + '&rsquo;s ' + runsTxt(f) + ' (' + f.b + ') was a ' + f.maiden + ' &middot; ' + fullMatchLink(ms[i].key));
+      break;
+    }
+  }
+  box.hidden = false;
+  box.innerHTML = '<div class="sb-head">From the scorer&rsquo;s box</div><ul>' +
+    lines.map(function(l){ return '<li>' + l + '</li>'; }).join("") + '</ul>';
+  bindGoLinks(box);
+}
+
+// "This day last cycle": the same day into the previous cycle (within two days).
+function throwback(c){
+  var i = S.cycles.indexOf(c), prev = i > 0 ? S.cycles[i - 1] : null;
+  if(!prev || !prev.start || !c.start) return "";
+  var day = function(iso){ return new Date(iso + "T00:00:00").getTime() / 86400000; };
+  var now = todayISO(), at = now < c.start ? c.start : (c.end && now > c.end ? c.end : now);
+  var off = Math.round(day(at) - day(c.start));
+  var target = day(prev.start) + off, best = null;
+  prev.matches.filter(function(m){ return m.counts && m.d; }).forEach(function(m){
+    var gap = Math.abs(day(m.d) - target);
+    if(gap <= 2 && (!best || gap < best.gap)) best = { m:m, gap:gap };
+  });
+  if(!best) return "";
+  var m = best.m, hl = headline(m);
+  return '<b>Last cycle</b> Day ' + (Math.round(day(m.d) - day(prev.start)) + 1) + ' of ' + esc(prev.name) + ', ' + fmt(m.d) + ': ' +
+    (hl ? '<i>' + hl + '</i> &middot; ' + plinks(m.w, "matches") + ' won' : plinks(m.w, "matches") + ' beat ' + plinks(m.l, "matches")) + esc(marginPhrase(m)) +
+    ' &middot; ' + fullMatchLink(m.key);
+}
+
+// The footer keeps a running tally of the whole league, every counted match.
+function renderOdometer(){
+  var ms = scopeCounted("all"), runs = 0, wk = 0, f = 0, h = 0;
+  ms.forEach(function(m){
+    [m.sw, m.sl].forEach(function(sc){ if(has(sc)){ runs += sc.r; wk += sc.k || 0; } });
+    (m.fifties || []).forEach(function(x){ if(x.r >= 100) h++; else f++; });
+  });
+  var first = S.cycles[0];
+  $("odometer").innerHTML = ms.length ? 'Since ' + esc(first && first.start ? fmt(first.start) + " " + first.start.slice(0, 4) : "the start") +
+    ' &middot; <b>' + ms.length.toLocaleString() + '</b> matches &middot; <b>' + runs.toLocaleString() + '</b> runs &middot; <b>' +
+    wk.toLocaleString() + '</b> wickets &middot; <b>' + f + '</b> 50s &middot; <b>' + h + '</b> 100s' : "";
+}
+
+/* ───────── the scorebook ledger ─────────
+   Walks every counted match in order, once, and notes what a scorer would:
+   each player's cap number (order of first appearance), debuts, and maiden
+   50s and 100s. Ties on debut day go alphabetically by handle. */
+function buildLedger(){
+  S.caps = {}; var n = 0, seen50 = {}, seen100 = {};
+  scopeCounted("all").forEach(function(m){
+    m.debuts = [];
+    (m.w || []).concat(m.l || []).slice().sort().forEach(function(p){
+      if(S.caps[p]) return;
+      S.caps[p] = { cap: ++n, mk: m.key };
+      m.debuts.push(p);
+    });
+    (m.fifties || []).slice().sort(function(a,b){ return a.r - b.r; }).forEach(function(f){
+      f.maiden = "";
+      if(f.r >= 100 && !seen100[f.p]){ seen100[f.p] = true; seen50[f.p] = true; f.maiden = "maiden 100"; }
+      else if(!seen50[f.p]){ seen50[f.p] = true; f.maiden = "maiden 50"; }
+    });
+  });
+}
+function capOf(p){ return S.caps && S.caps[p] ? S.caps[p].cap : null; }
 
 // Two scopes: the view (table, log, final) and the stats scope (records,
 // dossiers, highs), which can be flipped to the all-time league from any cycle.
@@ -2832,6 +2960,36 @@ function marginOf(mt){
   return d + " run" + (d === 1 ? "" : "s");
 }
 
+/* ───────── headlines ─────────
+   A back-page line for results worth one: a final, a Super Over, a rout, a
+   thriller, a big total, a collapse or a hundred. Ordinary wins get none.
+   The wording is picked from the match key, so a result always reads the same. */
+function pickLine(m, list){
+  var h = 0, k = m.key || "";
+  for(var i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0;
+  return list[h % list.length];
+}
+function headline(m){
+  if(m.ff) return "";
+  var W = (m.w || []).map(realName).join(" & "), L = (m.l || []).map(realName).join(" & ");
+  if(!W || !L) return "";
+  if(m.isFinal){ var c = cyc(m.c); return W + " take the " + (c ? c.name : "cycle") + " crown"; }
+  if(m.sow && m.sol) return pickLine(m, [W + " hold their nerve in the Super Over", W + " win it in the Super Over", "Super Over drama: " + W + " pip " + L]);
+  var ton = (m.fifties || []).filter(function(f){ return f.r >= 100 && (m.w || []).indexOf(f.p) >= 0; })[0];
+  if(ton) return realName(ton.p) + "&rsquo;s " + runsTxt(ton) + " sinks " + L;
+  if(m.dls || !m.bf || !has(m.sw) || !has(m.sl)) return "";
+  var byRuns = m.bf === "w", margin = byRuns ? m.sw.r - m.sl.r : 10 - (m.sw.k || 0);
+  if(byRuns ? margin >= 60 : margin >= 8)
+    return pickLine(m, [W + " rout " + L, W + " crush " + L, W + " romp past " + L, "One-way traffic as " + W + " beat " + L]);
+  if(byRuns ? margin <= 5 : margin <= 2)
+    return pickLine(m, byRuns ? [W + " edge " + L + " in a thriller", W + " hold on against " + L, W + " squeak past " + L]
+                              : [W + " scramble home against " + L, W + " get over the line with " + margin + " to spare", "Nerves hold as " + W + " sneak past " + L]);
+  var lose = m.sl;
+  if(lose.k === 10 && lose.r < 80) return pickLine(m, [L + " skittled for " + lose.r, L + " fold for " + lose.r]);
+  if(m.sw.r >= 200) return pickLine(m, [W + " pile on " + m.sw.r, m.sw.r + " up for " + W]);
+  return "";
+}
+
 function statsFor(name){
   var s = {
     name:name, real:realName(name), m:0, w:0, l:0, pcw:0,
@@ -3110,7 +3268,8 @@ function renderModal(){
   var html =
     '<div class="mhead">' +
       '<div><h3 class="mhandle" id="mHandle">' + esc(s.name) + '</h3>' +
-      '<p class="mreal">' + esc(s.real) + ' &middot; ' + esc(all ? "Career" : c.name) + '</p></div>' +
+      '<p class="mreal">' + esc(s.real) + (capOf(s.name) ? ' &middot; <span class="capno">RCCL cap ' + capOf(s.name) + '</span>' : '') +
+        ' &middot; ' + esc(all ? "Career" : c.name) + '</p></div>' +
       '<div class="mrec"><b>' + s.w + '&ndash;' + s.l + '</b><span>' + s.pcw.toFixed(2) + ' PCW' +
         (s.titles ? ' &middot; ' + s.titles + ' title' + (s.titles === 1 ? '' : 's') : '') + '</span></div>' +
     '</div>';
@@ -3440,6 +3599,7 @@ function logRow(m){
   return '<li id="match-' + esc(m.key) + '" class="' + (m.counts ? "" : "void") + (m.isFinal ? " fin" : "") + '">' +
     '<span class="mno">' + (m.isFinal ? "F" : "#" + m.no) + '</span>' +
     '<span class="day">' + (fmt(m.d) || "—") + '</span>' +
+    (headline(m) ? '<div class="hl">' + headline(m) + '</div>' : '') +
     '<div class="line">' +
       '<span class="won">' + plinks(m.w, "matches") + '</span>' +
       // winners' innings role sits between the names: "A & B, batting first, beat C & D"
@@ -3450,13 +3610,20 @@ function logRow(m){
       (marginPhrase(m) ? '<span class="mgn">' + esc(marginPhrase(m).trim()) + '</span>' : '') +
       (m.isFinal ? '<span class="sotag">Final</span>' : '') +
       (m.counts ? '' : '<span class="tag">Outside window</span>') +
+
       (S.unlocked
         ? '<span class="tools"><button class="tool go" data-k="' + esc(m.key) + '">Edit</button>' +
           '<button class="tool kill" data-k="' + esc(m.key) + '" aria-label="Remove this result">&times;</button></span>'
         : '') +
-    '</div>' + scoreCard(m) + fiftyLine(m) + '</li>';
+    '</div>' + scoreCard(m) + fiftyLine(m) + debutLine(m) + '</li>';
 }
 
+// "Debut  Arka · cap 1, Neil · cap 2" — first appearances, in cap order.
+function debutLine(m){
+  if(!(m.debuts || []).length) return "";
+  return '<div class="f50line dbline"><span class="f50tag dbtag">Debut</span>' + m.debuts.map(function(p){
+    return '<span>' + plink(p, "matches") + ' <i class="capi">cap ' + capOf(p) + '</i></span>'; }).join("") + '</div>';
+}
 // "Neil 75* (40) and Adarsh 60 (31); Arka 55 (30)" — winners' 50+ scores first, then the losers'.
 function fiftyLine(m){
   var fs = m.fifties || [];
@@ -3464,7 +3631,8 @@ function fiftyLine(m){
   var side = function(team){
     return fs.filter(function(f){ return (team || []).indexOf(f.p) >= 0; })
       .sort(function(a,b){ return b.r - a.r; })
-      .map(function(f){ return plink(f.p, "fifties") + ' <b>' + runsTxt(f) + '</b> (' + f.b + ')'; })
+      .map(function(f){ return plink(f.p, "fifties") + ' <b>' + runsTxt(f) + '</b> (' + f.b + ')' +
+        (f.maiden ? '<em class="maiden">' + f.maiden + '</em>' : ''); })
       .join(" and ");
   };
   var parts = [side(m.w), side(m.l)].filter(function(x){ return !!x; });
@@ -4509,6 +4677,15 @@ function openAutoRecord(kind){
   }
   else openHundreds(kind);
 }
+/* An era stamp for a record: the cycle it was set in, and how many cycles
+   (started since) it has outlived. */
+function eraStamp(mk, d){
+  var m = mk && S.byKey[mk], c = m ? cyc(m.c) : (d ? cycleForDate(d) : null);
+  if(!c) return "";
+  var t = todayISO(), i = S.cycles.indexOf(c);
+  var since = S.cycles.slice(i + 1).filter(function(x){ return x.start && x.start <= t; }).length;
+  return '<span class="era">Set in ' + esc(c.name) + (since ? ' &middot; stood ' + since + ' cycle' + (since === 1 ? '' : 's') + ' since' : '') + '</span>';
+}
 function autoTile(key){
   var a = AUTO[key], top = a.rows()[0];
   return '<div class="rcard rauto" data-auto="' + key + '" role="button" tabindex="0" title="Open the top ' + TOP_N + '">' +
@@ -4518,6 +4695,7 @@ function autoTile(key){
                                : '<span class="kind" style="margin:0">Nothing yet</span>') + '</span>' +
     '<span class="rm">' + (top ? fullMatchLink(top.mk) + (top.d ? ' &middot; ' + fmt(top.d) : '') : 'All-time &middot; updates itself') +
       '<span class="rgo">Top ' + TOP_N + ' &rsaquo;</span></span>' +
+    (top ? eraStamp(top.mk, top.d) : '') +
   '</div>';
 }
 function renderAutoModal(key){
@@ -4610,6 +4788,7 @@ function renderRecords(){
         '<span class="rh">' + recHolders(r) + '<span class="kind">' + (r.kind === "solo" ? "Individual" : "Pair") + '</span></span>' +
         '<span class="rm">' + recWhere(r) + tools(r) + '</span>' +
         (r.note ? '<span class="rn">' + esc(r.note) + '</span>' : '') +
+        eraStamp(r.mk, r.d) +
         (g.past.length ? '<details><summary>Previously held &middot; ' + g.past.length + '</summary><ul class="hist">' +
           g.past.map(function(x){
             return '<li><b>' + esc(x.v) + '</b>' + recHolders(x) + '<span>' + recWhere(x) + '</span>' + tools(x) + '</li>';
@@ -4769,7 +4948,7 @@ function deleteRecord(id){
 function render(){
   rebuild();
   if(S.editing && !S.byKey[S.editing]) S.editing = null;
-  renderCycleBar(); renderCrest(); renderWire(); renderVerdict();
+  renderCycleBar(); renderCrest(); renderWire(); renderVerdict(); renderScorebox(); renderOdometer();
   renderTable(); renderFinal(); renderRoll(); renderHighs(); renderRecords();
   renderEntry(); renderCycleAdmin();
   $("adminFab").innerHTML = "Admin" + (S.unlocked ? '<span class="dot" title="Unlocked"></span>' : ''); renderLog();
