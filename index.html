@@ -334,7 +334,11 @@ tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
 }
 
 /* ---------------- league records ---------------- */
-.recgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.recgrid{display:grid;grid-template-columns:repeat(var(--rcols,3),minmax(0,1fr));gap:12px}
+.recgrid > .rcard{grid-column:span var(--rspan,1)}
+.recgrid > :not(.rcard){grid-column:1/-1}
+@media (max-width:760px){ .recgrid{grid-template-columns:repeat(2,minmax(0,1fr))} .recgrid > .rcard{grid-column:span 1} }
+@media (max-width:480px){ .recgrid{grid-template-columns:1fr} }
 .rcard{border:1px solid var(--frame);border-radius:2px;padding:15px 16px 13px;display:flex;flex-direction:column;gap:4px;min-width:0;
   background:linear-gradient(158deg,var(--royal) 0%,var(--royal-panel) 46%,var(--royal-deep) 100%);box-shadow:0 1px 0 rgba(255,255,255,.07) inset,0 8px 24px rgba(0,0,0,.42)}
 .rcard .rt{font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--frame-lit)}
@@ -394,7 +398,6 @@ tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
 .log .won{font-weight:700;color:var(--gold)}
 .log .role{font-size:12.5px;font-style:italic;color:var(--lilac-dim);margin-left:-12px;white-space:nowrap}
 .log .mgn{font-size:12.5px;font-style:italic;color:var(--lilac-dim)}
-.log .hl{grid-column:3;font-family:'Teko',sans-serif;font-weight:600;font-size:19px;line-height:1;letter-spacing:.03em;text-transform:uppercase;color:var(--white);margin-bottom:-1px}
 .log .f50line{grid-column:3;font-size:12.5px;color:var(--lilac);display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px}
 .log .f50line b{font-family:'Teko',sans-serif;font-size:16px;font-weight:700;color:var(--gold)}
 .log .f50tag{font-size:8.5px;font-weight:800;letter-spacing:.14em;color:var(--royal-deep);background:var(--bronze-lit);padding:2px 6px;border-radius:2px;margin-right:2px}
@@ -1340,15 +1343,11 @@ function renderScorebox(){
       var k = gate - wins[p]; return plink(p, "matches") + ' needs ' + (k === 1 ? "one more win" : "two more wins"); }).join(" &middot; "));
   }
 
-  // the most recent milestone 50+
-  for(var i = ms.length - 1; i >= 0; i--){
-    var mf = (ms[i].fifties || []).filter(function(f){ return f.maiden; });
-    if(mf.length){
-      var f = mf[mf.length - 1];
-      lines.push('<b>Milestone</b> ' + plink(f.p, "fifties") + '&rsquo;s ' + runsTxt(f) + ' (' + f.b + ') was a ' + f.maiden + ' &middot; ' + fullMatchLink(ms[i].key));
-      break;
-    }
-  }
+  // the latest milestones in view: maidens, duo runs and wickets, climbs up the 50+ and 100s tables
+  var inView = {}; scopeCounted(S.view).forEach(function(m){ inView[m.key] = true; });
+  (S.events || []).filter(function(e){ return inView[e.mk]; }).slice(-3).reverse().forEach(function(e){
+    lines.push('<b>Milestone</b> ' + e.html + ' &middot; ' + fullMatchLink(e.mk));
+  });
   box.hidden = false;
   box.innerHTML = '<div class="sb-head">From the scorer&rsquo;s box</div><ul>' +
     lines.map(function(l){ return '<li>' + l + '</li>'; }).join("") + '</ul>';
@@ -1393,6 +1392,25 @@ function renderOdometer(){
    50s and 100s. Ties on debut day go alphabetically by handle. */
 function buildLedger(){
   S.caps = {}; var n = 0, seen50 = {}, seen100 = {};
+  // career duo tallies and 50+/100 counts, for the milestones the scorer reads out
+  var runs = {}, wk = {}, c50 = {}, c100 = {};
+  S.events = [];
+  var push = function(m, html){ S.events.push({ mk:m.key, html:html }); };
+  var rankMoves = function(m, counts, before, label, sec){
+    Object.keys(counts).forEach(function(p){
+      var was = before[p] || 0, now = counts[p];
+      if(now <= was) return;
+      // everyone this player has just gone past: level with or ahead of him before, behind him now
+      var passed = Object.keys(counts).filter(function(q){
+        return q !== p && (before[q] || 0) >= was && (before[q] || 0) > 0 && counts[q] < now;
+      });
+      var rank = 1 + Object.keys(counts).filter(function(q){ return counts[q] > now; }).length;
+      var joint = Object.keys(counts).some(function(q){ return q !== p && counts[q] === now; });
+      if(!passed.length || rank > TOP_N) return;
+      push(m, plink(p, sec) + ' moves past ' + passed.map(function(q){ return plink(q, sec); }).join(" &amp; ") +
+        ' into ' + (joint ? "joint " : "") + (rank === 1 ? "top spot" : ordinal(rank)) + ' for ' + label + ' (' + now + ')');
+    });
+  };
   scopeCounted("all").forEach(function(m){
     m.debuts = [];
     (m.w || []).concat(m.l || []).slice().sort().forEach(function(p){
@@ -1404,9 +1422,34 @@ function buildLedger(){
       f.maiden = "";
       if(f.r >= 100 && !seen100[f.p]){ seen100[f.p] = true; seen50[f.p] = true; f.maiden = "maiden 100"; }
       else if(!seen50[f.p]){ seen50[f.p] = true; f.maiden = "maiden 50"; }
+      if(f.maiden) push(m, plink(f.p, "fifties") + '&rsquo;s ' + runsTxt(f) + (f.b ? ' (' + f.b + ')' : '') + ' is a ' + f.maiden);
     });
+    // duo runs past each 1,000 and duo wickets past each 100
+    [[m.w, m.sw, m.sl], [m.l, m.sl, m.sw]].forEach(function(t){
+      (t[0] || []).forEach(function(p){
+        if(has(t[1])){
+          var r0 = runs[p] || 0, r1 = r0 + t[1].r; runs[p] = r1;
+          if(Math.floor(r1 / 1000) > Math.floor(r0 / 1000))
+            push(m, plink(p, "bat") + ' passes ' + (Math.floor(r1 / 1000) * 1000).toLocaleString() + ' duo runs');
+        }
+        if(has(t[2])){
+          var w0 = wk[p] || 0, w1 = w0 + (t[2].k || 0); wk[p] = w1;
+          if(Math.floor(w1 / 100) > Math.floor(w0 / 100))
+            push(m, plink(p, "ball") + ' reaches ' + Math.floor(w1 / 100) * 100 + ' duo wickets');
+        }
+      });
+    });
+    // climbing the 50+ and hundreds tables
+    var b50 = Object.assign({}, c50), b100 = Object.assign({}, c100);
+    (m.fifties || []).forEach(function(f){
+      c50[f.p] = (c50[f.p] || 0) + 1;
+      if(f.r >= 100) c100[f.p] = (c100[f.p] || 0) + 1;
+    });
+    rankMoves(m, c50, b50, "most 50+ scores", "fifties");
+    rankMoves(m, c100, b100, "most hundreds", "fifties");
   });
 }
+function ordinal(n){ var s = ["th","st","nd","rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
 function capOf(p){ return S.caps && S.caps[p] ? S.caps[p].cap : null; }
 
 // Two scopes: the view (table, log, final) and the stats scope (records,
@@ -3599,7 +3642,6 @@ function logRow(m){
   return '<li id="match-' + esc(m.key) + '" class="' + (m.counts ? "" : "void") + (m.isFinal ? " fin" : "") + '">' +
     '<span class="mno">' + (m.isFinal ? "F" : "#" + m.no) + '</span>' +
     '<span class="day">' + (fmt(m.d) || "—") + '</span>' +
-    (headline(m) ? '<div class="hl">' + headline(m) + '</div>' : '') +
     '<div class="line">' +
       '<span class="won">' + plinks(m.w, "matches") + '</span>' +
       // winners' innings role sits between the names: "A & B, batting first, beat C & D"
@@ -4801,6 +4843,7 @@ function renderRecords(){
     items.sort(function(a,b){ return a.t.localeCompare(b.t); });
     $("records").innerHTML = items.map(function(x){ return x.h; }).join("") + hundredsTile();
   }
+  layoutRecords();
   bindGoLinks($("records"));
   each($("records"), ".rauto", function(tile){
     var kind = tile.dataset.auto || "hundreds";
@@ -4814,6 +4857,22 @@ function renderRecords(){
     b.onclick = function(){ deleteRecord(b.dataset.rdel); };
   });
   renderRecAdmin();
+}
+
+/* Records sit in even rows (two, until there are more than ten): each row
+   shares the full width between its cards, so 7 reads 4 over 3, 9 reads 5 over 4. */
+function layoutRecords(){
+  var box = $("records"), cards = Array.prototype.filter.call(box.children, function(x){ return x.classList.contains("rcard"); });
+  var n = cards.length, rows = Math.max(1, Math.min(n, Math.max(2, Math.ceil(n / 5))));
+  var per = [], left = n;
+  for(var i = 0; i < rows; i++){ var k = Math.ceil(left / (rows - i)); per.push(k); left -= k; }
+  var gcd = function(a, b){ return b ? gcd(b, a % b) : a; };
+  var cols = per.reduce(function(a, b){ return a * b / gcd(a, b); }, 1);
+  box.style.setProperty("--rcols", cols);
+  var at = 0;
+  per.forEach(function(k){
+    for(var j = 0; j < k; j++) cards[at++].style.setProperty("--rspan", cols / k);
+  });
 }
 
 // Every match, newest first, as options for "set in".
