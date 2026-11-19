@@ -65,6 +65,29 @@ body{margin:0;
 :focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
+/* scroll reveals — see armReveals(). Entrances use backwards fill (they hand back
+   to the element's own styles when done); exits hold their end state. */
+@keyframes rvRise{from{opacity:0;translate:0 26px}}
+@keyframes rvLeft{from{opacity:0;translate:-30px 0}}
+@keyframes rvZoom{from{opacity:0;scale:.96}}
+@keyframes rvLine{from{scale:0 1}}
+@keyframes rvRow{from{opacity:0;translate:0 12px}}
+@keyframes rvGone{to{opacity:0;translate:0 16px}}
+@keyframes rvGoneLine{to{scale:0 1}}
+.rv.rv-in{animation:rvRise .8s cubic-bezier(.2,.7,.2,1) backwards}
+.rv.rv-l.rv-in{animation-name:rvLeft}
+.rv.rv-z.rv-in{animation-name:rvZoom}
+.rv.rv-out{animation:rvGone .4s ease forwards}
+.rv.rv-line{transform-origin:left center}
+.rv.rv-line.rv-in{animation:rvLine 1.1s cubic-bezier(.6,0,.2,1) .1s backwards}
+.rv.rv-line.rv-out{animation:rvGoneLine .4s ease forwards}
+.rvg.rv-in > *{animation:rvRise .75s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(var(--i,0) * 60ms)}
+.rvg.rvg-l.rv-in > *{animation-name:rvLeft}
+.rvg.rv-out > *{animation:rvGone .35s ease forwards}
+.log > li.rvr.rv-in{animation:rvRow .45s cubic-bezier(.2,.7,.2,1) backwards}
+.log > li.rvr.rv-out{animation:rvGone .25s ease forwards}
+.log > li.rvr.flash-row,.log > li.rvr.flash-row.rv-in,.log > li.rvr.flash-row.rv-out{animation:flashRow 2.2s ease}
+
 /* ══════════ PAGE, TOP TO BOTTOM ══════════ */
 
 /* ---------------- crest ---------------- */
@@ -422,6 +445,12 @@ tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
   .card{margin-top:7px}
 }
 .log li.void{opacity:.42}
+.log li.lazymore,.mlist li.lazymore{display:block;border-top:1px solid var(--hair-soft);padding:12px 0 4px;text-align:center}
+.lazymore button{background:none;border:0;cursor:pointer;font:inherit;font-size:10.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--lilac-dim);transition:color .16s ease,transform .16s ease}
+.lazymore button:hover,.lazymore button:focus-visible{color:var(--gold);transform:scale(1.05)}
+.field .two{display:flex;gap:8px}
+.field .two select{flex:1 1 0;min-width:0}
+.field .two select:first-child{flex:0 0 auto;width:auto}
 .log li.void .won{color:var(--lilac)}
 .tag{font-size:9.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim);border:1px solid var(--hair);padding:2px 7px}
 .blank{padding:20px 0;border-top:1px solid var(--hair-soft);color:var(--lilac-dim);font-size:14.5px}
@@ -1086,6 +1115,10 @@ const MIN_PROJ_BALLS = 30;
 
 // How many results stay in view before the log starts scrolling.
 const LOG_VISIBLE = 6;
+
+// Long lists (the results log, a player's match list) are built in chunks of
+// this many rows, the next chunk added as you scroll near the bottom.
+const LAZY_CHUNK = 30;
 
 // The Final panel appears this many days before a cycle closes.
 const FINAL_SHOW_DAYS = 3;
@@ -2268,8 +2301,8 @@ function topOf(list, val, better){
 function gotoMatch(mk){
   closeModal();
   var m = S.byKey[mk]; if(!m) return;
-  var li = document.getElementById("match-" + mk);
-  if(!li){ setView(m.c); li = document.getElementById("match-" + mk); }
+  var li = document.getElementById("match-" + mk) || lazyReveal($("log"), mk);
+  if(!li){ setView(m.c); li = document.getElementById("match-" + mk) || lazyReveal($("log"), mk); }
   if(!li) return;
   var wrap = $("logWrap");
   if(wrap) wrap.scrollTop += li.getBoundingClientRect().top - wrap.getBoundingClientRect().top;
@@ -3436,8 +3469,7 @@ function renderModal(){
 
   html += h2hTable(s);
 
-  html += sectionTitle("Every match on record", "duo", "Duo scores") + '<div class="mlistwrap"><ul class="mlist">' +
-    s.list.map(function(e){
+  var mrows = s.list.map(function(e){
       var sc = has(e.mine) && has(e.theirs) ? scoreFull(e.mine) + ' &ndash; ' + scoreFull(e.theirs) : "";
       return '<li class="' + (e.counts ? "" : "void") + '">' +
         '<span class="d">' + matchLink(e.mk) + '</span>' +
@@ -3446,9 +3478,12 @@ function renderModal(){
         '<span class="vs">with <b>' + plink(e.partner, "matches") + '</b> v ' + plinks(e.foes, "matches") + '</span>' +
         (e.margin ? '<span class="by">by ' + e.margin + '</span>' : '') +
         (sc ? '<span class="sc2">' + sc + '</span>' : '') + '</li>';
-    }).join("") + '</ul></div>';
+    });
+  html += sectionTitle("Every match on record", "duo", "Duo scores") + '<div class="mlistwrap"><ul class="mlist" id="pMatches"></ul></div>';
 
   $("modalBody").innerHTML = html;
+  lazyList($("pMatches"), $("modalBody").querySelector(".mlistwrap"),
+    mrows.map(function(h){ return { k:null, html:h }; }), { onAdd:bindGoLinks });
   bindGoLinks($("modalBody"));
   bindTopLinks($("modalBody"), s.name);
   bindCycleLinks($("modalBody"), s.name);
@@ -3629,6 +3664,50 @@ function sizeScrollWindow(wrap, ul, count){
   wrap.style.maxHeight = Math.round(h) + "px";
 }
 function sizeLogWindow(){ sizeScrollWindow($("logWrap"), $("log"), LOG_VISIBLE); }
+
+/* ───────── lazy lists ─────────
+   rows: [{ k: match key or null, html }]. The first LAZY_CHUNK rows are built
+   (or as many as were already showing, so a re-render keeps your place); the
+   rest arrive a chunk at a time as the scroll window nears its end, or from
+   the "show more" row at the bottom. onAdd(ul) runs after each chunk. */
+function lazyList(ul, wrap, rows, opt){
+  opt = opt || {};
+  var keep = ul._lazy ? ul._lazy.n : 0;
+  ul._lazy = { rows:rows, n:0, chunk:opt.chunk || LAZY_CHUNK, onAdd:opt.onAdd || null };
+  ul.innerHTML = rows.length ? "" : (opt.empty || "");
+  lazyGrow(ul, Math.max(ul._lazy.chunk, keep));
+  if(wrap){
+    wrap._lazyUl = ul;
+    if(!wrap._lazyBound){
+      wrap._lazyBound = true;
+      wrap.addEventListener("scroll", function(){
+        var u = wrap._lazyUl, st = u && u._lazy;
+        if(st && st.n < st.rows.length && wrap.scrollTop + wrap.clientHeight >= wrap.scrollHeight - 160) lazyGrow(u, st.n + st.chunk);
+      }, { passive:true });
+    }
+  }
+}
+function lazyGrow(ul, upto){
+  var st = ul._lazy; if(!st) return;
+  var to = Math.min(st.rows.length, upto);
+  if(to <= st.n) return;
+  var more = ul.querySelector(":scope > .lazymore"); if(more) more.remove();
+  ul.insertAdjacentHTML("beforeend", st.rows.slice(st.n, to).map(function(x){ return x.html; }).join(""));
+  st.n = to;
+  var left = st.rows.length - st.n;
+  if(left > 0){
+    ul.insertAdjacentHTML("beforeend", '<li class="lazymore"><button type="button">Show ' + Math.min(st.chunk, left) +
+      ' more &middot; ' + left + ' to go</button></li>');
+    ul.lastElementChild.querySelector("button").onclick = function(){ lazyGrow(ul, st.n + st.chunk); };
+  }
+  if(st.onAdd) st.onAdd(ul);
+}
+// Make sure a match's row is built (growing the list down to it); returns the row.
+function lazyReveal(ul, mk){
+  var st = ul && ul._lazy; if(!st) return null;
+  for(var i = 0; i < st.rows.length; i++) if(st.rows[i].k === mk){ lazyGrow(ul, i + 1); break; }
+  return document.getElementById("match-" + mk);
+}
 function sizeMatchWindow(){
   var run = function(){
     var body = $("modalBody"); if(!body) return;
@@ -3682,23 +3761,28 @@ function fiftyLine(m){
 }
 
 function renderLog(){
-  var all = S.view === "all", html = "";
+  var all = S.view === "all", rows = [];
   scopeCycles().slice().reverse().forEach(function(c){
     var items = c.matches.slice().reverse();
     if(c.final) items.unshift(c.final);
     if(!items.length) return;
-    if(all) html += '<li class="sep"><span>' + esc(c.name) + '</span><span>' + fmt(c.start) + ' – ' + fmt(c.end) + '</span></li>';
-    html += items.map(logRow).join("");
+    if(all) rows.push({ k:null, html:'<li class="sep"><span>' + esc(c.name) + '</span><span>' + fmt(c.start) + ' – ' + fmt(c.end) + '</span></li>' });
+    items.forEach(function(m){ rows.push({ k:m.key, html:logRow(m) }); });
   });
   var n = scopeRegular().length;
   $("logAside").textContent = all ? matchesWord(n) + " across " + S.cycles.length + " cycles" : matchesWord(n) + " this cycle";
-  $("log").innerHTML = html || '<li class="blank">Nothing played yet. The first result goes in above.</li>';
-  each($("log"), ".kill", function(b){
-    b.onclick = function(){ removeMatch(b.dataset.k); };
+  // a view switch starts the list from the top; a data sync keeps how far you'd scrolled
+  var log = $("log");
+  if(log._lazyView !== S.view){ log._lazy = null; log._lazyView = S.view; $("logWrap").scrollTop = 0; }
+  if($("logWrap")._rowIO) $("logWrap")._rowIO.disconnect();
+  lazyList(log, $("logWrap"), rows, {
+    empty:'<li class="blank">Nothing played yet. The first result goes in above.</li>',
+    onAdd:function(ul){ armRows(ul, $("logWrap")); }
   });
-  each($("log"), ".go", function(b){
-    b.onclick = function(){ startEdit(b.dataset.k); };
-  });
+  log.onclick = function(ev){
+    var k = ev.target.closest(".kill"), g = ev.target.closest(".go");
+    if(k) removeMatch(k.dataset.k); else if(g) startEdit(g.dataset.k);
+  };
   sizeLogWindow();
 }
 
@@ -4504,7 +4588,8 @@ function renderCycleAdmin(){
       '<div class="cahead"><h3>Match data</h3></div>' +
       '<p class="why">Deleting is permanent and updates every table, record and career at once. Hand-kept league records stay, just without the match link.</p>' +
       '<div class="delrow">' +
-        '<select id="mdSel" aria-label="Match to delete"><option value="">Pick a match or final&hellip;</option>' + matchOptions() + '</select>' +
+        '<select id="mdSelC" aria-label="Cycle">' + cyclePickOptions(latestPlayedCycle()) + '</select>' +
+        '<select id="mdSel" aria-label="Match to delete"><option value="">Pick a match or final&hellip;</option>' + matchOptions(latestPlayedCycle()) + '</select>' +
         '<button class="btn quiet danger" id="mdDel" type="button">Delete match</button>' +
       '</div>' +
       '<div class="delrow">' +
@@ -4518,6 +4603,7 @@ function renderCycleAdmin(){
     '<div class="flash" id="caFlash"></div>';
 
   // match data
+  bindMatchPicker($("mdSelC"), $("mdSel"), "Pick a match or final&hellip;");
   $("mdDel").onclick = function(){
     var m = S.byKey[$("mdSel").value];
     if(!m){ caSay("Pick a match first.", true); return; }
@@ -4876,17 +4962,32 @@ function layoutRecords(){
 }
 
 // Every match, newest first, as options for "set in".
-function matchOptions(){
-  var out = [];
-  S.cycles.slice().reverse().forEach(function(c){
-    var items = c.matches.slice().reverse();
-    if(c.final) items.unshift(c.final);
-    items.forEach(function(m){
-      out.push('<option value="' + esc(m.key) + '">' + esc(c.name) + ' · ' + (m.isFinal ? "Final" : "#" + m.no) + ' · ' +
-        esc((m.w || []).join(" & ")) + ' v ' + esc((m.l || []).join(" & ")) + (m.d ? ' · ' + fmt(m.d) : '') + '</option>');
-    });
-  });
-  return out.join("");
+/* Match pickers list one cycle at a time (a cycle select sits beside them),
+   so the dropdown stays short however many cycles the league runs. */
+function matchOptions(cid){
+  var c = cyc(cid); if(!c) return "";
+  var items = c.matches.slice().reverse();
+  if(c.final) items.unshift(c.final);
+  return items.map(function(m){
+    return '<option value="' + esc(m.key) + '">' + (m.isFinal ? "Final" : "#" + m.no) + ' · ' +
+      esc((m.w || []).join(" & ")) + ' v ' + esc((m.l || []).join(" & ")) + (m.d ? ' · ' + fmt(m.d) : '') + '</option>';
+  }).join("");
+}
+function cyclePickOptions(sel){
+  return S.cycles.slice().reverse().map(function(c){
+    return '<option value="' + esc(c.id) + '"' + (c.id === sel ? " selected" : "") + '>' + esc(c.name) + '</option>';
+  }).join("");
+}
+function latestPlayedCycle(){
+  var c = S.cycles.slice().reverse().filter(function(x){ return x.matches.length || x.final; })[0];
+  return c ? c.id : (S.cycles.length ? S.cycles[S.cycles.length - 1].id : "");
+}
+// Wire a cycle select to its match select: changing cycle refills the matches.
+function bindMatchPicker(cycSel, matchSel, blank, after){
+  cycSel.onchange = function(){
+    matchSel.innerHTML = '<option value="">' + blank + '</option>' + matchOptions(cycSel.value);
+    if(after) after();
+  };
 }
 
 function renderRecAdmin(){
@@ -4899,13 +5000,15 @@ function renderRecAdmin(){
   var ed = S.recEditing ? S.records[S.recEditing] : null;
   if(ed) S.recKind = ed.kind === "solo" ? "solo" : "pair";
   var titles = recordGroups().map(function(g){ return '<option value="' + esc(g.title) + '">'; }).join("");
+  var recCyc = ed && ed.mk && S.byKey[ed.mk] ? S.byKey[ed.mk].c : latestPlayedCycle();
 
   box.innerHTML =
     (ed ? '<div class="editbar"><span>Editing a record</span><button class="btn quiet" id="recCancel" style="margin-left:auto">Cancel</button></div>' : '') +
     '<div class="recform">' +
       '<label class="field"><span>Record</span><input id="recT" list="recTitles" placeholder="e.g. Fastest powerplay" autocomplete="off"><datalist id="recTitles">' + titles + '</datalist></label>' +
       '<label class="field"><span>Figure</span><input id="recV" placeholder="e.g. 84/0 in 6 ov" autocomplete="off"></label>' +
-      '<label class="field"><span>Set in</span><select id="recM"><option value="">No match linked</option>' + matchOptions() + '</select></label>' +
+      '<label class="field"><span>Set in</span><span class="two"><select id="recMC" aria-label="Cycle">' + cyclePickOptions(recCyc) + '</select>' +
+        '<select id="recM"><option value="">No match linked</option>' + matchOptions(recCyc) + '</select></span></label>' +
       '<div class="recwho full">' +
         '<div class="seg" role="group" aria-label="Held by"><button type="button" id="recKP">Pair</button><button type="button" id="recKS">Individual</button></div>' +
         '<select id="recH" aria-label="Record holder"></select>' +
@@ -4929,6 +5032,7 @@ function renderRecAdmin(){
     var m = S.byKey[this.value]; if(m && m.d) $("recD").value = m.d;
     recHolderUI();
   };
+  bindMatchPicker($("recMC"), $("recM"), "No match linked", function(){ recHolderUI(); });
   $("recGo").onclick = saveRecord;
   if($("recCancel")) $("recCancel").onclick = function(){ S.recEditing = null; S.recKey = null; renderRecAdmin(); };
   recHolderUI(ed ? ed.by : null);
@@ -5012,6 +5116,90 @@ function render(){
   renderEntry(); renderCycleAdmin();
   $("adminFab").innerHTML = "Admin" + (S.unlocked ? '<span class="dot" title="Unlocked"></span>' : ''); renderLog();
   if(S.openPlayer || S.openHighs || S.openTop || S.openHundreds) renderModal();
+  armReveals();
+}
+
+/* ───────── scroll reveals ─────────
+   Page blocks fade (or rise, slide, draw) in as they scroll into view and fade
+   back out once scrolled away. Card grids and lists come in one item at a time.
+   Rows in the results window do the same inside their own scroll. Only opacity
+   and translate/scale move, so hover effects and layout are untouched; with
+   reduced motion asked for, none of it runs and everything simply shows. */
+var REVEALS = [
+  ["#verdict", "rv"],
+  ["#scorebox", "rv rv-l"],
+  ["main > section:not(.drawer) > .head", "rv"],
+  ["main > section:not(.drawer) > .hairline", "rv rv-line"],
+  ["#table", "rvg rvg-l"],
+  ["#finalPanel", "rv rv-z"],
+  ["#roll", "rvg"],
+  ["#highsScope", "rv"],
+  ["#highs", "rvg"],
+  ["#records", "rvg"],
+  ["#resultsSection > .panel", "rv"],
+  ["ol.laws", "rvg rvg-l"],
+  ["main > footer", "rv"]
+];
+function rvOK(){
+  return "IntersectionObserver" in window &&
+    !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+// in → play the entrance, then settle (so later re-renders don't replay it); out → fade away
+function rvSet(el, on){
+  var cl = el.classList;
+  if(on){
+    if(!cl.contains("rv-out")) return;
+    cl.remove("rv-out"); cl.add("rv-in");
+    clearTimeout(el._rvT);
+    el._rvT = setTimeout(function(){ cl.remove("rv-in"); cl.add("rv-done"); }, el._rvDur || 800);
+  } else if(!cl.contains("rv-out")){
+    clearTimeout(el._rvT); cl.remove("rv-in", "rv-done"); cl.add("rv-out");
+  }
+}
+function rvStart(el, visible, animate){
+  if(visible){
+    el.classList.add(animate ? "rv-in" : "rv-done");
+    if(animate) el._rvT = setTimeout(function(){ el.classList.remove("rv-in"); el.classList.add("rv-done"); }, el._rvDur || 800);
+  } else el.classList.add("rv-out");
+}
+function rvKids(el){
+  Array.prototype.forEach.call(el.children, function(k, i){ k.style.setProperty("--i", Math.min(i, 14)); });
+}
+function armReveals(){
+  if(!rvOK()) return;
+  if(!S.rvIO) S.rvIO = new IntersectionObserver(function(es){
+    es.forEach(function(e){ rvSet(e.target, e.isIntersecting); });
+  }, { rootMargin:"-4% 0px -6% 0px", threshold:0 });
+  var vh = window.innerHeight;
+  REVEALS.forEach(function(x){
+    each(document, x[0], function(el){
+      if(el._rv) return;
+      el._rv = true;
+      x[1].split(" ").forEach(function(c){ el.classList.add(c); });
+      var group = el.classList.contains("rvg");
+      el._rvDur = group ? 1500 : 900;
+      if(group){ rvKids(el); new MutationObserver(function(){ rvKids(el); }).observe(el, { childList:true }); }
+      var b = el.getBoundingClientRect();
+      rvStart(el, (b.width || b.height) && b.bottom > vh * 0.04 && b.top < vh * 0.94, true);
+      S.rvIO.observe(el);
+    });
+  });
+}
+// Rows inside a scroll window: already-visible rows just show (no replay on every
+// sync); rows below the fold wait and come in as the window scrolls to them.
+function armRows(ul, wrap){
+  if(!rvOK() || !wrap) return;
+  if(!wrap._rowIO) wrap._rowIO = new IntersectionObserver(function(es){
+    es.forEach(function(e){ rvSet(e.target, e.isIntersecting); });
+  }, { root:wrap, threshold:0 });
+  var w = wrap.getBoundingClientRect();
+  Array.prototype.forEach.call(ul.children, function(li){
+    if(li._rv || li.classList.contains("lazymore") || li.classList.contains("blank")) return;
+    li._rv = true; li.classList.add("rvr"); li._rvDur = 500;
+    var b = li.getBoundingClientRect();
+    rvStart(li, b.bottom > w.top && b.top < w.bottom, false);
+    wrap._rowIO.observe(li);
+  });
 }
 
 /* ───────── firebase ───────── */
