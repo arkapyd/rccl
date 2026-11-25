@@ -207,8 +207,8 @@ tr:hover .namebtn::after{content:"›";margin-left:7px;color:var(--gold);font-fa
 tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
 /* gate progress: a thin bar under the wins count */
 .wcell span{display:block}
-.gbar{display:block;width:34px;height:3px;margin:5px 0 0 auto;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
-.gbar b{display:block;height:100%;background:linear-gradient(90deg,var(--bronze),var(--bronze-lit));border-radius:2px}
+.gbar{display:block;width:34px;height:3px;margin:5px 0 0 auto;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+.gbar b{display:block;height:100%;background:rgba(255,255,255,.3);border-radius:2px}
 .gbar.thru b{background:var(--gold);box-shadow:0 0 6px rgba(255,228,99,.55)}
 /* PCW trend sparkline */
 .sparkcell{padding-left:20px!important;width:112px}
@@ -5547,9 +5547,14 @@ function reviewFill(c){
     (m.debuts || []).forEach(function(p){ debuts.push(plink(p, "matches") + ' <i class="capi">cap ' + capOf(p) + '</i>'); });
   });
   var inCycle = function(mk, dd){ var m = mk && S.byKey[mk]; return m ? m.c === c.id : !!(dd && dd >= c.start && dd <= c.end); };
-  var recs = Object.keys(S.records).map(function(k){ return S.records[k]; })
-    .filter(function(x){ return inCycle(x.mk, x.d); })
-    .map(function(x){ return '<b class="rk">' + esc(x.t) + '</b> ' + esc(x.v) + ' (' + plinks(x.by || [], "") + ')'; });
+  // one line per record title: its latest mark set in this cycle (hand-kept titles now
+  // worked out automatically are skipped, as on the page), and whether it still stands
+  var recs = [];
+  recordGroups().forEach(function(g){
+    var x = [g.cur].concat(g.past).filter(function(e){ return inCycle(e.mk, e.d); })[0];
+    if(x) recs.push('<b class="rk">' + esc(x.t) + '</b> ' + esc(x.v) + ' (' + plinks(x.by || [], "") + ')' +
+      (x === g.cur ? '' : ' <i class="capi">since broken</i>'));
+  });
   Object.keys(AUTO).forEach(function(k){
     var t = AUTO[k].rows()[0];
     if(t && t.mk && inCycle(t.mk)) recs.push('<b class="rk">' + esc(AUTO[k].title) + '</b> ' + esc(t.val) + ' (' + plinks(t.by, "") + ')');
