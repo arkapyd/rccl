@@ -203,25 +203,27 @@ tr:hover .namebtn::after{content:"›";margin-left:7px;color:var(--gold);font-fa
 .seedtag{border:1px solid var(--bronze-lit);color:var(--bronze-lit)}
 .champtag{background:var(--gold);color:var(--royal-deep)}
 .num{width:46px;color:var(--lilac);font-weight:500}
-.pcw{width:88px;font-family:'Teko',sans-serif;font-size:clamp(22px,3.2vw,28px);font-weight:700}
+.pcw{width:104px;padding-left:12px!important;font-family:'Teko',sans-serif;font-size:clamp(22px,3.2vw,28px);font-weight:700}
 tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
-.plinth-cell{padding-left:20px!important;width:104px}
-.plinth{display:flex;align-items:flex-end;gap:3px;height:30px}
-.step{width:8px;background:rgba(255,255,255,.11);border-radius:1px 1px 0 0}
-.step.cut{background:linear-gradient(180deg,var(--bronze-lit),var(--bronze))}
-.step:nth-child(1){height:8px}.step:nth-child(2){height:11px}.step:nth-child(3){height:14px}
-.step:nth-child(4){height:17px}.step:nth-child(5){height:20px}.step:nth-child(6){height:23px}
-.step:nth-child(n+7){height:26px;width:10px}
-.urn{width:15px;height:15px;margin:0 0 12px 5px;fill:rgba(255,255,255,.14);flex:0 0 auto}
-.urn.lit{fill:var(--gold)}
+/* gate progress: a thin bar under the wins count */
+.wcell span{display:block}
+.gbar{display:block;width:34px;height:3px;margin:5px 0 0 auto;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
+.gbar b{display:block;height:100%;background:linear-gradient(90deg,var(--bronze),var(--bronze-lit));border-radius:2px}
+.gbar.thru b{background:var(--gold);box-shadow:0 0 6px rgba(255,228,99,.55)}
+/* PCW trend sparkline */
+.sparkcell{padding-left:20px!important;width:112px}
+.spark{display:block;overflow:visible}
+.spark polyline{fill:none;stroke:var(--lilac);stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round;opacity:.85}
+.spark circle{fill:var(--gold)}
+.spark .sp-mid{stroke:rgba(255,255,255,.12);stroke-width:1;stroke-dasharray:2 3}
+tr:hover .spark polyline{stroke:var(--gold);opacity:1}
 .tcell{padding-left:20px!important}
 .troph{display:flex;align-items:center;gap:2px}
 .troph svg{width:16px;height:16px;fill:var(--gold)}
 .troph .tn{margin-left:6px;font-family:'Teko',sans-serif;font-size:20px;font-weight:700;color:var(--gold)}
 .nil{color:var(--lilac-dim);font-size:12px}
 
-@media (max-width:620px){.plinth{height:24px}.step{width:6px}.step:nth-child(n+7){width:8px}}
-@media (max-width:470px){.plinth-cell,.hide-sm{display:none}}
+@media (max-width:470px){.hide-sm{display:none}}
 
 /* ---------------- final ---------------- */
 .fin{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:14px;align-items:stretch}
@@ -445,6 +447,89 @@ tr.dnp .who,tr.dnp .pcw,tr.dnp .num{color:var(--lilac-dim)}
   .card{margin-top:7px}
 }
 .log li.void{opacity:.42}
+/* cycle review */
+.crgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.crgrid .crf{cursor:default}
+.crgrid .crf .hv{font-size:clamp(24px,2.6vw,30px)}
+.crgrid .crf .hv .plink,.crgrid .crf .hv button{font:inherit;color:inherit}
+.crlines{margin-top:14px;padding:4px clamp(16px,3vw,24px) 2px;border-left:2px solid var(--gold)}
+.crlines p{margin:0;padding:8px 0;font-size:13px;line-height:1.55;color:var(--lilac);border-top:1px dashed rgba(255,255,255,.07)}
+.crlines p:first-child{border-top:0}
+.crlines p > b:first-child{display:inline-block;min-width:13em;font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.crlines .rk{font-weight:700;color:var(--white)}
+.crlines .capi{font-style:italic;font-size:.85em;color:var(--lilac-dim)}
+@media (max-width:860px){ .crgrid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:480px){ .crgrid{grid-template-columns:1fr} .crlines p > b:first-child{display:block} }
+/* The Nets */
+.tcards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:700px){ .tcards{grid-template-columns:1fr} }
+.cmp-pick{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:4px 0 16px}
+.cmp-side{display:flex;align-items:center;gap:8px;flex:1 1 220px;min-width:0}
+.cmp-side select{flex:1 1 0;min-width:0}
+.cmp-side i,.cmp-v{font-style:normal;font-family:'Teko',sans-serif;font-size:20px;color:var(--lilac-dim)}
+.cmp-head{display:flex;justify-content:space-between;gap:16px;padding:6px 0 8px;border-bottom:1px solid var(--hair);font-family:'Teko',sans-serif;font-size:22px;font-weight:600;text-transform:uppercase;letter-spacing:.02em}
+.cmp-head span:last-child{text-align:right}
+.cmp{width:100%;border-collapse:collapse}
+.cmp td{padding:9px 0;border-top:1px solid var(--hair-soft);font-size:13.5px}
+.cmp tr:first-child td{border-top:0}
+.cmp .cl{text-align:left;width:30%;font-family:'Teko',sans-serif;font-size:21px;color:var(--steel-ink)}
+.cmp .cr{text-align:right;width:30%;font-family:'Teko',sans-serif;font-size:21px;color:var(--steel-ink)}
+.cmp .cm{text-align:center;font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim)}
+.cmp .cm em{display:block;font-style:normal;font-weight:600;letter-spacing:.06em;text-transform:none;font-size:10px;opacity:.75}
+.cmp .win{color:var(--gold)}
+.cmp .sfx{font-family:'Teko',sans-serif;font-style:normal;font-size:.62em;color:var(--lilac-dim);margin-left:3px}
+.cmp-h2h{font-size:13px;color:var(--lilac);margin:14px 0 6px;line-height:1.6}
+.cmp-h2h b{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-right:6px}
+.mm-pool{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
+.mm-pool .chip{font-size:10.5px;padding:6px 10px}
+.mm-quick{display:flex;align-items:center;gap:6px;margin-bottom:16px}
+.mm-quick .chip{font-size:9.5px;padding:5px 9px}
+.mm-quick span{margin-left:auto;font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim)}
+.mm{display:flex;align-items:center;gap:16px;padding:13px 12px;border-top:1px solid var(--hair-soft);transition:background .16s ease,transform .16s ease}
+.mm:first-child{border-top:0}
+.mm:hover{background:var(--surface);transform:scale(1.01)}
+.mm-n{font-family:'Teko',sans-serif;font-size:26px;font-weight:700;color:var(--gold);width:18px;text-align:center}
+.mm-body{flex:1 1 auto;min-width:0}
+.mm-names{font-family:'Teko',sans-serif;font-size:22px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;line-height:1.1}
+.mm-names i{font-style:normal;color:var(--lilac-dim);margin:0 6px}
+.mm-why{font-size:11.5px;color:var(--lilac-dim);line-height:1.5;margin-top:3px}
+.mm-odds{flex:0 0 auto;text-align:right;font-family:'Teko',sans-serif;font-size:22px;color:var(--steel-ink)}
+.mm-odds i{font-style:normal;color:var(--lilac-dim);margin:0 2px}
+.mm-odds span{display:block;font-family:'Manrope',sans-serif;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim)}
+.rtab .rnum{font-family:'Teko',sans-serif;font-size:20px;font-weight:600;color:var(--white)}
+.rtab td.up{color:var(--good, #7fd48a)}
+.rtab td.down{color:var(--bad)}
+.rtab .spark{margin-left:auto}
+.rtab th:not(:first-child),.rtab td:not(:first-child){padding-left:16px}
+.rtab td.sp{width:100px}
+.mrec .mrating{display:block;margin-top:3px;font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--lilac-dim)}
+.mrec .mrating b{font-family:'Teko',sans-serif;font-size:17px;font-weight:600;letter-spacing:.02em;color:var(--gold);margin-left:4px}
+/* results filter */
+.logfilter{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:4px 0 14px}
+.logfilter select,.cmp-side select{background:transparent;border:0;border-bottom:1px solid var(--hair);border-radius:0;color:var(--lilac);
+  font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:8px 4px;cursor:pointer;transition:color .16s ease,border-color .16s ease}
+.logfilter select{flex:0 1 170px}
+.logfilter select:hover,.logfilter select:focus-visible,.cmp-side select:hover,.cmp-side select:focus-visible{color:var(--gold);border-bottom-color:var(--gold);outline:none}
+.logfilter select:disabled{opacity:.4;cursor:default}
+.logfilter select option,.cmp-side select option{background:#15171b;color:var(--white);text-transform:none;letter-spacing:0;font-weight:500}
+.logfilter .lf-pitch{display:flex;gap:4px;flex-wrap:wrap}
+.logfilter .chip{font-size:10px;padding:6px 10px;display:inline-flex;align-items:center;gap:6px}
+.logfilter .chip .pico{height:14px;width:auto;margin:0}
+.logfilter .lf-clear{margin-left:auto}
+/* undo toast */
+.toast{position:fixed;left:50%;bottom:24px;translate:-50% 0;z-index:120;display:flex;align-items:center;gap:18px;max-width:min(92vw,560px);
+  padding:13px 18px 15px;background:linear-gradient(180deg,#1d2026,#121418);border:1px solid var(--frame);border-radius:2px;
+  box-shadow:0 18px 44px rgba(0,0,0,.6);font-size:13px;color:var(--lilac);overflow:hidden;animation:toastIn .28s cubic-bezier(.2,.7,.2,1)}
+.toast[hidden]{display:none}
+.toast #toastMsg{line-height:1.4}
+.toast #toastUndo{flex:0 0 auto;margin-left:auto;background:none;border:0;cursor:pointer;font:inherit;font-size:11px;font-weight:800;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--gold);padding:6px 10px;border-radius:2px;transition:transform .16s ease,background .16s ease}
+.toast #toastUndo:hover,.toast #toastUndo:focus-visible{background:rgba(255,228,99,.12);transform:scale(1.06)}
+.toast #toastUndo[hidden]{display:none}
+.toast .tbar{position:absolute;left:0;bottom:0;height:2px;width:100%;background:var(--gold);transform-origin:left center;transform:scaleX(0)}
+.toast.go .tbar{animation:toastBar linear forwards}
+@keyframes toastBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@keyframes toastIn{from{opacity:0;translate:-50% 14px}}
 .log li.lazymore,.mlist li.lazymore{display:block;border-top:1px solid var(--hair-soft);padding:12px 0 4px;text-align:center}
 .lazymore button{background:none;border:0;cursor:pointer;font:inherit;font-size:10.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--lilac-dim);transition:color .16s ease,transform .16s ease}
 .lazymore button:hover,.lazymore button:focus-visible{color:var(--gold);transform:scale(1.05)}
@@ -895,6 +980,16 @@ html.slate .fanc:hover,html.slate .fanc:focus-visible{background:linear-gradient
 
   <aside class="scorebox" id="scorebox" aria-label="From the scorer's box" hidden></aside>
 
+  <section id="reviewSection" hidden>
+    <div class="head">
+      <h2 id="reviewTitle">Cycle Review</h2>
+      <span class="aside" id="reviewAside"></span>
+    </div>
+    <div class="hairline"></div>
+    <div class="crgrid" id="review"></div>
+    <div class="crlines" id="reviewLines"></div>
+  </section>
+
   <section id="tableSection">
     <div class="head">
       <h2 id="tableTitle">The Table</h2>
@@ -937,6 +1032,15 @@ html.slate .fanc:hover,html.slate .fanc:focus-visible{background:linear-gradient
     <div class="hcards" id="highs"></div>
   </section>
 
+  <section id="toolsSection">
+    <div class="head">
+      <h2>The Nets</h2>
+      <span class="aside">Tools for the next game</span>
+    </div>
+    <div class="hairline"></div>
+    <div class="tcards" id="tools"></div>
+  </section>
+
   <section id="recordsSection">
     <div class="head">
       <h2>League Records</h2>
@@ -964,6 +1068,7 @@ html.slate .fanc:hover,html.slate .fanc:focus-visible{background:linear-gradient
       <span class="aside" id="logAside"></span>
     </div>
     <div class="hairline"></div>
+    <div class="logfilter" id="logFilter"></div>
     <div class="panel"><div class="logwrap" id="logWrap"><ul class="log" id="log"></ul></div></div>
   </section>
 
@@ -996,6 +1101,12 @@ html.slate .fanc:hover,html.slate .fanc:focus-visible{background:linear-gradient
 
 <div class="drawer-scrim" id="adminScrim" hidden></div>
 <button class="adminfab" id="adminFab" type="button" aria-controls="entrySection" aria-expanded="false">Admin</button>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden>
+  <span id="toastMsg"></span>
+  <button type="button" id="toastUndo">Undo</button>
+  <i class="tbar" id="toastBar"></i>
+</div>
 
 <div class="modal" id="modal" hidden>
   <div class="scrim" id="scrim"></div>
@@ -1112,6 +1223,14 @@ const MATCH_OVERS = 20;
 // Batting/bowling averages scale an innings that stopped early with wickets in hand
 // up to MATCH_OVERS. Shorter than this, it's too little to scale and is left out.
 const MIN_PROJ_BALLS = 30;
+
+// Ratings (Elo-style): everyone starts at ELO_START; ELO_K is the most one
+// result can move a player. Carries across cycles; finals count.
+const ELO_START = 1000;
+const ELO_K = 24;
+
+// How long the Undo button stays up after saving or deleting (milliseconds).
+const UNDO_MS = 10000;
 
 // How many results stay in view before the log starts scrolling.
 const LOG_VISIBLE = 6;
@@ -1334,6 +1453,7 @@ function rebuild(){
   });
 
   buildLedger();
+  computeElo();
   var ok = function(v){ return v === "all" || !!cyc(v); };
   S.view = (S.want && ok(S.want)) ? S.want : defaultView();
 }
@@ -1417,6 +1537,43 @@ function renderOdometer(){
   $("odometer").innerHTML = ms.length ? 'Since ' + esc(first && first.start ? fmt(first.start) + " " + first.start.slice(0, 4) : "the start") +
     ' &middot; <b>' + ms.length.toLocaleString() + '</b> matches &middot; <b>' + runs.toLocaleString() + '</b> runs &middot; <b>' +
     wk.toLocaleString() + '</b> wickets &middot; <b>' + f + '</b> 50s &middot; <b>' + h + '</b> 100s' : "";
+}
+
+/* ───────── ratings (Elo-style) ─────────
+   Every counted match in order, finals included. A pair's strength is the
+   average of its two players' ratings; the expected result follows the usual
+   Elo curve, and both winners gain (both losers drop) ELO_K × (1 − expected).
+   An upset moves a lot, an expected win very little. Super Overs, D/L results
+   and forfeits count as the W/L they produced. */
+function computeElo(){
+  var R = {}, peak = {}, hist = {}, n = {}, at = {}, cur = null;
+  var get = function(p){ return R[p] === undefined ? ELO_START : R[p]; };
+  var mean = function(ps){ return ps.reduce(function(a, p){ return a + get(p); }, 0) / ps.length; };
+  scopeCounted("all").forEach(function(m){
+    if(!(m.w || []).length || !(m.l || []).length) return;
+    if(m.c !== cur){ cur = m.c; at[cur] = Object.assign({}, R); }     // ratings as each cycle opened
+    var e = 1 / (1 + Math.pow(10, (mean(m.l) - mean(m.w)) / 400));
+    var d = ELO_K * (1 - e);
+    m.elo = { d:d, p:e };          // points that moved, and the winners' pre-match chance
+    var move = function(p, by){
+      R[p] = get(p) + by; n[p] = (n[p] || 0) + 1;
+      if(peak[p] === undefined || R[p] > peak[p]) peak[p] = R[p];
+      (hist[p] = hist[p] || []).push(R[p]);
+    };
+    m.w.forEach(function(p){ move(p, d); });
+    m.l.forEach(function(p){ move(p, -d); });
+  });
+  S.elo = { R:R, peak:peak, hist:hist, n:n, at:at };
+}
+function eloOf(p){ return S.elo && S.elo.R[p] !== undefined ? S.elo.R[p] : ELO_START; }
+function pairElo(ps){ return ps.reduce(function(a, p){ return a + eloOf(p); }, 0) / ps.length; }
+function winChance(a, b){ return 1 / (1 + Math.pow(10, (pairElo(b) - pairElo(a)) / 400)); }
+// a player's rating going into a cycle, and coming out of it (or now, if it's the latest)
+function eloAt(p, cid){ var a = S.elo && S.elo.at[cid]; return a && a[p] !== undefined ? a[p] : ELO_START; }
+function eloAfter(p, cid){
+  var i = S.cycles.indexOf(cyc(cid));
+  for(var j = i + 1; j < S.cycles.length; j++){ var a = S.elo.at[S.cycles[j].id]; if(a) return a[p] !== undefined ? a[p] : ELO_START; }
+  return eloOf(p);
 }
 
 /* ───────── the scorebook ledger ─────────
@@ -1633,16 +1790,52 @@ function statusOf(c){
     : { k:"uncrowned", label:"Uncrowned",     sub:"Uncrowned" };
 }
 
-function plinth(w, gate){
-  var s = "", i;
-  for(i = 1; i <= gate; i++) s += '<span class="step' + (w >= i ? " cut" : "") + '"></span>';
-  s += '<svg class="urn' + (w >= gate ? " lit" : "") +
-       '" viewBox="0 0 14 14" aria-hidden="true"><path d="' + URN_PATH + '"/></svg>';
-  var left = gate - w;
-  var label = left > 0
-    ? left + " win" + (left === 1 ? "" : "s") + " from the gate"
-    : "Through the gate" + (left < 0 ? " by " + (-left) : "");
-  return '<div class="plinth" title="' + esc(label) + '" aria-label="' + esc(label) + '">' + s + '</div>';
+// A thin bar under the wins count: how far along the road to the cycle's win gate.
+function gateBar(w, gate){
+  var left = gate - w, pct = Math.min(100, Math.max(0, w / gate * 100));
+  var label = left > 0 ? left + " win" + (left === 1 ? "" : "s") + " from the gate"
+                       : "Through the gate" + (left < 0 ? " by " + (-left) : "");
+  return '<i class="gbar' + (left <= 0 ? ' thru' : '') + '" title="' + esc(label) + '" aria-label="' + esc(label) + '">' +
+    '<b style="width:' + pct.toFixed(1) + '%"></b></i>';
+}
+
+// A small line chart. lo/hi fix the scale (so rows compare honestly); mid draws a guide line.
+function spark(vals, opt){
+  opt = opt || {};
+  var W = opt.w || 92, H = opt.h || 24, pad = 3;
+  if(!vals.length) return '<span class="nil">&mdash;</span>';
+  var lo = opt.lo !== undefined ? opt.lo : Math.min.apply(null, vals);
+  var hi = opt.hi !== undefined ? opt.hi : Math.max.apply(null, vals);
+  if(hi === lo){ hi += 1; lo -= 1; }
+  var x = function(i){ return vals.length === 1 ? W - pad : pad + i * (W - 2 * pad) / (vals.length - 1); };
+  var y = function(v){ return pad + (1 - (v - lo) / (hi - lo)) * (H - 2 * pad); };
+  var last = vals.length - 1;
+  var mid = opt.mid !== undefined
+    ? '<line class="sp-mid" x1="0" x2="' + W + '" y1="' + y(opt.mid).toFixed(1) + '" y2="' + y(opt.mid).toFixed(1) + '"/>' : "";
+  return '<svg class="spark" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" aria-hidden="true">' + mid +
+    (vals.length > 1 ? '<polyline points="' + vals.map(function(v, i){ return x(i).toFixed(1) + "," + y(v).toFixed(1); }).join(" ") + '"/>' : '') +
+    '<circle cx="' + x(last).toFixed(1) + '" cy="' + y(vals[last]).toFixed(1) + '" r="2.4"/></svg>';
+}
+// PCW after each of a player's matches in the view (league matches only, as PCW is).
+function pcwSeries(view){
+  var out = {}, rec = {};
+  scopeRegular(view).forEach(function(m){
+    [[m.w, 1], [m.l, 0]].forEach(function(t){
+      (t[0] || []).forEach(function(p){
+        var x = rec[p] = rec[p] || { w:0, n:0 };
+        x.n++; x.w += t[1];
+        (out[p] = out[p] || []).push(x.w / x.n * 100);
+      });
+    });
+  });
+  return out;
+}
+function trendCell(vals){
+  if(!vals || !vals.length) return '<td class="tl sparkcell hide-sm" data-v="0"><span class="nil">&mdash;</span></td>';
+  var back = vals[Math.max(0, vals.length - 6)], now = vals[vals.length - 1], d = now - back;
+  var tip = "PCW " + back.toFixed(1) + " → " + now.toFixed(1) + " over the last " + Math.min(5, vals.length - 1 || 1) + " matches";
+  return '<td class="tl sparkcell hide-sm" data-v="' + d.toFixed(2) + '" title="' + esc(tip) + '">' +
+    spark(vals, { lo:0, hi:100, mid:50 }) + '</td>';
 }
 
 function trophies(r){
@@ -1922,15 +2115,16 @@ function renderTable(){
     $("tableTitle").textContent = "The All-time Table";
     $("tableAside").textContent = "Finals never count toward PCW · click a heading to sort";
     $("thead").innerHTML = '<tr><th class="tl" colspan="2">Player</th><th class="tl tcell">Titles</th>' +
-      '<th class="hide-sm">Cycles</th><th>M</th><th>W</th><th>L</th><th>PCW</th></tr>';
+      '<th class="hide-sm">Cycles</th><th class="tl sparkcell hide-sm" data-label="PCW trend">PCW trend</th><th>M</th><th>W</th><th>L</th><th>PCW</th></tr>';
   } else {
     $("tableTitle").textContent = "League Table";
     $("tableAside").textContent = "Ranked by PCW · click a heading to sort";
-    $("thead").innerHTML = '<tr><th class="tl" colspan="2">Player</th><th class="tl plinth-cell">The Threshold</th>' +
+    $("thead").innerHTML = '<tr><th class="tl" colspan="2">Player</th><th class="tl sparkcell hide-sm" data-label="PCW trend">PCW trend</th>' +
       '<th>M</th><th>W</th><th>L</th><th>PCW</th></tr>';
   }
 
   var seeds = all ? [] : cycleSeeds(c, rows);
+  var series = pcwSeries(all ? "all" : c.id);
   var champs = (!all && c.final) ? c.final.w : [];
 
   // A cycle's table lists only who has played in it (or its final).
@@ -1955,9 +2149,11 @@ function renderTable(){
         (r.stray ? '<span class="stray">Unknown name in results</span>' : '') + '</td>' +
       (all
         ? '<td class="tl tcell" data-v="' + (r.titles * 1000 + r.fw) + '">' + trophies(r) + '</td><td class="num hide-sm">' + r.cycles + '</td>'
-        : '<td class="tl plinth-cell" data-v="' + r.w + '">' + plinth(r.w, c.minWins) + '</td>') +
+        : '') +
+      trendCell(series[r.name]) +
       '<td class="num">' + r.m + '</td>' +
-      '<td class="num">' + r.w + '</td>' +
+      (all ? '<td class="num">' + r.w + '</td>'
+           : '<td class="num wcell" data-v="' + r.w + '"><span>' + r.w + '</span>' + gateBar(r.w, c.minWins) + '</td>') +
       '<td class="num">' + r.l + '</td>' +
       '<td class="pcw">' + r.pcw.toFixed(2) + '</td>' +
     '</tr>';
@@ -3329,6 +3525,7 @@ function cycleTable(name){
 }
 
 function renderModal(){
+  if(S.openTool){ renderToolModal(S.openTool); return; }
   if(S.openHundreds){ if(AUTO[S.openHundreds]) renderAutoModal(S.openHundreds); else renderHundredsModal(); return; }
   if(S.openTop){ renderTopModal(S.openTop); return; }
   if(S.openHighs){ renderHighsModal(S.openHighs); return; }
@@ -3347,12 +3544,16 @@ function renderModal(){
       '<p class="mreal">' + esc(s.real) + (capOf(s.name) ? ' &middot; <span class="capno">RCCL cap ' + capOf(s.name) + '</span>' : '') +
         ' &middot; ' + esc(all ? "Career" : c.name) + '</p></div>' +
       '<div class="mrec"><b>' + s.w + '&ndash;' + s.l + '</b><span>' + s.pcw.toFixed(2) + ' PCW' +
-        (s.titles ? ' &middot; ' + s.titles + ' title' + (s.titles === 1 ? '' : 's') : '') + '</span></div>' +
+        (s.titles ? ' &middot; ' + s.titles + ' title' + (s.titles === 1 ? '' : 's') : '') + '</span>' +
+        (S.elo && S.elo.n[s.name] ? '<span class="mrating" title="Elo-style rating, all-time">Rating <b>' +
+          Math.round(eloOf(s.name)).toLocaleString() + '</b></span>' : '') + '</div>' +
     '</div>';
 
   if(S.backTo){
     var bk = S.backTo, bl = bk.type === "hundreds" ? (AUTO[bk.kind] ? AUTO[bk.kind].title : "Most hundreds") :
-             bk.type === "top" ? (TOPS[bk.key] || {}).name : (HIGHS.filter(function(h){ return h.key === bk.key; })[0] || {}).name;
+             bk.type === "top" ? (TOPS[bk.key] || {}).name :
+             bk.type === "tool" ? (TOOLS.filter(function(t){ return t.key === bk.key; })[0] || {}).name :
+             (HIGHS.filter(function(h){ return h.key === bk.key; })[0] || {}).name;
     if(bl) html += '<div class="backbar"><button class="chip" type="button" data-back="1">&lsaquo; ' + esc(bl) + '</button></div>';
   }
   html += scopeChips();
@@ -3533,20 +3734,21 @@ function bindCycleLinks(root, name){
 function openPlayer(name, sec){
   // remember the list we came from, so the dossier can offer a way back
   S.backTo = S.openHundreds ? { type:"hundreds", kind:S.openHundreds } :
-             S.openTop ? { type:"top", key:S.openTop } : (S.openHighs ? { type:"highs", key:S.openHighs } : null);
-  S.openHundreds = null;
+             S.openTop ? { type:"top", key:S.openTop } : S.openTool ? { type:"tool", key:S.openTool } :
+             (S.openHighs ? { type:"highs", key:S.openHighs } : null);
+  S.openHundreds = null; S.openTool = null;
   S.openPlayer = name; S.openHighs = null; S.openTop = null; S.topFromPlayer = null;
   S.openSec = sec || null;
   renderModal(); $("modalX").focus({ preventScroll:true });
 }
 function openHighs(key){
-  S.backTo = null; S.resetScroll = true; S.openHundreds = null;
+  S.backTo = null; S.resetScroll = true; S.openHundreds = null; S.openTool = null;
   S.openHighs = key; S.openPlayer = null; S.openTop = null; S.topFromPlayer = null;
   if(key === "pitch") S.pitchTab = "batting";
   renderModal(); $("modalX").focus();
 }
 function openTop(key, fromPlayer){
-  S.backTo = null; S.resetScroll = true; S.openHundreds = null;
+  S.backTo = null; S.resetScroll = true; S.openHundreds = null; S.openTool = null;
   S.openTop = key;
   if(fromPlayer !== undefined) S.topFromPlayer = fromPlayer;
   S.openPlayer = null; S.openHighs = null;
@@ -3557,7 +3759,7 @@ function closeModal(){
     var back = S.scopeReturn; S.scopeReturn = undefined;
     if(back !== S.statScope){ S.statScope = back; setTimeout(render, 0); }
   }
-  S.backTo = null; S.openHundreds = null;
+  S.backTo = null; S.openHundreds = null; S.openTool = null;
   S.openPlayer = null; S.openHighs = null; S.openTop = null; S.topFromPlayer = null;
   $("modal").hidden = true;
 }
@@ -3566,7 +3768,8 @@ document.addEventListener("click", function(ev){
   var back = t.closest("[data-back]");
   if(back && S.backTo){
     var b = S.backTo;
-    if(b.type === "hundreds") openHundreds(b.kind); else if(b.type === "top") openTop(b.key); else openHighs(b.key);
+    if(b.type === "hundreds") openHundreds(b.kind); else if(b.type === "top") openTop(b.key);
+    else if(b.type === "tool") openTool(b.key); else openHighs(b.key);
     return;
   }
   if(t.closest("[data-pitchgo]")){ ev.preventDefault(); ev.stopPropagation(); openHighs("pitch"); return; }
@@ -3588,7 +3791,7 @@ $("highsScope").addEventListener("click", onScopeClick);
 $("scrim").onclick  = closeModal;
 document.addEventListener("keydown", function(e){
   if(e.key !== "Escape") return;
-  if(S.openPlayer || S.openHighs || S.openTop || S.openHundreds) closeModal();
+  if(S.openPlayer || S.openHighs || S.openTop || S.openHundreds || S.openTool) closeModal();
   else if(document.body.classList.contains("admin-open")) closeAdmin();
 });
 
@@ -3760,23 +3963,97 @@ function fiftyLine(m){
   return '<div class="f50line"><span class="f50tag">50+</span>' + parts.join("; ") + '</div>';
 }
 
+/* ───────── results filter ─────────
+   Narrow the log by player (and partner), pitch and kind of result. Filters
+   stay put as you switch cycles; "Clear" puts everything back. */
+var LOG_TYPES = [
+  { k:"",      name:"Every result" },
+  { k:"close", name:"Close finishes" },
+  { k:"rout",  name:"Big wins" },
+  { k:"fifty", name:"With a 50+" },
+  { k:"ton",   name:"With a hundred" },
+  { k:"so",    name:"Super Overs" },
+  { k:"dls",   name:"D/L results" },
+  { k:"ff",    name:"Forfeits" },
+  { k:"final", name:"Finals" }
+];
+// margin as a number, when the scorecard allows: { runs:bool, n }
+function marginNum(m){
+  if(m.ff || m.dls || !m.bf || !has(m.sw) || !has(m.sl) || (m.sow && m.sol)) return null;
+  return m.bf === "w" ? { runs:true, n:m.sw.r - m.sl.r } : { runs:false, n:10 - (m.sw.k || 0) };
+}
+function logPasses(m){
+  var f = S.logF, side = function(p){ return (m.w || []).indexOf(p) >= 0 ? m.w : ((m.l || []).indexOf(p) >= 0 ? m.l : null); };
+  if(f.p){ var t = side(f.p); if(!t) return false; if(f.q && t.indexOf(f.q) < 0) return false; }
+  if(f.pitch && m.pitch !== f.pitch) return false;
+  var g = marginNum(m), fl = m.fifties || [];
+  switch(f.type){
+    case "close": return !!(m.sow && m.sol) || !!(g && (g.runs ? g.n <= 5 : g.n <= 2));
+    case "rout":  return !!(g && (g.runs ? g.n >= 60 : g.n >= 8));
+    case "fifty": return fl.length > 0;
+    case "ton":   return fl.some(function(x){ return x.r >= 100; });
+    case "so":    return !!(m.sow && m.sol);
+    case "dls":   return !!m.dls;
+    case "ff":    return !!m.ff;
+    case "final": return !!m.isFinal;
+  }
+  return true;
+}
+function logFiltered(){ var f = S.logF; return !!(f.p || f.pitch || f.type); }
+function renderLogFilter(){
+  var f = S.logF, ms = scopeEverything(S.view), seen = {}, mates = {};
+  ms.forEach(function(m){ (m.w || []).concat(m.l || []).forEach(function(p){ seen[p] = true; }); });
+  if(f.p && !seen[f.p]){ f.p = ""; f.q = ""; }
+  if(f.p) ms.forEach(function(m){
+    [m.w || [], m.l || []].forEach(function(t){ if(t.indexOf(f.p) >= 0) t.forEach(function(x){ if(x !== f.p) mates[x] = true; }); });
+  });
+  if(f.q && !mates[f.q]) f.q = "";
+  var byName = function(a, b){ return realName(a).localeCompare(realName(b)); };
+  var opt = function(v, label, on){ return '<option value="' + esc(v) + '"' + (on ? " selected" : "") + '>' + esc(label) + '</option>'; };
+  $("logFilter").innerHTML =
+    '<select id="lfP" aria-label="Player">' + opt("", "Any player", !f.p) +
+      Object.keys(seen).sort(byName).map(function(p){ return opt(p, realName(p), p === f.p); }).join("") + '</select>' +
+    '<select id="lfQ" aria-label="Partner"' + (f.p ? '' : ' disabled') + '>' + opt("", f.p ? "with anyone" : "partner", !f.q) +
+      Object.keys(mates).sort(byName).map(function(p){ return opt(p, "with " + realName(p), p === f.q); }).join("") + '</select>' +
+    '<select id="lfT" aria-label="Kind of result">' + LOG_TYPES.map(function(t){ return opt(t.k, t.name, t.k === f.type); }).join("") + '</select>' +
+    '<span class="lf-pitch" role="group" aria-label="Pitch">' +
+      [["", "Any pitch"]].concat(PITCHES.map(function(x){ return [x[0], x[1]]; })).map(function(x){
+        return '<button type="button" class="chip' + (f.pitch === x[0] ? " on" : "") + '" data-lfpitch="' + x[0] + '" aria-pressed="' + (f.pitch === x[0]) + '">' +
+          (x[0] ? PITCH_ICON[x[0]] : '') + esc(x[1]) + '</button>';
+      }).join("") + '</span>' +
+    (logFiltered() ? '<button type="button" class="chip lf-clear" id="lfClear">Clear &times;</button>' : '');
+  var redo = function(){ $("log")._lazy = null; $("logWrap").scrollTop = 0; renderLog(); };
+  $("lfP").onchange = function(){ f.p = this.value; f.q = ""; redo(); };
+  $("lfQ").onchange = function(){ f.q = this.value; redo(); };
+  $("lfT").onchange = function(){ f.type = this.value; redo(); };
+  each($("logFilter"), "[data-lfpitch]", function(b){ b.onclick = function(){ f.pitch = b.dataset.lfpitch; redo(); }; });
+  if($("lfClear")) $("lfClear").onclick = function(){ S.logF = { p:"", q:"", pitch:"", type:"" }; redo(); };
+}
+
 function renderLog(){
-  var all = S.view === "all", rows = [];
+  var all = S.view === "all", rows = [], shown = 0;
+  if(!S.logF) S.logF = { p:"", q:"", pitch:"", type:"" };
+  renderLogFilter();
   scopeCycles().slice().reverse().forEach(function(c){
     var items = c.matches.slice().reverse();
     if(c.final) items.unshift(c.final);
+    items = items.filter(logPasses);
+    shown += items.length;
     if(!items.length) return;
     if(all) rows.push({ k:null, html:'<li class="sep"><span>' + esc(c.name) + '</span><span>' + fmt(c.start) + ' – ' + fmt(c.end) + '</span></li>' });
     items.forEach(function(m){ rows.push({ k:m.key, html:logRow(m) }); });
   });
   var n = scopeRegular().length;
-  $("logAside").textContent = all ? matchesWord(n) + " across " + S.cycles.length + " cycles" : matchesWord(n) + " this cycle";
+  $("logAside").textContent = logFiltered()
+    ? shown + " of " + matchesWord(scopeEverything(S.view).length) + " · filtered"
+    : (all ? matchesWord(n) + " across " + S.cycles.length + " cycles" : matchesWord(n) + " this cycle");
   // a view switch starts the list from the top; a data sync keeps how far you'd scrolled
   var log = $("log");
   if(log._lazyView !== S.view){ log._lazy = null; log._lazyView = S.view; $("logWrap").scrollTop = 0; }
   if($("logWrap")._rowIO) $("logWrap")._rowIO.disconnect();
   lazyList(log, $("logWrap"), rows, {
-    empty:'<li class="blank">Nothing played yet. The first result goes in above.</li>',
+    empty: logFiltered() ? '<li class="blank">No results match these filters.</li>'
+                         : '<li class="blank">Nothing played yet. The first result goes in above.</li>',
     onAdd:function(ul){ armRows(ul, $("logWrap")); }
   });
   log.onclick = function(ev){
@@ -4419,12 +4696,15 @@ function commit(forced, dlsInfo){
       (dlsInfo ? " on DLS (par " + dlsInfo.par + ")" : "") + (inWindow(c, rec) ? "." : " — outside the window, so it won't count.");
 
   var wasEdit = !!S.editing;
+  var prev = editing ? { c:editing.c, id: editing.isFinal ? "final" : editing.id, raw: rawMatch(editing) } : null;
+  var undoOps = [];                       // filled in once the new id is known
   var done = function(){
     S.editing = null;
     if(isF){ S.formType = "regular"; S.entryKey = null; }
     render();
     if(!wasEdit && !isF) clearForm();
     say(note);
+    offerUndo(note, function(){ return putMatches(undoOps); });
   };
 
   if(S.fb){
@@ -4432,29 +4712,115 @@ function commit(forced, dlsInfo){
     if(!S.info[cid]){ patch["index/" + cid] = cycleRecord(c); patch[cid + "/proof/info"] = ADMIN_KEY; }
     if(isF){
       patch[cid + "/final"] = rec; patch[cid + "/proof/final"] = ADMIN_KEY;
+      undoOps.push({ c:cid, id:"final", raw:null });
     } else {
       var remoteEdit = editing && isRemote(editing.id);
       var id = remoteEdit ? editing.id : S.fb.push(S.fb.ref(S.fb.db, ROOT + "/" + cid + "/matches")).key;
+      undoOps.push({ c:cid, id:id, raw:null });
       if(remoteEdit && editing.c !== cid){ patch[editing.c + "/matches/" + id] = null; patch[editing.c + "/proof/" + id] = null; }
       patch[cid + "/matches/" + id] = rec; patch[cid + "/proof/" + id] = ADMIN_KEY;
     }
+    if(prev) undoOps.push(prev);          // put the old version back where it was
     writeRoot(patch).then(done).catch(function(e){ say(dbErr(e), true); });
   } else {
-    if(isF){ rec.id = "final"; dataOf(cid).final = rec; }
+    if(isF){ rec.id = "final"; dataOf(cid).final = rec; undoOps.push({ c:cid, id:"final", raw:null }); }
     else if(editing){
       var old = dataOf(editing.c);
       old.matches = old.matches.filter(function(m){ return m.id !== editing.id; });
-      rec.id = editing.id; dataOf(cid).matches.push(rec);
-    } else { rec.id = "local" + Date.now(); dataOf(cid).matches.push(rec); }
+      rec.id = editing.id; dataOf(cid).matches.push(rec); undoOps.push({ c:cid, id:rec.id, raw:null });
+    } else { rec.id = "local" + Date.now(); dataOf(cid).matches.push(rec); undoOps.push({ c:cid, id:rec.id, raw:null }); }
+    if(prev) undoOps.push(prev);
     done();
   }
 }
+
+/* ───────── undo ─────────
+   After a save or delete, an Undo button stays up for UNDO_MS. Undo writes
+   back exactly what was there before: a new result is removed, an edited one
+   gets its old values back, a deleted one returns under its old id. */
+function rawMatch(m){
+  if(!m) return null;
+  var out = {};
+  ["d","ts","w","l","sw","sl","sow","sol","bf","dls","pitch","seeds"].forEach(function(k){
+    if(m[k] !== null && m[k] !== undefined && m[k] !== "") out[k] = m[k];
+  });
+  if(m.ff) out.ff = true;
+  if(m.fifties && m.fifties.length) out.fifties = m.fifties.map(function(f){
+    var e = { p:f.p, r:f.r, b:f.b };
+    if(f.m) e.m = f.m; if(f.ign) e.ign = f.ign; if(f.no) e.no = true;
+    return e;
+  });
+  return JSON.parse(JSON.stringify(out));
+}
+// ops: [{ c: cycle id, id: match id or "final", raw: data to put back, or null to remove }]
+function putMatches(ops){
+  var patch = {}, remote = false;
+  ops.forEach(function(o){
+    if(S.fb && (o.id === "final" || isRemote(o.id))){
+      remote = true;
+      if(o.id === "final"){ patch[o.c + "/final"] = o.raw; patch[o.c + "/proof/final"] = o.raw ? ADMIN_KEY : null; }
+      else { patch[o.c + "/matches/" + o.id] = o.raw; patch[o.c + "/proof/" + o.id] = o.raw ? ADMIN_KEY : null; }
+      return;
+    }
+    var d = dataOf(o.c);
+    if(o.id === "final"){ d.final = o.raw ? normalize("final", o.raw) : null; return; }
+    d.matches = d.matches.filter(function(x){ return x.id !== o.id; });
+    if(o.raw) d.matches.push(normalize(o.id, o.raw));
+  });
+  var after = function(){ render(); };
+  return remote ? writeRoot(patch).then(after) : Promise.resolve(after());
+}
+function putRecord(id, raw){
+  if(S.fb){
+    var patch = {}; patch["records/" + id] = raw; patch["recordproof/" + id] = raw ? ADMIN_KEY : null;
+    return writeRoot(patch).then(function(){ S.recKey = null; render(); });
+  }
+  if(raw) S.records[id] = raw; else delete S.records[id];
+  S.recKey = null; render(); return Promise.resolve();
+}
+function offerUndo(msg, fn){
+  var t = $("toast"), bar = $("toastBar");
+  clearTimeout(S.undoT);
+  S.undo = fn;
+  $("toastMsg").textContent = msg;
+  $("toastUndo").hidden = false;
+  t.hidden = false;
+  bar.style.animationDuration = UNDO_MS + "ms";
+  t.classList.remove("go"); void t.offsetWidth; t.classList.add("go");
+  S.undoT = setTimeout(function(){ t.hidden = true; S.undo = null; }, UNDO_MS);
+}
+function toastNote(msg){
+  var t = $("toast");
+  clearTimeout(S.undoT); S.undo = null;
+  $("toastMsg").textContent = msg; $("toastUndo").hidden = true;
+  t.classList.remove("go"); t.hidden = false;
+  S.undoT = setTimeout(function(){ t.hidden = true; }, 2600);
+}
+function runUndo(){
+  var fn = S.undo; if(!fn) return;
+  S.undo = null; clearTimeout(S.undoT);
+  $("toastUndo").hidden = true; $("toastMsg").textContent = "Undoing…";
+  fn().then(function(){ toastNote("Undone."); }).catch(function(e){ toastNote(dbErr(e)); });
+}
+$("toastUndo").onclick = runUndo;
+document.addEventListener("keydown", function(e){
+  if(!S.undo || !(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "z" || e.shiftKey) return;
+  var tag = (e.target && e.target.tagName) || "";
+  if(/INPUT|TEXTAREA|SELECT/.test(tag)) return;      // leave typing undo alone
+  e.preventDefault(); runUndo();
+});
 
 // Delete any set of matches/finals in one write. No confirmation here:
 // callers ask first. Returns a promise so the admin panel can report back.
 function deleteMatches(keys){
   var ms = keys.map(function(k){ return S.byKey[k]; }).filter(Boolean);
   if(!ms.length) return Promise.resolve(0);
+  var restore = ms.map(function(m){ return { c:m.c, id: m.isFinal ? "final" : m.id, raw: rawMatch(m) }; });
+  var label = ms.length === 1 ? matchWhat(ms[0]) : matchesWord(ms.length);
+  var undoable = function(n){
+    offerUndo(label.charAt(0).toUpperCase() + label.slice(1) + " deleted.", function(){ return putMatches(restore); });
+    return n;
+  };
   if(ms.some(function(m){ return m.key === S.editing; })) S.editing = null;
   var remote = ms.filter(function(m){ return S.fb && (m.isFinal || isRemote(m.id)); });
   ms.forEach(function(m){                      // local copies go straight away
@@ -4463,19 +4829,18 @@ function deleteMatches(keys){
     if(m.isFinal) d.final = null;
     else d.matches = d.matches.filter(function(x){ return x.id !== m.id; });
   });
-  if(!remote.length){ render(); return Promise.resolve(ms.length); }
+  if(!remote.length){ render(); return Promise.resolve(undoable(ms.length)); }
   var patch = {};
   remote.forEach(function(m){
     if(m.isFinal){ patch[m.c + "/final"] = null; patch[m.c + "/proof/final"] = null; }
     else         { patch[m.c + "/matches/" + m.id] = null; patch[m.c + "/proof/" + m.id] = null; }
   });
-  return writeRoot(patch).then(function(){ render(); return ms.length; });
+  return writeRoot(patch).then(function(){ render(); return undoable(ms.length); });
 }
 function matchWhat(m){ return m.isFinal ? "the " + cyc(m.c).name + " final" : "Match #" + m.no + " (" + cyc(m.c).name + ")"; }
 
 function removeMatch(mk){
   var m = S.byKey[mk]; if(!m) return;
-  if(!window.confirm("Remove " + matchWhat(m) + "? This can't be undone.")) return;
   deleteMatches([mk]).catch(function(e){ say("Could not remove that result: " + dbErr(e), true); });
 }
 
@@ -4608,7 +4973,7 @@ function renderCycleAdmin(){
     var m = S.byKey[$("mdSel").value];
     if(!m){ caSay("Pick a match first.", true); return; }
     var what = matchWhat(m);
-    if(!window.confirm("Delete " + what + "? This can't be undone.")) return;
+    if(!window.confirm("Delete " + what + "?")) return;
     deleteMatches([m.key]).then(function(){ caSay("Deleted " + what + "."); })
       .catch(function(e){ caSay(dbErr(e), true); });
   };
@@ -4892,7 +5257,7 @@ function renderHundredsModal(){
 }
 function openHundreds(kind){
   S.backTo = null; S.resetScroll = true;
-  S.openHundreds = kind || "hundreds"; S.openPlayer = null; S.openHighs = null; S.openTop = null; S.topFromPlayer = null;
+  S.openHundreds = kind || "hundreds"; S.openPlayer = null; S.openHighs = null; S.openTop = null; S.topFromPlayer = null; S.openTool = null;
   renderModal(); $("modalX").focus();
 }
 
@@ -5082,9 +5447,12 @@ function saveRecord(){
   var note = $("recN").value.trim(); if(note) rec.note = note;
   var id = S.recEditing || ("r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
   var wasEdit = !!S.recEditing;
+  var before = wasEdit && S.records[id] ? JSON.parse(JSON.stringify(S.records[id])) : null;
   var done = function(){
     S.recEditing = null; S.recKey = null; render();
-    recSay(wasEdit ? rec.t + " updated." : (same ? rec.t + ": new record logged, the old one moves to its history." : rec.t + " added."));
+    var msg = wasEdit ? rec.t + " updated." : (same ? rec.t + ": new record logged, the old one moves to its history." : rec.t + " added.");
+    recSay(msg);
+    offerUndo(msg, function(){ return putRecord(id, before); });
   };
   if(S.fb){
     var patch = {}; patch["records/" + id] = rec; patch["recordproof/" + id] = ADMIN_KEY;
@@ -5099,8 +5467,11 @@ function startRecordEdit(id){
 }
 function deleteRecord(id){
   var r = S.records[id]; if(!r) return;
-  if(!window.confirm("Delete this entry for “" + r.t + "” (" + r.v + ")?")) return;
-  var finish = function(){ delete S.records[id]; if(S.recEditing === id) S.recEditing = null; S.recKey = null; render(); };
+  var copy = JSON.parse(JSON.stringify(r));
+  var finish = function(){
+    delete S.records[id]; if(S.recEditing === id) S.recEditing = null; S.recKey = null; render();
+    offerUndo("“" + copy.t + "” entry deleted.", function(){ return putRecord(id, copy); });
+  };
   if(S.fb){
     var patch = {}; patch["records/" + id] = null; patch["recordproof/" + id] = null;
     writeRoot(patch).then(finish).catch(function(e){ recSay(dbErr(e), true); });
@@ -5112,11 +5483,382 @@ function render(){
   rebuild();
   if(S.editing && !S.byKey[S.editing]) S.editing = null;
   renderCycleBar(); renderCrest(); renderWire(); renderVerdict(); renderScorebox(); renderOdometer();
-  renderTable(); renderFinal(); renderRoll(); renderHighs(); renderRecords();
+  renderReview(); renderTable(); renderFinal(); renderRoll(); renderHighs(); renderTools(); renderRecords();
   renderEntry(); renderCycleAdmin();
   $("adminFab").innerHTML = "Admin" + (S.unlocked ? '<span class="dot" title="Unlocked"></span>' : ''); renderLog();
-  if(S.openPlayer || S.openHighs || S.openTop || S.openHundreds) renderModal();
+  if(S.openPlayer || S.openHighs || S.openTop || S.openHundreds || S.openTool) renderModal();
   armReveals();
+}
+
+/* ───────── cycle review ─────────
+   Once a cycle's window has shut, its page opens with a one-screen summary:
+   the champions, the table, the standout numbers, who climbed the ratings,
+   records set and debuts. Always reads the cycle itself, whatever "Stats for"
+   is set to elsewhere. */
+function renderReview(){
+  var sec = $("reviewSection"), c = S.view !== "all" ? cyc(S.view) : null;
+  if(!c || !isClosed(c) || !scopeRegular(c.id).length){ sec.hidden = true; $("review").innerHTML = ""; $("reviewLines").innerHTML = ""; return; }
+  sec.hidden = false;
+  $("reviewTitle").textContent = c.name + " in Review";
+  $("reviewAside").textContent = fmt(c.start) + " – " + fmt(c.end) + " · closed";
+  var keep = S.statScope; S.statScope = "view";
+  try { reviewFill(c); } finally { S.statScope = keep; }
+  bindGoLinks($("reviewSection"));
+}
+function reviewFill(c){
+  var rows = buildTable([c]).filter(function(r){ return r.m > 0; }), gate = c.minWins, d = highsData();
+  var fact = function(t, v, sub){
+    return '<div class="hcard crf"><span class="ht">' + t + '</span><span class="hv">' + (v === null || v === undefined ? "&mdash;" : v) + '</span>' +
+      '<span class="hs">' + (sub || "") + '</span></div>';
+  };
+  var unitV = function(v, u){ return v + '<em class="sfx">' + u + '</em>'; };
+  var f = c.final, st = statusOf(c), cards = [];
+
+  cards.push(f ? fact("Champions", plinks(f.w, ""), "beat " + plinks(f.l, "") + esc(marginPhrase(f)) + " &middot; " + matchLink(f.key))
+               : fact("Champions", esc(st.label), st.k === "pending" ? "the final is still to be played" : "fewer than four made it past the gate"));
+  var top = rows.filter(function(r){ return r.w >= gate; })[0] || rows[0];
+  cards.push(fact("Top of the table", top ? plink(top.name, "") : null,
+    top ? top.pcw.toFixed(2) + " PCW &middot; " + top.w + "&ndash;" + top.l + (top.w < gate ? " &middot; nobody passed the gate" : "") : ""));
+  var mw = rows.slice().sort(function(a, b){ return b.w - a.w || b.pcw - a.pcw; })[0];
+  cards.push(fact("Most wins", mw ? mw.w : null, mw ? plink(mw.name, "matches") + " &middot; from " + matchesWord(mw.m) : ""));
+  var climb = rows.map(function(r){ return { p:r.name, a:eloAt(r.name, c.id), b:eloAfter(r.name, c.id) }; })
+    .sort(function(x, y){ return (y.b - y.a) - (x.b - x.a); })[0];
+  cards.push(fact("Biggest climber", climb ? (climb.b - climb.a >= 0 ? "+" : "&minus;") + Math.abs(Math.round(climb.b - climb.a)) : null,
+    climb ? plink(climb.p, "") + " &middot; rating " + Math.round(climb.a).toLocaleString() + " &rarr; " + Math.round(climb.b).toLocaleString() : ""));
+  var e;
+  e = topEntries("batAvg", d)[0];
+  cards.push(fact("Best batting average", e ? unitV(Math.round(e.v), AVG_U) : null, e ? whoLinks(e, "bat") + " &middot; " + e.sub : ""));
+  e = topEntries("bowlAvg", d)[0];
+  cards.push(fact("Best bowling average", e ? unitV(Math.round(e.v), AVG_U) : null, e ? whoLinks(e, "ball") + " &middot; " + e.sub : ""));
+  e = topEntries("high", d)[0];
+  cards.push(fact("Highest total", e ? e.v + (e.tail ? '<em class="sfx">' + esc(e.tail) + '</em>' : '') : null,
+    e ? whoLinks(e, "bat") + " &middot; " + matchLink(e.mk) : ""));
+  e = topEntries("winRuns", d)[0] || topEntries("winWkts", d)[0];
+  var wk = e && !topEntries("winRuns", d)[0];
+  cards.push(fact("Biggest win", e ? unitV(e.v, wk ? (e.v === 1 ? "wicket" : "wickets") : (e.v === 1 ? "run" : "runs")) : null,
+    e ? whoLinks(e, "margins") + " &middot; " + matchLink(e.mk) : ""));
+  $("review").innerHTML = cards.join("");
+
+  // by the numbers, records set, debuts
+  var ms = scopeCounted(c.id), runs = 0, wkts = 0, f50 = 0, f100 = 0, debuts = [];
+  ms.forEach(function(m){
+    [m.sw, m.sl].forEach(function(sc){ if(has(sc)){ runs += sc.r; wkts += sc.k || 0; } });
+    (m.fifties || []).forEach(function(x){ if(x.r >= 100) f100++; else f50++; });
+    (m.debuts || []).forEach(function(p){ debuts.push(plink(p, "matches") + ' <i class="capi">cap ' + capOf(p) + '</i>'); });
+  });
+  var inCycle = function(mk, dd){ var m = mk && S.byKey[mk]; return m ? m.c === c.id : !!(dd && dd >= c.start && dd <= c.end); };
+  var recs = Object.keys(S.records).map(function(k){ return S.records[k]; })
+    .filter(function(x){ return inCycle(x.mk, x.d); })
+    .map(function(x){ return '<b class="rk">' + esc(x.t) + '</b> ' + esc(x.v) + ' (' + plinks(x.by || [], "") + ')'; });
+  Object.keys(AUTO).forEach(function(k){
+    var t = AUTO[k].rows()[0];
+    if(t && t.mk && inCycle(t.mk)) recs.push('<b class="rk">' + esc(AUTO[k].title) + '</b> ' + esc(t.val) + ' (' + plinks(t.by, "") + ')');
+  });
+  var line = function(t, body){ return '<p><b>' + t + '</b><span>' + body + '</span></p>'; };
+  $("reviewLines").innerHTML =
+    line("By the numbers", matchesWord(ms.length) + ' &middot; ' + runs.toLocaleString() + ' runs &middot; ' + wkts.toLocaleString() +
+      ' wickets &middot; ' + f50 + ' fifties &middot; ' + f100 + ' hundred' + (f100 === 1 ? '' : 's')) +
+    line("Records set", recs.length ? recs.join(" &middot; ") : "none this cycle") +
+    line("Debuts", debuts.length ? debuts.join(", ") : "none this cycle");
+}
+
+/* ───────── The Nets: compare, matchmaker, ratings ───────── */
+var TOOLS = [
+  { key:"compare", name:"Compare" },
+  { key:"match",   name:"Matchmaker" },
+  { key:"ratings", name:"Ratings" }
+];
+function ratingRows(){
+  if(!S.elo) return [];
+  return Object.keys(S.elo.n).map(function(p){ return { p:p, r:S.elo.R[p], peak:S.elo.peak[p], n:S.elo.n[p] }; })
+    .sort(function(a, b){ return b.r - a.r; });
+}
+function renderTools(){
+  var box = $("tools"); if(!box) return;
+  var top = ratingRows()[0];
+  var face = {
+    compare: { v:false, s:"Any two players, or two pairs, side by side: record, batting, bowling, rating and head to head." },
+    match:   { v:false, s:"Tick who&rsquo;s around and get the freshest, fairest pairings for the next game, with each side&rsquo;s chance." },
+    ratings: top ? { v: esc(realName(top.p)) + '<em class="sfx">' + Math.round(top.r).toLocaleString() + '</em>',
+                     s:"Top of the ratings &middot; Elo-style, carried across cycles" }
+                 : { v:null, s:"Ratings start with the first result." }
+  };
+  box.innerHTML = TOOLS.map(function(t){
+    var f = face[t.key];
+    return '<button class="hcard tcard" type="button" data-tool="' + t.key + '">' +
+      '<span class="ht">' + esc(t.name) + '</span>' +
+      (f.v === false ? '' : '<span class="hv">' + (f.v === null ? "&mdash;" : f.v) + '</span>') +
+      '<span class="hs">' + f.s + '</span><span class="hgo">Open &rsaquo;</span></button>';
+  }).join("");
+  each(box, "[data-tool]", function(b){ b.onclick = function(){ openTool(b.dataset.tool); }; });
+}
+function openTool(key){
+  S.backTo = null; S.resetScroll = true; S.openHundreds = null;
+  S.openTool = key; S.openHighs = null; S.openPlayer = null; S.openTop = null; S.topFromPlayer = null;
+  renderModal(); $("modalX").focus();
+}
+function renderToolModal(key){
+  var meta = TOOLS.filter(function(t){ return t.key === key; })[0];
+  if(!meta){ closeModal(); return; }
+  $("modal").hidden = false;
+  var mc = mmCycle();
+  var html = '<div class="mhead"><div><h3 class="mhandle" id="mHandle">' + esc(meta.name) + '</h3>' +
+    '<p class="mreal">The Nets &middot; ' + esc(key === "match" ? (mc ? mc.name : "All-time") : scopeName()) + '</p></div></div>' +
+    (key === "match" ? "" : scopeChips()) +
+    (key === "compare" ? compareBody() : key === "match" ? matchBody() : ratingsBody()) +
+    '<div class="hnav">' + TOOLS.map(function(t){
+      return '<button class="chip' + (t.key === key ? " on" : "") + '" type="button" data-tool="' + t.key + '">' + esc(t.name) + '</button>';
+    }).join("") + '</div>';
+  $("modalBody").innerHTML = html;
+  var body = $("modalBody");
+  bindGoLinks(body);
+  enhanceTables(body);
+  each(body, "[data-tool]", function(b){ b.onclick = function(){ openTool(b.dataset.tool); }; });
+  each(body, "[data-cmode]", function(b){ b.onclick = function(){ S.cmp.mode = b.dataset.cmode; renderModal(); }; });
+  each(body, "select[data-cp]", function(sel){
+    sel.onchange = function(){ var L = S.cmp.mode === "pairs" ? S.cmp.pr : S.cmp.pl; L[Number(sel.dataset.cp)] = sel.value; renderModal(); };
+  });
+  each(body, "[data-mm]", function(b){
+    b.onclick = function(){
+      var p = b.dataset.mm, i = S.mmPool.indexOf(p);
+      if(i >= 0) S.mmPool.splice(i, 1); else S.mmPool.push(p);
+      renderModal();
+    };
+  });
+  each(body, "[data-mmset]", function(b){
+    b.onclick = function(){ S.mmPool = b.dataset.mmset === "none" ? [] : mmCyclePlayers().slice(); renderModal(); };
+  });
+  resetModalScroll();
+}
+
+// ── compare
+function cmpPool(){
+  return buildTable(scopeCycles(statId())).filter(function(r){ return r.m > 0; }).map(function(r){ return r.name; });
+}
+function pairStats(a, b){
+  var s = { m:0, w:0, l:0, runs:0, balls:0, conc:0, bb:0, wk:0, bat:z20(), bowl:z20(), high:null, f50:0, f100:0 };
+  scopeRegular(statId()).forEach(function(m){
+    var side = [m.w || [], m.l || []].filter(function(t){ return t.indexOf(a) >= 0 && t.indexOf(b) >= 0; })[0];
+    if(!side) return;
+    var won = side === m.w, mine = won ? m.sw : m.sl, theirs = won ? m.sl : m.sw;
+    s.m++; if(won) s.w++; else s.l++;
+    if(has(mine)){
+      s.runs += mine.r; s.balls += toBalls(mine.o); add20(s.bat, mine);
+      if(!s.high || mine.r > s.high.r) s.high = { r:mine.r, tail:scoreTail(mine), mk:m.key };
+    }
+    if(has(theirs)){ s.conc += theirs.r; s.bb += toBalls(theirs.o); s.wk += theirs.k || 0; add20(s.bowl, theirs); }
+    (m.fifties || []).forEach(function(f){ if(f.p === a || f.p === b){ if(f.r >= 100) s.f100++; else s.f50++; } });
+  });
+  s.pcw = s.m ? s.w / s.m * 100 : null;
+  return s;
+}
+var CMP_PLAYER = [
+  { n:"Matches",         v:function(s){ return s.m; } },
+  { n:"Won &ndash; lost", v:function(s){ return s.w; }, f:function(v, s){ return s.w + "&ndash;" + s.l; } },
+  { n:"PCW",             v:function(s){ return s.m ? s.pcw : null; }, f:function(v){ return v.toFixed(2); }, dir:1 },
+  { n:"Rating",          u:"now", v:function(s){ return S.elo.n[s.name] ? eloOf(s.name) : null; }, f:function(v){ return Math.round(v).toLocaleString(); }, dir:1 },
+  { n:"Batting average", u:AVG_U, v:function(s){ return avg20(s.bat20); }, f:Math.round, dir:1 },
+  { n:"Run rate",        v:function(s){ return s.ballsFaced ? s.runs / (s.ballsFaced / 6) : null; }, f:function(v){ return v.toFixed(2); }, dir:1 },
+  { n:"Highest total",   v:function(s){ return s.high; }, f:function(v, s){ return v + '<em class="sfx">' + esc(s.highTail || "") + '</em>'; }, dir:1 },
+  { n:"Bowling average", u:AVG_U, v:function(s){ return avg20(s.bowl20); }, f:Math.round, dir:-1 },
+  { n:"Economy",         v:function(s){ return s.ballsBowled ? s.conceded / (s.ballsBowled / 6) : null; }, f:function(v){ return v.toFixed(2); }, dir:-1 },
+  { n:"Wickets taken",   v:function(s){ return s.wkts; }, dir:1 },
+  { n:"50+ scores",      v:function(s){ return s.fifties.filter(function(f){ return f.counts; }).length; }, dir:1 },
+  { n:"Hundreds",        v:function(s){ return s.fifties.filter(function(f){ return f.counts && f.r >= 100; }).length; }, dir:1 },
+  { n:"Best win streak", v:function(s){ return s.bestStreak; }, dir:1 },
+  { n:"Titles",          v:function(s){ return s.titles; }, dir:1 }
+];
+var CMP_PAIR = [
+  { n:"Matches together", v:function(s){ return s.m; } },
+  { n:"Won &ndash; lost", v:function(s){ return s.w; }, f:function(v, s){ return s.w + "&ndash;" + s.l; } },
+  { n:"PCW",             v:function(s){ return s.pcw; }, f:function(v){ return v.toFixed(2); }, dir:1 },
+  { n:"Pair rating",     u:"now", v:function(s){ return s.elo; }, f:function(v){ return Math.round(v).toLocaleString(); }, dir:1 },
+  { n:"Batting average", u:AVG_U, v:function(s){ return avg20(s.bat); }, f:Math.round, dir:1 },
+  { n:"Run rate",        v:function(s){ return s.balls ? s.runs / (s.balls / 6) : null; }, f:function(v){ return v.toFixed(2); }, dir:1 },
+  { n:"Highest total",   v:function(s){ return s.high ? s.high.r : null; }, f:function(v, s){ return v + '<em class="sfx">' + esc(s.high.tail) + '</em>'; }, dir:1 },
+  { n:"Bowling average", u:AVG_U, v:function(s){ return avg20(s.bowl); }, f:Math.round, dir:-1 },
+  { n:"Economy",         v:function(s){ return s.bb ? s.conc / (s.bb / 6) : null; }, f:function(v){ return v.toFixed(2); }, dir:-1 },
+  { n:"Wickets taken",   v:function(s){ return s.m ? s.wk : null; }, dir:1 },
+  { n:"50+ scores",      v:function(s){ return s.m ? s.f50 + s.f100 : null; }, dir:1 },
+  { n:"Hundreds",        v:function(s){ return s.m ? s.f100 : null; }, dir:1 }
+];
+function cmpTable(L, R, defs){
+  return '<table class="cmp"><tbody>' + defs.map(function(d){
+    var a = d.v(L), b = d.v(R);
+    var shown = function(v, s){ return v === null || v === undefined ? "&mdash;" : (d.f ? d.f(v, s) : v); };
+    var ok = d.dir && a !== null && a !== undefined && b !== null && b !== undefined && a !== b;
+    var win = ok ? ((a > b) === (d.dir > 0) ? "l" : "r") : "";
+    return '<tr><td class="cl' + (win === "l" ? " win" : "") + '">' + shown(a, L) + '</td>' +
+      '<td class="cm">' + d.n + (d.u ? '<em>' + d.u + '</em>' : '') + '</td>' +
+      '<td class="cr' + (win === "r" ? " win" : "") + '">' + shown(b, R) + '</td></tr>';
+  }).join("") + '</tbody></table>';
+}
+// The two most-played partnerships in view that share no player (falls back to the table order).
+function busiestPairs(pool){
+  var n = {};
+  scopeRegular(statId()).forEach(function(m){
+    [m.w || [], m.l || []].forEach(function(t){ if(t.length === 2){ var k = t.slice().sort().join("|"); n[k] = (n[k] || 0) + 1; } });
+  });
+  var ks = Object.keys(n).sort(function(a, b){ return n[b] - n[a]; }).map(function(k){ return k.split("|"); })
+    .filter(function(P){ return pool.indexOf(P[0]) >= 0 && pool.indexOf(P[1]) >= 0; });
+  var A = ks[0], B = A && ks.filter(function(P){ return P.indexOf(A[0]) < 0 && P.indexOf(A[1]) < 0; })[0];
+  return A && B ? A.concat(B) : [pool[0], pool[3], pool[1], pool[2]];
+}
+function compareBody(){
+  var pool = cmpPool();
+  var C = S.cmp = S.cmp || { mode:"players", pl:[], pr:[] };
+  var pairs = C.mode === "pairs", need = pairs ? 4 : 2, list = pairs ? C.pr : C.pl;
+  var tabs = '<div class="ptabs">' + [["players", "Players"], ["pairs", "Pairs"]].map(function(x){
+    return '<button class="chip' + (C.mode === x[0] ? " on" : "") + '" type="button" data-cmode="' + x[0] + '">' + x[1] + '</button>';
+  }).join("") + '</div>';
+  if(pool.length < need) return tabs + '<div class="mnone">Needs at least ' + need + ' players with matches in this view.</div>';
+  var defaults = pairs ? busiestPairs(pool) : [pool[0], pool[1]];
+  for(var i = 0; i < need; i++) if(!list[i] || pool.indexOf(list[i]) < 0) list[i] = defaults[i];
+  var sorted = pool.slice().sort(function(a, b){ return realName(a).localeCompare(realName(b)); });
+  var pick = function(i){
+    return '<select data-cp="' + i + '" aria-label="Player ' + (i + 1) + '">' + sorted.map(function(p){
+      return '<option value="' + esc(p) + '"' + (p === list[i] ? " selected" : "") + '>' + esc(realName(p)) + '</option>';
+    }).join("") + '</select>';
+  };
+  var html = tabs + '<div class="cmp-pick">' +
+    (pairs ? '<span class="cmp-side">' + pick(0) + '<i>&amp;</i>' + pick(1) + '</span><span class="cmp-v">v</span><span class="cmp-side">' + pick(2) + '<i>&amp;</i>' + pick(3) + '</span>'
+           : '<span class="cmp-side">' + pick(0) + '</span><span class="cmp-v">v</span><span class="cmp-side">' + pick(1) + '</span>') + '</div>';
+  var ms = scopeRegular(statId());
+  if(pairs){
+    var A = [list[0], list[1]], B = [list[2], list[3]];
+    if(A[0] === A[1] || B[0] === B[1] || A.some(function(p){ return B.indexOf(p) >= 0; }))
+      return html + '<div class="mnone">Pick four different players.</div>';
+    var sa = pairStats(A[0], A[1]), sb = pairStats(B[0], B[1]);
+    sa.elo = pairElo(A); sb.elo = pairElo(B);
+    var met = { a:0, b:0 };
+    ms.forEach(function(m){
+      var has2 = function(t, P){ return t && P.every(function(p){ return t.indexOf(p) >= 0; }); };
+      if(has2(m.w, A) && has2(m.l, B)) met.a++; else if(has2(m.w, B) && has2(m.l, A)) met.b++;
+    });
+    html += '<div class="cmp-head"><span>' + plinks(A, "h2h") + '</span><span>' + plinks(B, "h2h") + '</span></div>' +
+      cmpTable(sa, sb, CMP_PAIR) +
+      '<p class="cmp-h2h"><b>Head to head</b> ' + (met.a + met.b ? plinks(A, "h2h") + ' ' + met.a + '&ndash;' + met.b + ' ' + plinks(B, "h2h")
+        : 'these two pairs haven&rsquo;t met in this view') +
+      ' &middot; <b>Next time</b> ' + Math.round(winChance(A, B) * 100) + '&ndash;' + (100 - Math.round(winChance(A, B) * 100)) + ' on ratings</p>';
+  } else {
+    var a = list[0], b = list[1];
+    if(a === b) return html + '<div class="mnone">Pick two different players.</div>';
+    var together = { w:0, n:0 }, against = { a:0, b:0 };
+    ms.forEach(function(m){
+      var aw = (m.w || []).indexOf(a) >= 0, al = (m.l || []).indexOf(a) >= 0, bw = (m.w || []).indexOf(b) >= 0, bl = (m.l || []).indexOf(b) >= 0;
+      if((aw && bw) || (al && bl)){ together.n++; if(aw) together.w++; }
+      else if(aw && bl) against.a++; else if(bw && al) against.b++;
+    });
+    html += '<div class="cmp-head"><span>' + plink(a, "") + '</span><span>' + plink(b, "") + '</span></div>' +
+      cmpTable(statsFor(a), statsFor(b), CMP_PLAYER) +
+      '<p class="cmp-h2h"><b>Together</b> ' + (together.n ? together.w + '&ndash;' + (together.n - together.w) + ' in ' + matchesWord(together.n) : 'never paired in this view') +
+      ' &middot; <b>Against</b> ' + (against.a + against.b ? plink(a, "h2h") + ' ' + against.a + '&ndash;' + against.b + ' ' + plink(b, "h2h") : 'never faced each other') + '</p>';
+  }
+  return html + '<p class="mnote">Batting and bowling are <b>duo figures</b>, as everywhere else. The better figure in each row is lit; ratings are as of now, whatever the view.</p>';
+}
+
+// ── matchmaker
+function mmCycle(){
+  if(S.view !== "all") return cyc(S.view);
+  return S.cycles.slice().reverse().filter(function(c){ return c.matches.length; })[0] || S.cycles[S.cycles.length - 1] || null;
+}
+function mmCyclePlayers(){
+  var c = mmCycle(), seen = {};
+  if(c) scopeRegular(c.id).forEach(function(m){ (m.w || []).concat(m.l || []).forEach(function(p){ seen[p] = true; }); });
+  var out = Object.keys(seen);
+  return out.length ? out : PLAYERS.slice();
+}
+function mmSuggest(pool, c){
+  var key = function(a, b){ return [a, b].sort().join("|"); };
+  var pc = {}, pa = {}, mu = {}, games = {};
+  (c ? scopeRegular(c.id) : []).forEach(function(m){
+    [m.w || [], m.l || []].forEach(function(t){
+      if(t.length === 2) pc[key(t[0], t[1])] = (pc[key(t[0], t[1])] || 0) + 1;
+      t.forEach(function(p){ games[p] = (games[p] || 0) + 1; });
+    });
+  });
+  scopeRegular("all").forEach(function(m){
+    var w = m.w || [], l = m.l || [];
+    [w, l].forEach(function(t){ if(t.length === 2) pa[key(t[0], t[1])] = (pa[key(t[0], t[1])] || 0) + 1; });
+    if(w.length === 2 && l.length === 2){ var k = [key(w[0], w[1]), key(l[0], l[1])].sort().join(" v "); mu[k] = (mu[k] || 0) + 1; }
+  });
+  var out = [], n = pool.length;
+  for(var i = 0; i < n; i++) for(var j = i + 1; j < n; j++) for(var k = j + 1; k < n; k++) for(var q = k + 1; q < n; q++){
+    var f = [pool[i], pool[j], pool[k], pool[q]];
+    [[[0, 1], [2, 3]], [[0, 2], [1, 3]], [[0, 3], [1, 2]]].forEach(function(sp){
+      var A = [f[sp[0][0]], f[sp[0][1]]], B = [f[sp[1][0]], f[sp[1][1]]];
+      var kA = key(A[0], A[1]), kB = key(B[0], B[1]);
+      var x = { A:A, B:B, cA:pc[kA] || 0, cB:pc[kB] || 0, aA:pa[kA] || 0, aB:pa[kB] || 0,
+                ex: mu[[kA, kB].sort().join(" v ")] || 0, gap: Math.abs(pairElo(A) - pairElo(B)),
+                g: f.reduce(function(s, p){ return s + (games[p] || 0); }, 0) };
+      // lower is better: fresh partnerships this cycle, then all-time, an unseen match-up,
+      // a close contest on ratings, and (with a bigger pool) those who've played least
+      x.score = 4 * (x.cA + x.cB) + (x.aA + x.aB) + 3 * x.ex + x.gap / 20 + (n > 4 ? x.g / 6 : 0);
+      out.push(x);
+    });
+  }
+  out.sort(function(a, b){ return a.score - b.score; });
+  if(n > 4){                         // more than four around: the best split of each foursome only
+    var seen = {};
+    out = out.filter(function(x){ var k = x.A.concat(x.B).sort().join("|"); if(seen[k]) return false; seen[k] = true; return true; });
+  }
+  return out.slice(0, 5);
+}
+function matchBody(){
+  var c = mmCycle();
+  if(!S.mmPool || S.mmPoolFor !== (c && c.id)){ S.mmPool = mmCyclePlayers().slice(); S.mmPoolFor = c && c.id; }
+  var everyone = Object.keys(S.elo ? S.elo.n : {}).concat(PLAYERS).filter(function(p, i, a){ return a.indexOf(p) === i; })
+    .sort(function(a, b){ return realName(a).localeCompare(realName(b)); });
+  var html = '<p class="mnote">Tick who&rsquo;s around. Suggestions favour partnerships that haven&rsquo;t had many games together in ' +
+    esc(c ? c.name : "the cycle") + ', match-ups not seen before, and a close contest on ratings' +
+    ' &mdash; and, with more than four to pick from, whoever has played least.</p>' +
+    '<div class="mm-pool">' + everyone.map(function(p){
+      var on = S.mmPool.indexOf(p) >= 0;
+      return '<button class="chip' + (on ? " on" : "") + '" type="button" data-mm="' + esc(p) + '" aria-pressed="' + on + '">' + esc(realName(p)) + '</button>';
+    }).join("") + '</div>' +
+    '<div class="mm-quick"><button class="chip" type="button" data-mmset="cycle">This cycle&rsquo;s players</button>' +
+    '<button class="chip" type="button" data-mmset="none">Clear</button><span>' + S.mmPool.length + ' picked</span></div>';
+  if(S.mmPool.length < 4) return html + '<div class="mnone">Pick at least four players.</div>';
+  var note = function(P, cyc, all){
+    var who = realName(P[0]) + " &amp; " + realName(P[1]);
+    return who + (all === 0 ? " &mdash; first time together" : cyc === 0 ? " &mdash; not together this cycle" : " &mdash; together " + cyc + "&times; this cycle");
+  };
+  return html + '<div class="mm-list">' + mmSuggest(S.mmPool, c).map(function(x, i){
+    var pA = Math.round(winChance(x.A, x.B) * 100);
+    return '<div class="mm"><span class="mm-n">' + (i + 1) + '</span>' +
+      '<div class="mm-body"><div class="mm-names">' + plinks(x.A, "h2h") + ' <i>v</i> ' + plinks(x.B, "h2h") + '</div>' +
+        '<div class="mm-why">' + note(x.A, x.cA, x.aA) + ' &middot; ' + note(x.B, x.cB, x.aB) + ' &middot; ' +
+          (x.ex ? "met " + x.ex + "&times; before" : "a fresh match-up") + ' &middot; ratings ' +
+          Math.round(pairElo(x.A)).toLocaleString() + ' v ' + Math.round(pairElo(x.B)).toLocaleString() + '</div></div>' +
+      '<div class="mm-odds" title="Chance of winning, on ratings"><b>' + pA + '</b><i>&ndash;</i><b>' + (100 - pA) + '</b><span>on ratings</span></div></div>';
+  }).join("") + '</div>';
+}
+
+// ── ratings
+function ratingsBody(){
+  var rows = ratingRows();
+  if(!rows.length) return '<div class="mnone">Ratings start with the first result.</div>';
+  var cid = statId() !== "all" ? statId() : null, c = cid ? cyc(cid) : null, played = {};
+  if(c) scopeCounted(cid).forEach(function(m){ (m.w || []).concat(m.l || []).forEach(function(p){ played[p] = true; }); });
+  var lo = Infinity, hi = -Infinity;
+  rows.forEach(function(x){ S.elo.hist[x.p].slice(-40).forEach(function(v){ lo = Math.min(lo, v); hi = Math.max(hi, v); }); });
+  return '<p class="mnote">Elo-style ratings. Everyone starts at ' + ELO_START.toLocaleString() + '; each result moves both winners up and both losers down by the same amount &mdash; ' +
+    'a lot for an upset, very little for an expected win (at most ' + ELO_K + ' points). A pair counts as the average of its two players. ' +
+    'Ratings carry across cycles and finals count; super overs, D/L results and forfeits count as the result they gave.</p>' +
+    '<div class="tlwrap"><table class="mtab rtab" data-sort-key="ratings"><thead><tr><th class="tl">#</th><th class="tl">Player</th><th>Rating</th>' +
+    (c ? '<th data-label="Change">In ' + esc(c.name) + '</th>' : '') + '<th>Peak</th><th>M</th><th data-label="Trend">Trend</th></tr></thead><tbody>' +
+    rows.map(function(x, i){
+      var dlt = c && played[x.p] ? eloAfter(x.p, cid) - eloAt(x.p, cid) : null;
+      var h = S.elo.hist[x.p].slice(-40);
+      return '<tr><td class="tl" data-v="' + (i + 1) + '">' + (i + 1) + '</td>' +
+        '<td class="tl" data-v="' + esc(realName(x.p).toLowerCase()) + '">' + plink(x.p, "") + '</td>' +
+        '<td data-v="' + x.r.toFixed(2) + '"><b class="rnum">' + Math.round(x.r).toLocaleString() + '</b></td>' +
+        (c ? '<td data-v="' + (dlt === null ? -1e9 : dlt.toFixed(2)) + '" class="' + (dlt === null ? "" : dlt >= 0 ? "up" : "down") + '">' +
+              (dlt === null ? "&mdash;" : (dlt >= 0 ? "+" : "&minus;") + Math.abs(Math.round(dlt))) + '</td>' : '') +
+        '<td data-v="' + x.peak.toFixed(2) + '">' + Math.round(x.peak).toLocaleString() + '</td>' +
+        '<td>' + x.n + '</td>' +
+        '<td class="sp" data-v="' + (h[h.length - 1] - h[0]).toFixed(2) + '">' + spark(h, { lo:lo, hi:hi, mid:ELO_START, w:84, h:22 }) + '</td></tr>';
+    }).join("") + '</tbody></table></div>';
 }
 
 /* ───────── scroll reveals ─────────
@@ -5135,6 +5877,9 @@ var REVEALS = [
   ["#roll", "rvg"],
   ["#highsScope", "rv"],
   ["#highs", "rvg"],
+  ["#review", "rvg"],
+  ["#reviewLines", "rv rv-l"],
+  ["#tools", "rvg"],
   ["#records", "rvg"],
   ["#resultsSection > .panel", "rv"],
   ["ol.laws", "rvg rvg-l"],
